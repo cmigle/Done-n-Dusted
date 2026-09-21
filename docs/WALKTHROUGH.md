@@ -550,3 +550,124 @@ PATCH  /api/guilds/1                      → 405 ApiError
 
 While checking this, the raw Jackson parse message turned out to be multi-line and full of
 internals, so `HttpMessageNotReadableException` now reports only the first line of the cause.
+
+---
+
+## Branch 5 — `feat/quest-api`
+
+Methods 6–10. The first **nested** resource, so this is where the parent-chain rule becomes real.
+
+### 5.1 The five endpoints
+
+All under `/api/guilds/{guildId}/quests`:
+
+| # | Method | Path | Success |
+| --- | --- | --- | --- |
+| 6 | `GET` | `…/quests` | 200 — paged, four filters |
+| 7 | `GET` | `…/quests/{questId}` | 200 |
+| 8 | `POST` | `…/quests` | 201 + `Location` |
+| 9 | `PUT` | `…/quests/{questId}` | 200 |
+| 10 | `DELETE` | `…/quests/{questId}` | 204 |
+
+There is **no** `/api/quests/{id}` shortcut. The report says a child is reachable only through its
+parent, so the flat route simply does not exist — not "exists but is hidden".
+
+### 5.2 Three different 404s, and why each is correct
+
+| Request | Response |
+| --- | --- |
+| `GET /api/guilds/999/quests` | **404** "Guild 999 nerasta" |
+| `GET /api/guilds/1/quests/999` | **404** "Quest 999 nerasta grupeje 1" |
+| `GET /api/guilds/1/quests/4` where quest 4 belongs to guild 2 | **404** "Quest 4 nerasta grupeje 1" |
+
+The third row is the interesting one. Quest 4 exists, and a naive `findById(4)` would happily
+return it — leaking another guild's data through a URL that claims otherwise. Because the
+repository only offers `findByIdAndGuildId`, the mismatch produces an empty `Optional` and
+therefore a 404. The rule is enforced by the shape of the API, not by a check someone has to
+remember to write.
+
+Note that listing the quests of a guild that does not exist is **404, not an empty list**. An
+empty `content` array would tell the client "this guild has no quests", which is a different and
+false statement. `QuestService.list` therefore calls `guilds.get(guildId)` first.
+
+### 5.3 Filtering with four optional parameters
+
+`stat`, `type`, `difficulty`, `active` — any combination, all optional. The service builds one
+`Specification` and adds a predicate only for the parameters that were supplied:
+
+```java
+List<Predicate> predicates = new ArrayList<>();
+predicates.add(cb.equal(root.get("guild").get("id"), guildId));
+if (stat != null)       predicates.add(cb.equal(root.get("stat"), stat));
+if (type != null)       predicates.add(cb.equal(root.get("type"), type));
+...
+return cb.and(predicates.toArray(Predicate[]::new));
+```
+
+The guild predicate is not optional — it is what scopes the list to the parent. This is the same
+pattern introduced in branch 4 and it is exactly what avoids the PostgreSQL untyped-null problem
+described in 4.6(a); with four enum parameters, the JPQL `:p is null` approach would have failed
+four times over.
+
+An unknown enum value in a query parameter (`?type=NOPE`) becomes
+`MethodArgumentTypeMismatchException` → **400**, handled centrally.
+
+### 5.4 `xpPerCompletion` — showing that the server owns XP
+
+`QuestResponse` carries a field that does not exist in the database:
+
+```java
+quest.getDifficulty().xpValue()   // BASE_XP (10) × multiplier
+```
+
+The report states *"XP niekada nepriimamas iš kliento… serveris jį išveda iš užduoties
+sudėtingumo"*. `QuestRequest` has no XP field at all — there is nothing for a client to send. The
+derived value is published in the response so a client can show "this is worth 50 XP" without
+duplicating the formula. It is computed on read rather than stored, so it can never go stale.
+
+This pairs with the frozen `xpAwarded` on `LogEntry` in the next branch: the *quest* always
+reports its current worth, while an *approved entry* keeps what it was worth on the day it was
+approved. Changing a quest from `EASY` to `LEGENDARY` changes future entries only.
+
+### 5.5 Why `targetCount` produces 422 and not 400
+
+`targetCount` is annotated `@Positive`, so `-5` is a **400** — the field is invalid on its own
+terms. But these two are **422**:
+
+* `type = GRIND` with no `targetCount` — a cumulative quest with no target to accumulate towards.
+* `type = MILESTONE` with a `targetCount` — a one-off quest cannot have a progress target.
+
+Both requests are perfectly well-formed JSON with every field individually legal. They are
+rejected because of what the fields mean *together*, which is the 422 case defined in branch 3.
+The check lives in `QuestService.validate` and runs on both create and update, because an update
+can break the rule just as easily as a create.
+
+A Jakarta `@AssertTrue` on the record could express this too. It is a service-level check instead
+so that it produces the same 422 as every other domain rule — routing it through bean validation
+would make it a 400 and blur the very line branch 3 drew.
+
+### 5.6 `active` defaults to `true`
+
+`QuestRequest.active` is a `Boolean` (nullable), not a `boolean`. If it were primitive, an
+omitted field would silently become `false` and every quest created without mentioning `active`
+would be born inactive. As a nullable wrapper, "not sent" is distinguishable from "sent as
+false", and `activeOrDefault()` turns the former into `true`.
+
+### 5.7 Verified by hand before merging
+
+```
+GET    /api/guilds/2/quests?size=3              → 200, sorted by title
+GET    /api/guilds/2/quests?type=GRIND          → 200, totalElements = 1
+GET    /api/guilds/2/quests?active=true&size=2  → 200, links keep active=true
+GET    /api/guilds/2/quests?type=NOPE           → 400
+GET    /api/guilds/999/quests                   → 404 (guild, not empty list)
+GET    /api/guilds/1/quests/4                   → 404 (quest 4 belongs to guild 2)
+POST   /api/guilds/1/quests                     → 201 + Location, xpPerCompletion = 30
+POST   … GRIND without targetCount              → 422
+POST   … MILESTONE with targetCount             → 422
+POST   … missing "stat"                         → 400 + details[].field = "stat"
+POST   … "stat":"LUCK"                          → 400, message lists accepted values
+POST   … duplicate title in same guild          → 409
+PUT    /api/guilds/1/quests/10                  → 200, xpPerCompletion recalculated to 50
+DELETE /api/guilds/1/quests/10                  → 204, then 404 on repeat
+```
