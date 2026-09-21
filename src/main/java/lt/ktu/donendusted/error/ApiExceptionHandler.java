@@ -89,8 +89,10 @@ public class ApiExceptionHandler {
     @ExceptionHandler(HttpMessageNotReadableException.class)
     public ResponseEntity<ApiError> handleUnreadableBody(HttpMessageNotReadableException ex,
                                                          HttpServletRequest request) {
-        return build(HttpStatus.BAD_REQUEST, "Uzklausos turinio nepavyko perskaityti: "
-                + ex.getMostSpecificCause().getMessage(), request);
+        // Jackson pranesimas daugiaeilis ir su vidinemis detalemis - paliekame tik pirmaja eilute.
+        String cause = ex.getMostSpecificCause().getMessage();
+        String firstLine = cause == null ? "netinkamas JSON" : cause.split("\\R", 2)[0];
+        return build(HttpStatus.BAD_REQUEST, "Uzklausos turinio nepavyko perskaityti: " + firstLine, request);
     }
 
     /** Blogo tipo kelio kintamasis ar query parametras, pvz. /api/guilds/abc. */
