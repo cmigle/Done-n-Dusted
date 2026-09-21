@@ -7,9 +7,12 @@ import lt.ktu.donendusted.error.ApiError.FieldViolation;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.data.core.PropertyReferenceException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
+import org.springframework.web.HttpMediaTypeNotAcceptableException;
+import org.springframework.web.HttpMediaTypeNotSupportedException;
 import org.springframework.web.HttpRequestMethodNotSupportedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -108,6 +111,29 @@ public class ApiExceptionHandler {
     public ResponseEntity<ApiError> handleMethodNotSupported(HttpRequestMethodNotSupportedException ex,
                                                              HttpServletRequest request) {
         return build(HttpStatus.METHOD_NOT_ALLOWED, ex.getMessage(), request);
+    }
+
+    /** Kunas atsiustas ne kaip JSON. */
+    @ExceptionHandler(HttpMediaTypeNotSupportedException.class)
+    public ResponseEntity<ApiError> handleUnsupportedMediaType(HttpMediaTypeNotSupportedException ex,
+                                                               HttpServletRequest request) {
+        return build(HttpStatus.UNSUPPORTED_MEDIA_TYPE,
+                "Palaikomas tik application/json; gauta: " + ex.getContentType(), request);
+    }
+
+    /** Klientas Accept antrasteje prase formato, kurio API neturi. */
+    @ExceptionHandler(HttpMediaTypeNotAcceptableException.class)
+    public ResponseEntity<ApiError> handleNotAcceptable(HttpMediaTypeNotAcceptableException ex,
+                                                        HttpServletRequest request) {
+        return build(HttpStatus.NOT_ACCEPTABLE, "API grazina tik application/json", request);
+    }
+
+    /** Rikiavimas pagal neegzistuojanti lauka, pvz. ?sort=bogus. */
+    @ExceptionHandler(PropertyReferenceException.class)
+    public ResponseEntity<ApiError> handleUnknownSortProperty(PropertyReferenceException ex,
+                                                              HttpServletRequest request) {
+        return build(HttpStatus.BAD_REQUEST,
+                "Rikiuoti pagal lauka '" + ex.getPropertyName() + "' negalima - tokio lauko nera", request);
     }
 
     @ExceptionHandler(Exception.class)

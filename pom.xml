@@ -86,6 +86,20 @@
             <plugin>
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-maven-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <id>repackage</id>
+                        <goals>
+                            <goal>repackage</goal>
+                        </goals>
+                        <configuration>
+                            <!-- Ikeltos PostgreSQL binarines bibliotekos reikalingos tik "dev"
+                                 paleidimui per spring-boot:run, todel i jar faila neitraukiamos.
+                                 Konfiguracija taikoma tik repackage tikslui - kitaip ji paveiktu ir run. -->
+                            <excludeGroupIds>io.zonky.test,io.zonky.test.postgres</excludeGroupIds>
+                        </configuration>
+                    </execution>
+                </executions>
             </plugin>
         </plugins>
     </build>
