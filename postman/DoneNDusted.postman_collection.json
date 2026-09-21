@@ -5,13 +5,34 @@
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "variable": [
-    { "key": "baseUrl", "value": "http://localhost:8080/api" },
-    { "key": "guildName", "value": "" },
-    { "key": "guildA", "value": "" },
-    { "key": "guildB", "value": "" },
-    { "key": "questId", "value": "" },
-    { "key": "logId", "value": "" },
-    { "key": "occurredAt", "value": "" }
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:8080/api"
+    },
+    {
+      "key": "guildName",
+      "value": ""
+    },
+    {
+      "key": "guildA",
+      "value": ""
+    },
+    {
+      "key": "guildB",
+      "value": ""
+    },
+    {
+      "key": "questId",
+      "value": ""
+    },
+    {
+      "key": "logId",
+      "value": ""
+    },
+    {
+      "key": "occurredAt",
+      "value": ""
+    }
   ],
   "item": [
     {
@@ -50,8 +71,21 @@
       ],
       "request": {
         "method": "POST",
-        "header": [{ "key": "Content-Type", "value": "application/json" }],
-        "url": { "raw": "{{baseUrl}}/guilds", "host": ["{{baseUrl}}"], "path": ["guilds"] },
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/guilds",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "guilds"
+          ]
+        },
         "body": {
           "mode": "raw",
           "raw": "{\n  \"name\": \"{{guildName}}\",\n  \"description\": \"Postman demonstracijai sukurta grupe\"\n}"
@@ -74,8 +108,21 @@
       ],
       "request": {
         "method": "POST",
-        "header": [{ "key": "Content-Type", "value": "application/json" }],
-        "url": { "raw": "{{baseUrl}}/guilds", "host": ["{{baseUrl}}"], "path": ["guilds"] },
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/guilds",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "guilds"
+          ]
+        },
         "body": {
           "mode": "raw",
           "raw": "{\n  \"name\": \"{{guildName}} (B)\",\n  \"description\": \"Naudojama tik neteisingos grandines testui\"\n}"
@@ -114,12 +161,25 @@
         "method": "GET",
         "url": {
           "raw": "{{baseUrl}}/guilds?name=Postman&page=0&size=2",
-          "host": ["{{baseUrl}}"],
-          "path": ["guilds"],
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "guilds"
+          ],
           "query": [
-            { "key": "name", "value": "Postman" },
-            { "key": "page", "value": "0" },
-            { "key": "size", "value": "2" }
+            {
+              "key": "name",
+              "value": "Postman"
+            },
+            {
+              "key": "page",
+              "value": "0"
+            },
+            {
+              "key": "size",
+              "value": "2"
+            }
           ]
         }
       }
@@ -140,7 +200,16 @@
       ],
       "request": {
         "method": "GET",
-        "url": { "raw": "{{baseUrl}}/guilds/{{guildA}}", "host": ["{{baseUrl}}"], "path": ["guilds", "{{guildA}}"] }
+        "url": {
+          "raw": "{{baseUrl}}/guilds/{{guildA}}",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "guilds",
+            "{{guildA}}"
+          ]
+        }
       }
     },
     {
@@ -159,8 +228,22 @@
       ],
       "request": {
         "method": "PUT",
-        "header": [{ "key": "Content-Type", "value": "application/json" }],
-        "url": { "raw": "{{baseUrl}}/guilds/{{guildA}}", "host": ["{{baseUrl}}"], "path": ["guilds", "{{guildA}}"] },
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/guilds/{{guildA}}",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "guilds",
+            "{{guildA}}"
+          ]
+        },
         "body": {
           "mode": "raw",
           "raw": "{\n  \"name\": \"{{guildName}}\",\n  \"description\": \"Aprasymas po redagavimo\"\n}"
@@ -189,9 +272,25 @@
       ],
       "request": {
         "method": "POST",
-        "header": [{ "key": "Content-Type", "value": "application/json" }],
-        "url": { "raw": "{{baseUrl}}/guilds", "host": ["{{baseUrl}}"], "path": ["guilds"] },
-        "body": { "mode": "raw", "raw": "{\n  \"name\": \"{{guildName}}\"\n}" }
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/guilds",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "guilds"
+          ]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"name\": \"{{guildName}}\"\n}"
+        }
       }
     },
     {
@@ -214,9 +313,99 @@
       ],
       "request": {
         "method": "POST",
-        "header": [{ "key": "Content-Type", "value": "application/json" }],
-        "url": { "raw": "{{baseUrl}}/guilds", "host": ["{{baseUrl}}"], "path": ["guilds"] },
-        "body": { "mode": "raw", "raw": "{\n  \"name\": \"ab\"\n}" }
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/guilds",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "guilds"
+          ]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"name\": \"ab\"\n}"
+        }
+      }
+    },
+    {
+      "name": "07a POST /guilds ne JSON turinio tipu -> 415",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('415 Unsupported Media Type', () => pm.response.to.have.status(415));",
+              "pm.test('ApiError paaiskina palaikoma tipa', () => pm.expect(pm.response.json().message).to.include('application/json'));"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "text/plain"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/guilds",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "guilds"
+          ]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "sveiki"
+        }
+      }
+    },
+    {
+      "name": "07b POST /guilds su nezinomu lauku -> 400",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('400 Bad Request', () => pm.response.to.have.status(400));",
+              "pm.test('Serveris atmeta nedeklaruotus laukus', () => pm.expect(pm.response.json().message).to.include('xpAwarded'));"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/guilds",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "guilds"
+          ]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"name\": \"{{guildName}} (C)\",\n  \"xpAwarded\": 9999\n}"
+        }
       }
     },
     {
@@ -239,7 +428,16 @@
       ],
       "request": {
         "method": "GET",
-        "url": { "raw": "{{baseUrl}}/guilds/999999", "host": ["{{baseUrl}}"], "path": ["guilds", "999999"] }
+        "url": {
+          "raw": "{{baseUrl}}/guilds/999999",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "guilds",
+            "999999"
+          ]
+        }
       }
     },
     {
@@ -261,11 +459,22 @@
       ],
       "request": {
         "method": "POST",
-        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
         "url": {
           "raw": "{{baseUrl}}/guilds/{{guildA}}/quests",
-          "host": ["{{baseUrl}}"],
-          "path": ["guilds", "{{guildA}}", "quests"]
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "guilds",
+            "{{guildA}}",
+            "quests"
+          ]
         },
         "body": {
           "mode": "raw",
@@ -289,11 +498,22 @@
       ],
       "request": {
         "method": "POST",
-        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
         "url": {
           "raw": "{{baseUrl}}/guilds/{{guildA}}/quests",
-          "host": ["{{baseUrl}}"],
-          "path": ["guilds", "{{guildA}}", "quests"]
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "guilds",
+            "{{guildA}}",
+            "quests"
+          ]
         },
         "body": {
           "mode": "raw",
@@ -324,9 +544,20 @@
         "method": "GET",
         "url": {
           "raw": "{{baseUrl}}/guilds/{{guildA}}/quests?stat=CON",
-          "host": ["{{baseUrl}}"],
-          "path": ["guilds", "{{guildA}}", "quests"],
-          "query": [{ "key": "stat", "value": "CON" }]
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "guilds",
+            "{{guildA}}",
+            "quests"
+          ],
+          "query": [
+            {
+              "key": "stat",
+              "value": "CON"
+            }
+          ]
         }
       }
     },
@@ -348,8 +579,15 @@
         "method": "GET",
         "url": {
           "raw": "{{baseUrl}}/guilds/{{guildA}}/quests/{{questId}}",
-          "host": ["{{baseUrl}}"],
-          "path": ["guilds", "{{guildA}}", "quests", "{{questId}}"]
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "guilds",
+            "{{guildA}}",
+            "quests",
+            "{{questId}}"
+          ]
         }
       }
     },
@@ -371,8 +609,15 @@
         "method": "GET",
         "url": {
           "raw": "{{baseUrl}}/guilds/{{guildB}}/quests/{{questId}}",
-          "host": ["{{baseUrl}}"],
-          "path": ["guilds", "{{guildB}}", "quests", "{{questId}}"]
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "guilds",
+            "{{guildB}}",
+            "quests",
+            "{{questId}}"
+          ]
         }
       }
     },
@@ -395,11 +640,23 @@
       ],
       "request": {
         "method": "PUT",
-        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
         "url": {
           "raw": "{{baseUrl}}/guilds/{{guildA}}/quests/{{questId}}",
-          "host": ["{{baseUrl}}"],
-          "path": ["guilds", "{{guildA}}", "quests", "{{questId}}"]
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "guilds",
+            "{{guildA}}",
+            "quests",
+            "{{questId}}"
+          ]
         },
         "body": {
           "mode": "raw",
@@ -430,11 +687,24 @@
       ],
       "request": {
         "method": "POST",
-        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
         "url": {
           "raw": "{{baseUrl}}/guilds/{{guildA}}/quests/{{questId}}/logs",
-          "host": ["{{baseUrl}}"],
-          "path": ["guilds", "{{guildA}}", "quests", "{{questId}}", "logs"]
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "guilds",
+            "{{guildA}}",
+            "quests",
+            "{{questId}}",
+            "logs"
+          ]
         },
         "body": {
           "mode": "raw",
@@ -458,13 +728,29 @@
       ],
       "request": {
         "method": "POST",
-        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
         "url": {
           "raw": "{{baseUrl}}/guilds/{{guildA}}/quests/{{questId}}/logs",
-          "host": ["{{baseUrl}}"],
-          "path": ["guilds", "{{guildA}}", "quests", "{{questId}}", "logs"]
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "guilds",
+            "{{guildA}}",
+            "quests",
+            "{{questId}}",
+            "logs"
+          ]
         },
-        "body": { "mode": "raw", "raw": "{\n  \"occurredAt\": \"2099-01-01T00:00:00Z\"\n}" }
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"occurredAt\": \"2099-01-01T00:00:00Z\"\n}"
+        }
       }
     },
     {
@@ -489,9 +775,22 @@
         "method": "GET",
         "url": {
           "raw": "{{baseUrl}}/guilds/{{guildA}}/quests/{{questId}}/logs?status=PENDING",
-          "host": ["{{baseUrl}}"],
-          "path": ["guilds", "{{guildA}}", "quests", "{{questId}}", "logs"],
-          "query": [{ "key": "status", "value": "PENDING" }]
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "guilds",
+            "{{guildA}}",
+            "quests",
+            "{{questId}}",
+            "logs"
+          ],
+          "query": [
+            {
+              "key": "status",
+              "value": "PENDING"
+            }
+          ]
         }
       }
     },
@@ -513,8 +812,17 @@
         "method": "GET",
         "url": {
           "raw": "{{baseUrl}}/guilds/{{guildA}}/quests/{{questId}}/logs/{{logId}}",
-          "host": ["{{baseUrl}}"],
-          "path": ["guilds", "{{guildA}}", "quests", "{{questId}}", "logs", "{{logId}}"]
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "guilds",
+            "{{guildA}}",
+            "quests",
+            "{{questId}}",
+            "logs",
+            "{{logId}}"
+          ]
         }
       }
     },
@@ -540,11 +848,25 @@
       ],
       "request": {
         "method": "PUT",
-        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
         "url": {
           "raw": "{{baseUrl}}/guilds/{{guildA}}/quests/{{questId}}/logs/{{logId}}",
-          "host": ["{{baseUrl}}"],
-          "path": ["guilds", "{{guildA}}", "quests", "{{questId}}", "logs", "{{logId}}"]
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "guilds",
+            "{{guildA}}",
+            "quests",
+            "{{questId}}",
+            "logs",
+            "{{logId}}"
+          ]
         },
         "body": {
           "mode": "raw",
@@ -568,11 +890,25 @@
       ],
       "request": {
         "method": "PUT",
-        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
         "url": {
           "raw": "{{baseUrl}}/guilds/{{guildA}}/quests/{{questId}}/logs/{{logId}}",
-          "host": ["{{baseUrl}}"],
-          "path": ["guilds", "{{guildA}}", "quests", "{{questId}}", "logs", "{{logId}}"]
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "guilds",
+            "{{guildA}}",
+            "quests",
+            "{{questId}}",
+            "logs",
+            "{{logId}}"
+          ]
         },
         "body": {
           "mode": "raw",
@@ -598,8 +934,17 @@
         "method": "DELETE",
         "url": {
           "raw": "{{baseUrl}}/guilds/{{guildA}}/quests/{{questId}}/logs/{{logId}}",
-          "host": ["{{baseUrl}}"],
-          "path": ["guilds", "{{guildA}}", "quests", "{{questId}}", "logs", "{{logId}}"]
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "guilds",
+            "{{guildA}}",
+            "quests",
+            "{{questId}}",
+            "logs",
+            "{{logId}}"
+          ]
         }
       }
     },
@@ -610,7 +955,9 @@
           "listen": "test",
           "script": {
             "type": "text/javascript",
-            "exec": ["pm.test('404 Not Found', () => pm.response.to.have.status(404));"]
+            "exec": [
+              "pm.test('404 Not Found', () => pm.response.to.have.status(404));"
+            ]
           }
         }
       ],
@@ -618,8 +965,17 @@
         "method": "DELETE",
         "url": {
           "raw": "{{baseUrl}}/guilds/{{guildA}}/quests/{{questId}}/logs/{{logId}}",
-          "host": ["{{baseUrl}}"],
-          "path": ["guilds", "{{guildA}}", "quests", "{{questId}}", "logs", "{{logId}}"]
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "guilds",
+            "{{guildA}}",
+            "quests",
+            "{{questId}}",
+            "logs",
+            "{{logId}}"
+          ]
         }
       }
     },
@@ -630,7 +986,9 @@
           "listen": "test",
           "script": {
             "type": "text/javascript",
-            "exec": ["pm.test('204 No Content', () => pm.response.to.have.status(204));"]
+            "exec": [
+              "pm.test('204 No Content', () => pm.response.to.have.status(204));"
+            ]
           }
         }
       ],
@@ -638,8 +996,15 @@
         "method": "DELETE",
         "url": {
           "raw": "{{baseUrl}}/guilds/{{guildA}}/quests/{{questId}}",
-          "host": ["{{baseUrl}}"],
-          "path": ["guilds", "{{guildA}}", "quests", "{{questId}}"]
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "guilds",
+            "{{guildA}}",
+            "quests",
+            "{{questId}}"
+          ]
         }
       }
     },
@@ -650,13 +1015,24 @@
           "listen": "test",
           "script": {
             "type": "text/javascript",
-            "exec": ["pm.test('204 No Content', () => pm.response.to.have.status(204));"]
+            "exec": [
+              "pm.test('204 No Content', () => pm.response.to.have.status(204));"
+            ]
           }
         }
       ],
       "request": {
         "method": "DELETE",
-        "url": { "raw": "{{baseUrl}}/guilds/{{guildA}}", "host": ["{{baseUrl}}"], "path": ["guilds", "{{guildA}}"] }
+        "url": {
+          "raw": "{{baseUrl}}/guilds/{{guildA}}",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "guilds",
+            "{{guildA}}"
+          ]
+        }
       }
     },
     {
@@ -674,7 +1050,16 @@
       ],
       "request": {
         "method": "DELETE",
-        "url": { "raw": "{{baseUrl}}/guilds/{{guildB}}", "host": ["{{baseUrl}}"], "path": ["guilds", "{{guildB}}"] }
+        "url": {
+          "raw": "{{baseUrl}}/guilds/{{guildB}}",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "guilds",
+            "{{guildB}}"
+          ]
+        }
       }
     },
     {
@@ -693,7 +1078,16 @@
       ],
       "request": {
         "method": "GET",
-        "url": { "raw": "{{baseUrl}}/guilds/{{guildA}}", "host": ["{{baseUrl}}"], "path": ["guilds", "{{guildA}}"] }
+        "url": {
+          "raw": "{{baseUrl}}/guilds/{{guildA}}",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "guilds",
+            "{{guildA}}"
+          ]
+        }
       }
     }
   ]

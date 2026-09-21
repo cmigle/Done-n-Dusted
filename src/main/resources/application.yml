@@ -16,6 +16,8 @@ spring:
     locations: classpath:db/migration
   jackson:
     default-property-inclusion: non_null
+    deserialization:
+      fail-on-unknown-properties: true
   data:
     web:
       pageable:

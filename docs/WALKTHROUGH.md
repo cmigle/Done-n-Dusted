@@ -905,3 +905,127 @@ The seed data exists so the database is not empty when someone opens it during t
 so the filters have something to filter. The Postman run creates its own data instead, because a
 demonstration that mutates or depends on seeded rows breaks the second time you run it. The two
 serve different purposes and neither depends on the other.
+
+---
+
+## Branch 8 — `chore/review-fixes`
+
+After the feature branches were merged, the whole thing was reviewed against the assignment's
+requirement list as a grader would: by sending requests the Postman collection did **not** yet
+cover, rather than by re-reading the code. Five problems turned up. The findings are written up
+in Lithuanian in [`docs/REVIEW.md`](REVIEW.md); the reasoning behind each fix is here.
+
+### 8.1 `?sort=bogus` returned 500
+
+Sorting by a property that does not exist throws `PropertyReferenceException` from Spring Data.
+Nothing handled it, so it fell through to the catch-all `Exception` handler and became a 500.
+
+A 500 means "the server is broken". Here the server is fine and the *request* is wrong, so the
+correct answer is **400** naming the offending property. New handler added.
+
+Two things worth remembering:
+
+* The class moved in Spring Data 4 — `org.springframework.data.core.PropertyReferenceException`,
+  not `…data.mapping…`. Found with `unzip -l` on the jar rather than by guessing.
+* A catch-all `@ExceptionHandler(Exception.class)` is necessary, but it hides this class of bug.
+  Anything reaching it should be treated as a missing handler until proven otherwise.
+
+### 8.2 `Content-Type: text/plain` returned 500
+
+Posting a non-JSON body produced `HttpMediaTypeNotSupportedException`, again unhandled, again a
+500. It is now **415 Unsupported Media Type**, with the `ApiError` body like everything else.
+`HttpMediaTypeNotAcceptableException` was mapped to **406** at the same time, for a client that
+asks for XML.
+
+(406 comes back with an empty body — correct, since the whole reason for the 406 is that the
+server cannot produce what the client asked for, including the error.)
+
+### 8.3 Unknown request fields were silently ignored
+
+Jackson's default is to ignore properties the DTO does not declare. So this:
+
+```
+POST /api/guilds/2/quests/4/logs   { "occurredAt": "...", "xpAwarded": 500 }
+```
+
+returned **201** with `xpAwarded: 0`. The behaviour was correct — the client's XP was discarded —
+but it was *silent*, and silence is the wrong response to an attempt to set a field the server
+owns. A client could ship that request for months believing it worked.
+
+`spring.jackson.deserialization.fail-on-unknown-properties: true` makes it a **400** that names
+the field. This turns the report's strongest rule — *"XP niekada nepriimamas iš kliento"* — from
+something you have to trust into something you can see the server enforce.
+
+The trade-off is real: strict deserialisation makes the API less tolerant of clients that send
+extra fields. For an API whose entire point is that the server decides the score, being strict is
+the right side of that trade.
+
+### 8.4 The executable jar was 188 MB
+
+`unzip -l` on the jar showed why:
+
+```
+71 MB  embedded-postgres-binaries-darwin-amd64
+25 MB  embedded-postgres-binaries-windows-amd64
+15 MB  embedded-postgres-binaries-linux-amd64
+14 MB  embedded-postgres-binaries-linux-amd64-alpine
+```
+
+Four operating systems' worth of PostgreSQL, shipped inside an artifact that connects to an
+external database. Fixed with `excludeGroupIds` on the plugin — **188 MB → 61 MB**, an ordinary
+Spring Boot fat jar.
+
+**The detail that matters:** the exclusion is attached to the `repackage` *execution*, not to the
+plugin's top-level `<configuration>`:
+
+```xml
+<executions>
+  <execution>
+    <id>repackage</id>
+    <goals><goal>repackage</goal></goals>
+    <configuration>
+      <excludeGroupIds>io.zonky.test,io.zonky.test.postgres</excludeGroupIds>
+    </configuration>
+  </execution>
+</executions>
+```
+
+Top-level plugin configuration applies to *every* goal, including `spring-boot:run` — and
+excluding the embedded PostgreSQL from `run` breaks the `dev` profile with
+`NoClassDefFoundError: io/zonky/test/db/postgres/embedded/EmbeddedPostgres`. That was observed,
+not theorised. Per-execution configuration is what separates "what the jar contains" from "what
+the dev run has on its classpath".
+
+Both paths were then verified end to end: `./mvnw spring-boot:run` boots the embedded PostgreSQL
+and answers on `/api/guilds`; `java -jar … --spring.profiles.active=prod` gets all the way to
+"Connection to localhost:5432 refused" with **zero** `NoClassDefFoundError` in the log, proving
+the `@Profile("dev")` configuration class is skipped cleanly when its dependency is absent.
+
+### 8.5 A fix that was tried and rejected: `<scope>provided</scope>`
+
+The obvious way to keep a dependency out of the jar is `provided` scope. It does keep it out —
+and it also removes it from `spring-boot:run`, because Spring Boot 4's run goal does not put
+provided-scope dependencies on the classpath. The `dev` profile died immediately.
+
+Reverted to the default scope. Recorded in the review document so the same idea is not retried
+later — a rejected approach is as much a result as an accepted one.
+
+### 8.6 What the review confirmed was already correct
+
+Not every check found a problem. These were probed and behaved properly:
+
+* wrong parent chain → 404 rather than another guild's data;
+* quests of a non-existent guild → 404 rather than an empty list;
+* pagination links preserving filters and sort, `prev`/`next` absent at the edges;
+* `?size=99999` clamped to 100;
+* approving without `xpAwarded` taking the value from the quest's difficulty;
+* `PENDING`/`REJECTED` entries refusing rewards at both the API and the database level;
+* cascading deletes leaving no orphans;
+* the collection running repeatedly without failures.
+
+### 8.7 Collection and documentation updated
+
+Two requests were added to the Postman collection for the new behaviour — `07a` (415 on
+`text/plain`) and `07b` (400 on an unknown field carrying `xpAwarded`). The suite is now
+**28 requests, 57 assertions, 4.9 seconds, zero failures**. The README error table gained `406`
+and `415`, and the demonstration section mentions the two new cases.

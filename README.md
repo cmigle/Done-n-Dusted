@@ -128,7 +128,9 @@ Kiekviena klaida — vienoda `ApiError` struktūra:
 | `400` | Užklausos nepavyko suprasti: netinkamas JSON, blogas tipas, nežinoma enum reikšmė, lauko apribojimo pažeidimas |
 | `404` | Resurso nėra **arba** neteisinga tėvinė grandinė |
 | `405` | Teisingas kelias, netinkamas HTTP metodas |
+| `406` | Klientas `Accept` antraštėje paprašė formato, kurio API neturi |
 | `409` | Užklausa teisinga, bet prieštarauja esamai būsenai (pvz., užimtas pavadinimas) |
+| `415` | Kūnas atsiųstas ne `application/json` tipu |
 | `422` | JSON suprastas, laukai teisingi, bet pažeista dalykinės srities taisyklė |
 | `500` | Netikėta serverio klaida |
 
@@ -141,7 +143,7 @@ ateityje, XP neperžiūrėtam įrašui, naujas įrašas prie neaktyvios užduoti
 ## Demonstracija su Postman
 
 [`postman/DoneNDusted.postman_collection.json`](postman/DoneNDusted.postman_collection.json) —
-26 užklausos, 53 patikros. Kolekcija pati susikuria duomenis ir po savęs išsivalo, todėl ją
+28 užklausų, 57 patikros. Kolekcija pati susikuria duomenis ir po savęs išsivalo, todėl ją
 galima paleisti kiek nori kartų iš eilės.
 
 ```bash
@@ -157,7 +159,8 @@ Kolekcija paeiliui iškviečia **visus 15 metodų** ir papildomai parodo:
 * `404` neegzistuojančiam resursui, ištrintam resursui ir **neteisingai tėvinei grandinei**
   (užduotis egzistuoja, bet ne toje grupėje);
 * `400` blogam payload (nurodomas konkretus laukas) ir `422` pažeistoms dalykinėms taisyklėms;
-* `409` pasikartojančiam pavadinimui;
+* `409` pasikartojančiam pavadinimui ir `415` ne JSON turinio tipui;
+* `400`, kai užklausoje yra nedeklaruotas laukas (pvz., bandymas atsiųsti `xpAwarded`);
 * kad XP ateina iš serverio: patvirtinant įrašą be `xpAwarded`, gaunamas `80` — `LEGENDARY`
   užduoties vertė.
 
@@ -209,6 +212,7 @@ src/main/resources/db/migration/
 docs/
   openapi.json          sugeneruota OpenAPI specifikacija
   WALKTHROUGH.md        detalus kiekvieno sprendimo paaiškinimas
+  REVIEW.md             patikros ataskaita pagal užduoties reikalavimus
 postman/
   DoneNDusted.postman_collection.json
 ```
