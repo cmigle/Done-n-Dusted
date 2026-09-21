@@ -671,3 +671,138 @@ POST   … duplicate title in same guild          → 409
 PUT    /api/guilds/1/quests/10                  → 200, xpPerCompletion recalculated to 50
 DELETE /api/guilds/1/quests/10                  → 204, then 404 on repeat
 ```
+
+---
+
+## Branch 6 — `feat/logentry-api`
+
+Methods 11–15, two levels deep: `/api/guilds/{guildId}/quests/{questId}/logs`. This is the exact
+path the report names, and it is where the domain rules about XP actually live.
+
+### 6.1 The five endpoints
+
+| # | Method | Path | Success |
+| --- | --- | --- | --- |
+| 11 | `GET` | `…/logs` | 200 — paged, filter by `status` |
+| 12 | `GET` | `…/logs/{logId}` | 200 |
+| 13 | `POST` | `…/logs` | 201 + `Location` |
+| 14 | `PUT` | `…/logs/{logId}` | 200 — content **and** DM review |
+| 15 | `DELETE` | `…/logs/{logId}` | 204 |
+
+The list is sorted by `occurredAt` **descending** by default — a log is read newest-first.
+
+### 6.2 Two request DTOs for one resource, on purpose
+
+This is the only resource with separate `LogEntryCreateRequest` and `LogEntryUpdateRequest`, and
+the difference is the whole point:
+
+```java
+record LogEntryCreateRequest(String note, String evidenceUrl, Instant occurredAt) { }
+```
+
+There is **no `status` and no `xpAwarded` field**. The report says *"įrašas atsiranda būsenoje
+PENDING ir neduoda jokių taškų"* and *"XP niekada nepriimamas iš kliento kuriant įrašą"*. Rather
+than accepting those fields and then validating them away, the create DTO simply has nowhere to
+put them. A client cannot send what the schema does not define — and the generated OpenAPI
+document says so too.
+
+`LogEntryUpdateRequest` does have `status`, `xpAwarded`, `inspirationAwarded` and `reviewerNote`,
+because `PUT` is the DM review: *"DM peržiūri įrašą ir nustato būseną APPROVED arba REJECTED, gali
+perrašyti XP įvertį ir palikti pastabą"*, plus *"Tvirtindamas DM gali skirti inspiration"*.
+
+### 6.3 How approval works
+
+```java
+case APPROVED -> {
+    int xp = request.xpAwarded() != null ? request.xpAwarded() : quest.getDifficulty().xpValue();
+    int inspiration = request.inspirationAwarded() != null ? request.inspirationAwarded() : 0;
+    entry.approve(xp, inspiration, request.reviewerNote(), Instant.now());
+}
+```
+
+* **Omitting `xpAwarded` is the normal case** — the server derives it from the quest's difficulty
+  (`BASE_XP × multiplier`). Verified: approving an entry on a `HARD` quest without sending any XP
+  produced `"xpAwarded": 50`.
+* **Sending `xpAwarded` is the DM override**, which the report explicitly allows *at approval
+  time and only then*.
+* `reviewedAt` is stamped by the server with `Instant.now()`. It is never taken from the request;
+  a client cannot backdate a review.
+
+**The XP is frozen at this moment.** `xpAwarded` is a plain column on `LogEntry`, not a
+calculation over the quest. Editing the quest to `LEGENDARY` afterwards changes
+`QuestResponse.xpPerCompletion` for future entries, and leaves every already-approved entry
+exactly as it was — *"Patvirtintas XP užšaldomas įraše - vėliau pakeitus užduoties sudėtingumą
+istorija neperrašoma."* If the value were derived on read, history would silently rewrite itself
+every time a DM re-balanced a quest.
+
+### 6.4 The status transitions, and the 422s they produce
+
+`LogEntry` has no `setStatus`. The only ways to change state are `approve()`, `reject()` and
+`resetToPending()` — each sets status, XP, inspiration and `reviewedAt` together:
+
+| Target status | What the entity does | Rejected with 422 when |
+| --- | --- | --- |
+| `APPROVED` | stores XP + inspiration, stamps `reviewedAt` | — |
+| `REJECTED` | forces XP and inspiration to 0, stamps `reviewedAt` | the request carries non-zero XP or inspiration |
+| `PENDING` | clears XP, inspiration **and** `reviewedAt` | the request carries non-zero XP or inspiration |
+
+The last row matters: sending an entry back for revision has to *remove* the reward, not leave a
+pending entry sitting on 50 XP. `resetToPending` nulls `reviewedAt` as well, which is what keeps
+the `ck_log_reviewed_at` and `ck_log_pending_is_empty` constraints satisfied. Those two database
+checks and these three methods are the same rule expressed twice — deliberately.
+
+Trying to set `PENDING` while sending `xpAwarded: 50` is a 422, not a 400: the JSON is valid and
+`50` is a legal integer; the request is refused because of what those fields mean together.
+
+### 6.5 Two more domain rules
+
+* **`occurredAt` cannot be in the future** → 422. Checked on create *and* on update.
+* **No new entries on an inactive quest** → 422. `active = false` means the quest is closed;
+  existing entries stay readable and reviewable, but nothing new can be logged against it. This
+  is why the seed data contains one inactive quest — the rule is demonstrable.
+
+`occurredAt` is `@NotNull` (→ 400 if missing) and the "not in the future" check is in the service
+(→ 422). Same field, two different failures, each with the code that matches the reason. That
+contrast is worth showing during the defence.
+
+`evidenceUrl` uses Hibernate Validator's `@URL`, so `"not a url"` is a **400** with
+`details[0].field = "evidenceUrl"` — it is malformed on its own terms, no domain knowledge
+needed.
+
+### 6.6 A LazyInitializationException that was designed away
+
+`LogEntryResponse` originally carried a `guildId`, mapped as:
+
+```java
+entry.getQuest().getGuild().getId()
+```
+
+`entry.getQuest()` returns a lazy proxy. Calling `getId()` on a proxy is safe — Hibernate answers
+from the identifier without going to the database — but calling `getGuild()` **initialises** the
+proxy, and with `open-in-view: false` the session is already closed by the time the controller
+maps the response. That is a `LazyInitializationException`, i.e. a 500.
+
+Three ways out: map inside the transaction, `join fetch` the guild, or drop the field. The field
+was dropped. A log entry is only ever reachable through `/api/guilds/{guildId}/…`, so the client
+already knows the guild id — it was duplicated data that cost an extra join. The cheapest fix was
+the one that removed something.
+
+(`questId` stays, because that one *is* a proxy id read and costs nothing.)
+
+### 6.7 Verified by hand before merging
+
+```
+GET    …/quests/4/logs?size=2              → 200, newest first, all statuses present
+GET    …/quests/4/logs?status=PENDING      → 200, totalElements = 1
+POST   …/quests/4/logs                     → 201 + Location, status PENDING, xpAwarded 0
+PUT    …/logs/13 status=APPROVED (no xp)   → 200, xpAwarded 50 (derived), reviewedAt stamped
+PUT    …/logs/13 status=PENDING, xp 50     → 422
+POST   …/logs occurredAt in 2030           → 422
+POST   …/quests/7/logs (inactive quest)    → 422
+POST   …/logs evidenceUrl="not a url"      → 400 + details[].field = "evidenceUrl"
+POST   …/logs {}                           → 400 (occurredAt required)
+GET    /api/guilds/1/quests/4/logs/13      → 404 (quest 4 is in guild 2)
+DELETE …/logs/13                           → 204, then 404 on repeat
+```
+
+**All fifteen API methods are now implemented and working.**
