@@ -1,0 +1,21 @@
+package lt.ktu.donendusted.error;
+
+/** 404 - resursas neegzistuoja arba nepriklauso nurodytam tevui. */
+public class ResourceNotFoundException extends RuntimeException {
+
+    public ResourceNotFoundException(String message) {
+        super(message);
+    }
+
+    public static ResourceNotFoundException guild(Long id) {
+        return new ResourceNotFoundException("Guild " + id + " nerasta");
+    }
+
+    public static ResourceNotFoundException quest(Long guildId, Long questId) {
+        return new ResourceNotFoundException("Quest " + questId + " nerasta grupeje " + guildId);
+    }
+
+    public static ResourceNotFoundException logEntry(Long questId, Long logId) {
+        return new ResourceNotFoundException("LogEntry " + logId + " nerastas uzduotyje " + questId);
+    }
+}
