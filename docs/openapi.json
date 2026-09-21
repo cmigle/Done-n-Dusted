@@ -1,0 +1,1474 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "Done n Dusted API",
+    "description": "DnD principu veikianti produktyvumo sistema.\n\nResursu hierarchija: **Guild (1:N) -> Quest (1:N) -> LogEntry**.\nVaikinis objektas pasiekiamas tik per tevini kelia; neteisinga\ngrandine grazina 404. Visos klaidos grazinamos vienoda `ApiError`\nstruktura, visi sarasai - puslapiuoti `PagedResponse` su\nself/first/prev/next/last nuorodomis.\n",
+    "contact": {
+      "name": "Migle Cirtautaite"
+    },
+    "license": {
+      "name": "KTU T120B165"
+    },
+    "version": "0.1.0"
+  },
+  "servers": [
+    {
+      "url": "/",
+      "description": "Dabartinis serveris"
+    }
+  ],
+  "tags": [
+    {
+      "name": "Quests",
+      "description": "Uzduotys - pasiekiamos tik per savo grupe"
+    },
+    {
+      "name": "Guilds",
+      "description": "Grupes - virsutinis hierarchijos lygis"
+    },
+    {
+      "name": "Log entries",
+      "description": "Progreso irasai - pasiekiami tik per grupe ir uzduoti"
+    }
+  ],
+  "paths": {
+    "/api/guilds/{guildId}": {
+      "get": {
+        "tags": [
+          "Guilds"
+        ],
+        "summary": "Viena grupe",
+        "operationId": "get",
+        "parameters": [
+          {
+            "name": "guildId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Grupe rasta",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GuildResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Grupe neegzistuoja",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Guilds"
+        ],
+        "summary": "Atnaujinti grupe",
+        "operationId": "update",
+        "parameters": [
+          {
+            "name": "guildId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GuildRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Grupe atnaujinta",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GuildResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Neteisingas payload",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Grupe neegzistuoja",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Toks pavadinimas jau uzimtas",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Guilds"
+        ],
+        "summary": "Istrinti grupe",
+        "description": "Kartu istrinamos visos grupes uzduotys ir ju progreso irasai.",
+        "operationId": "delete",
+        "parameters": [
+          {
+            "name": "guildId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Istrinta; atsakymo kuno nera"
+          },
+          "404": {
+            "description": "Grupe neegzistuoja",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/guilds/{guildId}/quests/{questId}": {
+      "get": {
+        "tags": [
+          "Quests"
+        ],
+        "summary": "Viena uzduotis",
+        "description": "Grazina 404, jei uzduotis nepriklauso nurodytai grupei.",
+        "operationId": "get_1",
+        "parameters": [
+          {
+            "name": "guildId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          },
+          {
+            "name": "questId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Uzduotis rasta",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/QuestResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Neteisinga grandine arba uzduoties nera",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Quests"
+        ],
+        "summary": "Atnaujinti uzduoti",
+        "description": "Sudetingumo keitimas veikia tik busimus irasus - jau patvirtintu irasu XP nekeiciamas.",
+        "operationId": "update_1",
+        "parameters": [
+          {
+            "name": "guildId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          },
+          {
+            "name": "questId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/QuestRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Uzduotis atnaujinta",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/QuestResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Neteisingas payload",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Neteisinga grandine arba uzduoties nera",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Toks pavadinimas grupeje jau yra",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Pazeista dalykine taisykle",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Quests"
+        ],
+        "summary": "Istrinti uzduoti",
+        "description": "Kartu istrinami visi jos progreso irasai.",
+        "operationId": "delete_1",
+        "parameters": [
+          {
+            "name": "guildId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          },
+          {
+            "name": "questId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Istrinta; atsakymo kuno nera"
+          },
+          "404": {
+            "description": "Neteisinga grandine arba uzduoties nera",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/guilds/{guildId}/quests/{questId}/logs/{logId}": {
+      "get": {
+        "tags": [
+          "Log entries"
+        ],
+        "summary": "Vienas irasas",
+        "operationId": "get_2",
+        "parameters": [
+          {
+            "name": "guildId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          },
+          {
+            "name": "questId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          },
+          {
+            "name": "logId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Irasas rastas",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LogEntryResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Neteisinga grandine arba iraso nera",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Log entries"
+        ],
+        "summary": "Atnaujinti irasa ir jo perziuros rezultata",
+        "description": "Tvirtinant (APPROVED) praleistas xpAwarded reiskia, kad XP imamas is uzduoties\nsudetingumo. PENDING ir REJECTED irasai privalo likti be XP ir inspiration.\n",
+        "operationId": "update_2",
+        "parameters": [
+          {
+            "name": "guildId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          },
+          {
+            "name": "questId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          },
+          {
+            "name": "logId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LogEntryUpdateRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Irasas atnaujintas",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LogEntryResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Neteisingas payload",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Neteisinga grandine arba iraso nera",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Pazeista dalykine taisykle",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Log entries"
+        ],
+        "summary": "Istrinti irasa",
+        "operationId": "delete_2",
+        "parameters": [
+          {
+            "name": "guildId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          },
+          {
+            "name": "questId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          },
+          {
+            "name": "logId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Istrinta; atsakymo kuno nera"
+          },
+          "404": {
+            "description": "Neteisinga grandine arba iraso nera",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/guilds": {
+      "get": {
+        "tags": [
+          "Guilds"
+        ],
+        "summary": "Grupiu sarasas",
+        "description": "Puslapiuotas ir filtruojamas sarasas. Nuorodose islieka visi filtrai.",
+        "operationId": "list",
+        "parameters": [
+          {
+            "name": "name",
+            "in": "query",
+            "description": "Filtras pagal pavadinimo dali, neatsizvelgiant i raidziu dydi",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "pageable",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/Pageable"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Sarasas grazintas",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PagedResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Guilds"
+        ],
+        "summary": "Sukurti grupe",
+        "operationId": "create",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GuildRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Grupe sukurta; Location antraste nurodo nauja resursa",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GuildResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Neteisingas payload",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Toks pavadinimas jau uzimtas",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/guilds/{guildId}/quests": {
+      "get": {
+        "tags": [
+          "Quests"
+        ],
+        "summary": "Grupes uzduociu sarasas",
+        "description": "Puslapiuotas sarasas su filtrais pagal charakteristika, tipa, sudetinguma ir aktyvuma.",
+        "operationId": "list_1",
+        "parameters": [
+          {
+            "name": "guildId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          },
+          {
+            "name": "stat",
+            "in": "query",
+            "description": "Filtras pagal auginama charakteristika",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "STR",
+                "DEX",
+                "CON",
+                "INT",
+                "WIS",
+                "CHA"
+              ]
+            }
+          },
+          {
+            "name": "type",
+            "in": "query",
+            "description": "Filtras pagal uzduoties tipa",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "MILESTONE",
+                "HABIT",
+                "GRIND",
+                "SIDE_QUEST"
+              ]
+            }
+          },
+          {
+            "name": "difficulty",
+            "in": "query",
+            "description": "Filtras pagal sudetinguma",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "TRIVIAL",
+                "EASY",
+                "MEDIUM",
+                "HARD",
+                "LEGENDARY"
+              ]
+            }
+          },
+          {
+            "name": "active",
+            "in": "query",
+            "description": "Filtras pagal aktyvuma",
+            "required": false,
+            "schema": {
+              "type": "boolean"
+            }
+          },
+          {
+            "name": "pageable",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/Pageable"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Sarasas grazintas",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PagedResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Grupe neegzistuoja",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Quests"
+        ],
+        "summary": "Sukurti uzduoti",
+        "operationId": "create_1",
+        "parameters": [
+          {
+            "name": "guildId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/QuestRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Uzduotis sukurta",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/QuestResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Neteisingas payload",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Grupe neegzistuoja",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Toks pavadinimas grupeje jau yra",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Pazeista dalykine taisykle (pvz., GRIND be targetCount)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/guilds/{guildId}/quests/{questId}/logs": {
+      "get": {
+        "tags": [
+          "Log entries"
+        ],
+        "summary": "Uzduoties irasu sarasas",
+        "description": "Puslapiuotas sarasas; filtruojamas pagal busena. Rikiuojama nuo naujausio ivykio.",
+        "operationId": "list_2",
+        "parameters": [
+          {
+            "name": "guildId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          },
+          {
+            "name": "questId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "description": "Filtras pagal iraso busena",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "PENDING",
+                "APPROVED",
+                "REJECTED"
+              ]
+            }
+          },
+          {
+            "name": "pageable",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/Pageable"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Sarasas grazintas",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PagedResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Neteisinga grupes/uzduoties grandine",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Log entries"
+        ],
+        "summary": "Registruoti progresa",
+        "description": "Irasas visada sukuriamas PENDING busenoje su 0 XP - taskus skiria tik DM tvirtindamas.",
+        "operationId": "create_2",
+        "parameters": [
+          {
+            "name": "guildId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          },
+          {
+            "name": "questId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LogEntryCreateRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Irasas sukurtas",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LogEntryResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Neteisingas payload",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Neteisinga grandine",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Neaktyvi uzduotis arba data ateityje",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "GuildRequest": {
+        "type": "object",
+        "description": "Grupes kurimo ir atnaujinimo duomenys",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Unikalus grupes pavadinimas",
+            "example": "Thursday Night Crew",
+            "maxLength": 60,
+            "minLength": 3
+          },
+          "description": {
+            "type": "string",
+            "description": "Laisvas grupes aprasymas",
+            "example": "Ketvirtadieniais renkasi kampanija.",
+            "maxLength": 500,
+            "minLength": 0
+          }
+        },
+        "required": [
+          "name"
+        ]
+      },
+      "ApiError": {
+        "type": "object",
+        "description": "Vieninga klaidos atsako struktura",
+        "properties": {
+          "timestamp": {
+            "type": "string",
+            "format": "date-time",
+            "example": "2026-09-21T09:15:30.123Z"
+          },
+          "status": {
+            "type": "integer",
+            "format": "int32",
+            "example": 404
+          },
+          "error": {
+            "type": "string",
+            "example": "Not Found"
+          },
+          "message": {
+            "type": "string",
+            "example": "Guild 99 nerasta"
+          },
+          "path": {
+            "type": "string",
+            "example": "/api/guilds/99"
+          },
+          "details": {
+            "type": "array",
+            "description": "Uzpildoma tik kai klaida susijusi su konkreciais laukais",
+            "items": {
+              "$ref": "#/components/schemas/FieldViolation"
+            }
+          }
+        }
+      },
+      "FieldViolation": {
+        "type": "object",
+        "properties": {
+          "field": {
+            "type": "string",
+            "example": "name"
+          },
+          "message": {
+            "type": "string",
+            "example": "must not be blank"
+          }
+        }
+      },
+      "GuildResponse": {
+        "type": "object",
+        "description": "Grupe",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int64",
+            "example": 1
+          },
+          "name": {
+            "type": "string",
+            "example": "Thursday Night Crew"
+          },
+          "description": {
+            "type": "string",
+            "example": "Ketvirtadieniais renkasi kampanija."
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "example": "2026-09-21T09:15:30.123Z"
+          }
+        }
+      },
+      "QuestRequest": {
+        "type": "object",
+        "description": "Uzduoties kurimo ir atnaujinimo duomenys",
+        "properties": {
+          "title": {
+            "type": "string",
+            "example": "Run 50 kilometers",
+            "maxLength": 120,
+            "minLength": 3
+          },
+          "description": {
+            "type": "string",
+            "example": "Kaupiamoji uzduotis - kiekvienas patvirtintas irasas priartina prie tikslo.",
+            "maxLength": 1000,
+            "minLength": 0
+          },
+          "stat": {
+            "type": "string",
+            "description": "Charakteristika, kuria uzduotis augina",
+            "enum": [
+              "STR",
+              "DEX",
+              "CON",
+              "INT",
+              "WIS",
+              "CHA"
+            ],
+            "example": "CON"
+          },
+          "type": {
+            "type": "string",
+            "enum": [
+              "MILESTONE",
+              "HABIT",
+              "GRIND",
+              "SIDE_QUEST"
+            ],
+            "example": "GRIND"
+          },
+          "difficulty": {
+            "type": "string",
+            "description": "Bazinio XP daugiklis",
+            "enum": [
+              "TRIVIAL",
+              "EASY",
+              "MEDIUM",
+              "HARD",
+              "LEGENDARY"
+            ],
+            "example": "HARD"
+          },
+          "targetCount": {
+            "type": "integer",
+            "format": "int32",
+            "description": "Privalomas tik GRIND tipui; kitiems tipams turi buti nenurodytas",
+            "example": 50,
+            "exclusiveMinimum": 0
+          },
+          "active": {
+            "type": "boolean",
+            "description": "Ar uzduotis vis dar aktyvi; nenurodzius laikoma true",
+            "example": true
+          }
+        },
+        "required": [
+          "difficulty",
+          "stat",
+          "title",
+          "type"
+        ]
+      },
+      "QuestResponse": {
+        "type": "object",
+        "description": "Uzduotis",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int64",
+            "example": 4
+          },
+          "guildId": {
+            "type": "integer",
+            "format": "int64",
+            "description": "Tevine grupe",
+            "example": 2
+          },
+          "title": {
+            "type": "string",
+            "example": "Run 50 kilometers"
+          },
+          "description": {
+            "type": "string"
+          },
+          "stat": {
+            "type": "string",
+            "enum": [
+              "STR",
+              "DEX",
+              "CON",
+              "INT",
+              "WIS",
+              "CHA"
+            ],
+            "example": "CON"
+          },
+          "type": {
+            "type": "string",
+            "enum": [
+              "MILESTONE",
+              "HABIT",
+              "GRIND",
+              "SIDE_QUEST"
+            ],
+            "example": "GRIND"
+          },
+          "difficulty": {
+            "type": "string",
+            "enum": [
+              "TRIVIAL",
+              "EASY",
+              "MEDIUM",
+              "HARD",
+              "LEGENDARY"
+            ],
+            "example": "HARD"
+          },
+          "targetCount": {
+            "type": "integer",
+            "format": "int32",
+            "example": 50
+          },
+          "active": {
+            "type": "boolean",
+            "example": true
+          },
+          "xpPerCompletion": {
+            "type": "integer",
+            "format": "int32",
+            "description": "Serverio isvestas XP uz viena patvirtinta irasa (BASE_XP * daugiklis)",
+            "example": 50
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "LogEntryUpdateRequest": {
+        "type": "object",
+        "description": "Iraso turinio ir perziuros rezultato atnaujinimas",
+        "properties": {
+          "note": {
+            "type": "string",
+            "example": "Begau 8 km palei upe.",
+            "maxLength": 1000,
+            "minLength": 0
+          },
+          "evidenceUrl": {
+            "type": "string",
+            "example": "https://example.org/evidence/run-8km.png",
+            "maxLength": 500,
+            "minLength": 0
+          },
+          "occurredAt": {
+            "type": "string",
+            "format": "date-time",
+            "example": "2026-09-19T15:20:00Z"
+          },
+          "status": {
+            "type": "string",
+            "description": "Nauja iraso busena",
+            "enum": [
+              "PENDING",
+              "APPROVED",
+              "REJECTED"
+            ],
+            "example": "APPROVED"
+          },
+          "xpAwarded": {
+            "type": "integer",
+            "format": "int32",
+            "description": "DM perrasytas XP ivertis. Praleidus, tvirtinant naudojama uzduoties verte.",
+            "example": 50,
+            "minimum": 0
+          },
+          "inspirationAwarded": {
+            "type": "integer",
+            "format": "int32",
+            "description": "Skiriamas heroic inspiration; praleidus laikoma 0",
+            "example": 1,
+            "minimum": 0
+          },
+          "reviewerNote": {
+            "type": "string",
+            "example": "Uzskaitau, nors nuotrauka neryski.",
+            "maxLength": 500,
+            "minLength": 0
+          }
+        },
+        "required": [
+          "occurredAt",
+          "status"
+        ]
+      },
+      "LogEntryResponse": {
+        "type": "object",
+        "description": "Progreso irasas",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int64",
+            "example": 7
+          },
+          "questId": {
+            "type": "integer",
+            "format": "int64",
+            "description": "Tevine uzduotis",
+            "example": 4
+          },
+          "note": {
+            "type": "string"
+          },
+          "evidenceUrl": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "PENDING",
+              "APPROVED",
+              "REJECTED"
+            ],
+            "example": "APPROVED"
+          },
+          "xpAwarded": {
+            "type": "integer",
+            "format": "int32",
+            "description": "Patvirtinimo metu uzsaldytas XP; PENDING ir REJECTED visada 0",
+            "example": 50
+          },
+          "inspirationAwarded": {
+            "type": "integer",
+            "format": "int32",
+            "example": 1
+          },
+          "reviewerNote": {
+            "type": "string"
+          },
+          "occurredAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "reviewedAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Nera, kol irasas neperziuretas"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "LogEntryCreateRequest": {
+        "type": "object",
+        "description": "Naujo progreso iraso duomenys",
+        "properties": {
+          "note": {
+            "type": "string",
+            "example": "Begau 8 km palei upe.",
+            "maxLength": 1000,
+            "minLength": 0
+          },
+          "evidenceUrl": {
+            "type": "string",
+            "description": "Nuoroda i irodyma, pvz. nuotrauka",
+            "example": "https://example.org/evidence/run-8km.png",
+            "maxLength": 500,
+            "minLength": 0
+          },
+          "occurredAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Kada veiksmas atliktas; negali buti ateityje",
+            "example": "2026-09-19T15:20:00Z"
+          }
+        },
+        "required": [
+          "occurredAt"
+        ]
+      },
+      "Pageable": {
+        "type": "object",
+        "properties": {
+          "page": {
+            "type": "integer",
+            "format": "int32",
+            "minimum": 0
+          },
+          "size": {
+            "type": "integer",
+            "format": "int32",
+            "minimum": 1
+          },
+          "sort": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "PageInfo": {
+        "type": "object",
+        "properties": {
+          "number": {
+            "type": "integer",
+            "format": "int32",
+            "example": 0
+          },
+          "size": {
+            "type": "integer",
+            "format": "int32",
+            "example": 20
+          },
+          "totalElements": {
+            "type": "integer",
+            "format": "int64",
+            "example": 42
+          },
+          "totalPages": {
+            "type": "integer",
+            "format": "int32",
+            "example": 3
+          }
+        }
+      },
+      "PageLinks": {
+        "type": "object",
+        "description": "prev ir next nera pateikiami, kai tokio puslapio nera",
+        "properties": {
+          "self": {
+            "type": "string"
+          },
+          "first": {
+            "type": "string"
+          },
+          "prev": {
+            "type": "string"
+          },
+          "next": {
+            "type": "string"
+          },
+          "last": {
+            "type": "string"
+          }
+        }
+      },
+      "PagedResponse": {
+        "type": "object",
+        "description": "Puslapiuotas sarasas su navigacijos nuorodomis",
+        "properties": {
+          "content": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/GuildResponse"
+            }
+          },
+          "page": {
+            "$ref": "#/components/schemas/PageInfo"
+          },
+          "links": {
+            "$ref": "#/components/schemas/PageLinks"
+          }
+        }
+      }
+    }
+  }
+}
