@@ -397,3 +397,156 @@ The spec is generated from the code, so it cannot describe an endpoint that does
 
 `HandlerMethodValidationException.getAllValidationResults()` does not exist in Spring Framework 7
 — it is now `getParameterValidationResults()`. Another Boot 4 / Spring 7 rename to watch for.
+
+---
+
+## Branch 4 — `feat/guild-api`
+
+The first five of the fifteen methods. This branch also fixes the layering for the two branches
+that follow, so it is longer than they will be.
+
+### 4.1 The five endpoints
+
+| # | Method | Path | Success |
+| --- | --- | --- | --- |
+| 1 | `GET` | `/api/guilds` | 200 — paged, filtered list |
+| 2 | `GET` | `/api/guilds/{guildId}` | 200 |
+| 3 | `POST` | `/api/guilds` | **201** + `Location` header |
+| 4 | `PUT` | `/api/guilds/{guildId}` | 200 — updated resource in the body |
+| 5 | `DELETE` | `/api/guilds/{guildId}` | **204** — no body |
+
+Why those particular codes:
+
+* **201 with `Location`.** The lab explicitly asks that creation returns 201. The `Location`
+  header is built from the actual request URI plus the new id, so the client is told where the
+  thing it just made lives. The created resource is also in the body, which saves the client a
+  follow-up GET.
+* **200 on PUT, 204 on DELETE.** The lab says *"Kai resursas ištrinamas - 200/204 priklausomai,
+  ar grąžinamas response body"*. There is nothing meaningful to return after a delete, so the
+  honest answer is 204 No Content. PUT does have something to return — the new state, including
+  fields the server owns like `createdAt` — so it is 200 with a body.
+
+### 4.2 Three layers, and what each is allowed to do
+
+```
+GuildController  ── HTTP only: routing, status codes, Location header, DTO ↔ JSON
+      │
+GuildService     ── transactions + business rules; speaks entities
+      │
+GuildRepository  ── queries only
+```
+
+* The **controller** never touches the repository and never builds an error response. Every
+  method body is one or two lines.
+* The **service** is where `@Transactional` lives, and it is the only place that decides a rule
+  has been broken. Reads are `@Transactional(readOnly = true)`, which lets the driver and
+  Hibernate skip dirty-checking and flushing.
+* The **repository** has no logic at all.
+
+### 4.3 DTOs, not entities, on the wire
+
+`GuildRequest` (in) and `GuildResponse` (out) are separate Java records. Entities are never
+serialised directly. Three concrete reasons, not style:
+
+1. **The client must not be able to set server-owned fields.** `GuildRequest` has no `id` and no
+   `createdAt`, so a request that includes them cannot do anything. If the entity were bound
+   directly, a `PUT` carrying `"id": 7` would be a small privilege-escalation bug.
+2. **Lazy associations.** Serialising an entity with a lazy `@ManyToOne` outside a transaction
+   throws. A DTO is already fully materialised.
+3. **The API shape can stay stable while the schema changes.** They are allowed to diverge.
+
+The mapping is a single static factory, `GuildResponse.from(guild)`. No MapStruct, no
+ModelMapper: three entities with a handful of fields do not justify a code generator or a
+reflection-based mapper, and a static method is greppable and steps through in a debugger.
+
+Validation annotations sit on `GuildRequest` (`@NotBlank`, `@Size(min = 3, max = 60)`) and the
+controller marks the body `@Valid`. That is what produces the 400 with per-field `details`.
+Note that the constraint mirrors the SQL column definition (`varchar(60)`) — the same limit is
+stated once for the client, once for the database.
+
+### 4.4 Uniqueness: checked in the service, guaranteed by the database
+
+`create` and `update` both ask `existsByNameIgnoreCase…` before saving, and throw
+`ConflictException` → 409 with a readable message. The `uq_guild_name` index is what actually
+guarantees it; the service check exists to produce a good error message instead of a raw
+constraint violation.
+
+`update` uses `existsByNameIgnoreCaseAndIdNot(name, id)` — without the `AndIdNot`, saving a guild
+without changing its name would find *itself* and report a conflict.
+
+### 4.5 Delete cascades through the database
+
+`GuildService.delete` just deletes the guild. There is no `@OneToMany(cascade = REMOVE)` and no
+manual "first delete the log entries, then the quests" loop. The `ON DELETE CASCADE` on the two
+foreign keys does it in one statement inside the same transaction. Fewer round trips, and it is
+impossible to leave orphans behind even if someone deletes a row with psql.
+
+### 4.6 Two bugs this branch hit — both worth understanding
+
+**(a) `function lower(bytea) does not exist`.**
+The original filter query was JPQL of the form:
+
+```sql
+where (:name is null or lower(g.name) like lower(concat('%', :name, '%')))
+```
+
+This is the standard "optional filter" trick and it works on many databases. On PostgreSQL it
+fails: when the parameter is `null`, the driver sends an untyped parameter, Postgres cannot infer
+its type from `? IS NULL`, and it guesses `bytea`. Adding `cast(:name as String)` did not help
+either.
+
+The fix was to stop expressing the optionality in SQL and express it in Java, with a
+**`Specification`**:
+
+```java
+Specification<Guild> spec = (root, query, cb) -> StringUtils.hasText(nameFilter)
+        ? cb.like(cb.lower(root.get("name")), "%" + nameFilter.toLowerCase() + "%")
+        : cb.conjunction();
+return guilds.findAll(spec, pageable);
+```
+
+When no filter is supplied, the predicate is simply **not added to the query** — there is no null
+parameter to type in the first place. `cb.conjunction()` is the always-true predicate used when
+nothing is filtered. The repositories now extend `JpaSpecificationExecutor`, and the same pattern
+is used for the quest and log-entry filters in the next branches, where the parameters are enums
+and would hit exactly the same problem.
+
+The lesson generalises: *"is this filter present?"* is a Java question, not a SQL question.
+Answering it in SQL forces the database to reason about a value that is not really there.
+
+**(b) `@PageableDefault` silently overrode the configured page size.**
+`spring.data.web.pageable.default-page-size: 20` was set in `application.yml`, yet responses came
+back with `"size": 10`. Cause: `@PageableDefault` has its own `size()` whose default is **10**,
+and the annotation wins over the global property. Writing `@PageableDefault(sort = "name")` for
+the sort alone quietly changed the page size too.
+
+Fix: state the size in the annotation (`@PageableDefault(size = 20, sort = "name")`) and delete
+`default-page-size` from the YAML, so there is exactly one place that defines it. `max-page-size:
+100` stays in the YAML, because it is a global safety limit rather than a per-endpoint default —
+and it is verified to work: `?size=99999` comes back as `"size": 100`.
+
+A default `sort` is set on every list endpoint on purpose. Without one, PostgreSQL may return
+rows in any order, which means page 2 can repeat a row from page 1. Pagination without a
+deterministic sort is not pagination.
+
+### 4.7 Verified by hand before merging
+
+```
+GET    /api/guilds                        → 200, paged, sorted by name
+GET    /api/guilds?name=iron              → 200, one result, filters preserved in links
+GET    /api/guilds?size=99999             → 200, size clamped to 100
+GET    /api/guilds/1                      → 200
+GET    /api/guilds/999                    → 404 ApiError
+GET    /api/guilds/abc                    → 400 ApiError ("turi buti Long")
+POST   /api/guilds                        → 201 + Location: /api/guilds/4
+POST   /api/guilds (duplicate name)       → 409 ApiError
+POST   /api/guilds {"name":"ab"}          → 400 ApiError + details[].field = "name"
+POST   /api/guilds (truncated JSON)       → 400 ApiError
+PUT    /api/guilds/4                      → 200, updated body
+DELETE /api/guilds/4                      → 204, empty body
+DELETE /api/guilds/4 (again)              → 404 ApiError
+PATCH  /api/guilds/1                      → 405 ApiError
+```
+
+While checking this, the raw Jackson parse message turned out to be multi-line and full of
+internals, so `HttpMessageNotReadableException` now reports only the first line of the cause.
