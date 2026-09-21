@@ -806,3 +806,102 @@ DELETE …/logs/13                           → 204, then 404 on repeat
 ```
 
 **All fifteen API methods are now implemented and working.**
+
+---
+
+## Branch 7 — `feat/openapi-and-postman`
+
+No production code. This branch produces the three things the lab grades besides the endpoints
+themselves: the OpenAPI specification, the demonstration, and the repository documentation.
+
+### 7.1 OpenAPI: generated, then committed
+
+`springdoc-openapi` builds the document by reflecting over the controllers at runtime, so
+`/v3/api-docs` can never describe an endpoint that does not exist. The annotations that feed it
+(`@Tag`, `@Operation`, `@ApiResponse`, `@Schema`, `@Parameter`) were written in branches 4–6, next
+to the code they describe — that is the only way they stay true.
+
+The generated document was then pretty-printed and committed as
+[`docs/openapi.json`](openapi.json). Both forms matter:
+
+* the **live** endpoint is what Swagger UI reads, and it is what you show during the defence;
+* the **committed file** is a reviewable artefact — it diffs when the API changes, and the lab
+  asks for a specification to be *submitted*, not merely to be reachable while the app runs.
+
+Verification that the spec really covers everything:
+
+```
+paths: 6   operations: 15
+  GET,POST        /api/guilds
+  GET,PUT,DELETE  /api/guilds/{guildId}
+  GET,POST        /api/guilds/{guildId}/quests
+  GET,PUT,DELETE  /api/guilds/{guildId}/quests/{questId}
+  GET,POST        /api/guilds/{guildId}/quests/{questId}/logs
+  GET,PUT,DELETE  /api/guilds/{guildId}/quests/{questId}/logs/{logId}
+```
+
+Six path templates, **exactly fifteen operations** — matching the fifteen methods the lab
+requires, with no extras and none missing. Every operation documents its error codes with
+`ApiError` as the response schema, so the uniform error structure is part of the published
+contract rather than an implementation detail.
+
+### 7.2 The Postman collection
+
+[`postman/DoneNDusted.postman_collection.json`](../postman/DoneNDusted.postman_collection.json) —
+26 requests, 53 assertions, **5.2 seconds** end to end (the lab asks for roughly 15).
+
+Three properties were designed in deliberately:
+
+1. **It is re-runnable.** A pre-request script stamps the guild name with `Date.now()`, so the
+   409-duplicate test never collides with a previous run, and the last four requests delete
+   everything the run created. You can run it ten times in a row during the defence without
+   resetting the database.
+2. **Ids are never hard-coded.** Each create captures the id from the response into a collection
+   variable (`guildA`, `guildB`, `questId`, `logId`) and later requests use it. The collection
+   does not care what is already in the database.
+3. **The assertions check meaning, not just status codes.** For example request 19 asserts
+   `xpAwarded === 80` after approving without sending any XP — which is the *"XP niekada
+   nepriimamas iš kliento"* rule, demonstrated rather than claimed.
+
+Ordering is the story of the domain: create a guild → create a quest in it → log progress →
+DM approves → clean up. Interleaved with it are the error cases the lab lists explicitly:
+
+| Requirement from the lab | Request | Result |
+| --- | --- | --- |
+| resource created → 201 | 01, 09, 15 | `201` + `Location` |
+| resource deleted → 200/204 | 21, 23, 24 | `204`, empty body asserted |
+| resource not found → 404 | 08, 13, 22, 26 | `404` `ApiError` |
+| bad payload → 400/422 | 07, 10, 16, 20 | `400` with `details[].field`; `422` for rule violations |
+
+Request 13 is the one worth pausing on during the defence: it asks for a quest that **does
+exist**, through a guild that does **not own it**, and gets `404 … nerasta grupeje` — the
+parent-chain rule from the report, demonstrated live.
+
+A second guild (request 02) exists purely to make that test possible without depending on seed
+data.
+
+Newman was used to verify the whole thing actually passes rather than assuming it does:
+
+```
+requests 26 / failed 0     assertions 53 / failed 0     duration 5.2s
+```
+
+### 7.3 README
+
+[`README.md`](../README.md) is written **in Lithuanian**, unlike this walkthrough. Different
+audiences: the README is the document the reviewer opens first, and it is the "dokumentacija
+projekto Git saugykloje" the lab asks for; this walkthrough is written for you, to explain the
+reasoning.
+
+The README covers: one-command start, all fifteen methods in three tables, the paged-response and
+`ApiError` shapes, the 400-vs-422 rule, how to run the Postman demo, the domain rules, the tech
+stack, the project layout, and — deliberately — a closing section stating what is **not** in LD1
+and why. Writing down the scope boundary is not an apology; it is what stops a reviewer from
+reading a missing feature as a missing requirement.
+
+### 7.4 Why the demo does not use the seeded data
+
+The seed data exists so the database is not empty when someone opens it during the defence, and
+so the filters have something to filter. The Postman run creates its own data instead, because a
+demonstration that mutates or depends on seeded rows breaks the second time you run it. The two
+serve different purposes and neither depends on the other.

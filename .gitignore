@@ -10,3 +10,5 @@ target/
 .project
 
 *.log
+
+node_modules/
