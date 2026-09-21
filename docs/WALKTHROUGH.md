@@ -251,3 +251,149 @@ Spring Boot 4 split auto-configuration out of `spring-boot-autoconfigure` into p
 modules, so a bare `flyway-core` dependency gives you the library but **not** the
 auto-configuration. Fix: depend on `spring-boot-starter-flyway`. Worth remembering, because the
 same trap applies to any Boot-3 tutorial followed while on Boot 4.
+
+---
+
+## Branch 3 — `feat/api-foundation`
+
+Nothing in this branch is a REST endpoint. It is the three things every endpoint needs, built
+once so the three controller branches after it stay short: a uniform error body, a uniform paged
+list body, and the OpenAPI document metadata.
+
+### 3.1 `ApiError` — one error shape for everything
+
+The report requires *"Klaidos grąžinamos vienoda struktūra (ApiError) su prasmingu HTTP kodu."*
+
+```json
+{
+  "timestamp": "2026-09-21T09:15:30.123Z",
+  "status": 422,
+  "error": "Unprocessable Entity",
+  "message": "GRIND tipo uzduotis privalo tureti targetCount",
+  "path": "/api/guilds/2/quests",
+  "details": [ { "field": "title", "message": "must not be blank" } ]
+}
+```
+
+* `details` is **only** present when the error is about specific fields — `jackson.default-property-inclusion: non_null` drops it otherwise, so a 404 body is not padded with `"details": null`.
+* `error` is always the standard HTTP reason phrase, taken from `HttpStatus`, so it can never
+  drift from `status`.
+* `path` comes from the actual request URI, which makes a failing Postman run self-explanatory.
+
+Spring has a built-in RFC 7807 `ProblemDetail`, and in a greenfield project it would be a
+reasonable default. It is **not** used here because the LD0 specification names `ApiError` and
+lists its role explicitly. Following my own written spec beats following a convention the spec
+did not choose.
+
+### 3.2 One handler, no error handling in controllers
+
+`ApiExceptionHandler` is a single `@RestControllerAdvice`. No controller builds an error
+response; controllers only ever return the happy path. That is what makes "uniform structure"
+actually true rather than aspirational.
+
+Three custom exceptions, and the reason each HTTP code was picked:
+
+| Exception | Code | When |
+| --- | --- | --- |
+| `ResourceNotFoundException` | **404** | id does not exist, **or** the parent chain in the URL does not match |
+| `ConflictException` | **409** | request is valid but fights the current state (duplicate guild name) |
+| `BusinessRuleException` | **422** | JSON parsed, types correct, but the *content* breaks a domain rule |
+
+And the framework exceptions that are translated:
+
+| Exception | Code | Why |
+| --- | --- | --- |
+| `MethodArgumentNotValidException` | 400 | `@Valid` failed on the body — the payload does not match the declared schema |
+| `HandlerMethodValidationException`, `ConstraintViolationException` | 400 | same, for query/path parameters |
+| `HttpMessageNotReadableException` | 400 | malformed JSON, unknown enum value, unparseable timestamp |
+| `MethodArgumentTypeMismatchException` | 400 | `/api/guilds/abc` — `abc` is not a `Long` |
+| `NoResourceFoundException` | 404 | a URL the API does not define at all |
+| `HttpRequestMethodNotSupportedException` | 405 | right URL, wrong verb |
+| `DataIntegrityViolationException` | 409 | a database constraint caught what a check missed |
+| `Exception` | 500 | last resort — logged with a stack trace, but the client gets a generic message |
+
+**The 400-vs-422 line, because the lab asks for both.** The rule used consistently across this
+codebase:
+
+> **400** = "I could not understand your request." Broken syntax, wrong type, a field that is
+> missing or violates its own declared constraint (`@NotBlank`, `@Size`, `@Positive`).
+> **422** = "I understood you perfectly, and the answer is no." Everything parsed and every field
+> is individually legal, but the combination breaks a rule of the domain — a `GRIND` quest with
+> no `targetCount`, a log entry dated in the future, approving an entry with negative XP.
+
+Put differently: a 400 can be fixed by looking only at the request; a 422 needs knowledge of the
+business rules. This is the distinction demonstrated during the defence.
+
+The `DataIntegrityViolationException` handler deserves a note: every uniqueness rule is *also*
+checked in the service before insert, which is what produces the nice 409 message. The handler is
+there for the race where two requests pass that check simultaneously and the database unique index
+is what actually stops the second one. Without it, that race returns 500. With it, both callers
+get the same 409.
+
+### 3.3 `PagedResponse` — lists with navigation links
+
+The report requires *"Sąrašai puslapiuojami, filtruojami ir grąžina self/first/prev/next/last
+nuorodas, išsaugančias filtrus."*
+
+```json
+{
+  "content": [ ... ],
+  "page":  { "number": 1, "size": 20, "totalElements": 42, "totalPages": 3 },
+  "links": {
+    "self":  "http://localhost:8080/api/guilds?name=iron&page=1&size=20",
+    "first": "http://localhost:8080/api/guilds?name=iron&page=0&size=20",
+    "prev":  "http://localhost:8080/api/guilds?name=iron&page=0&size=20",
+    "next":  "http://localhost:8080/api/guilds?name=iron&page=2&size=20",
+    "last":  "http://localhost:8080/api/guilds?name=iron&page=2&size=20"
+  }
+}
+```
+
+Two decisions:
+
+1. **Links are built from the current request URI**
+   (`ServletUriComponentsBuilder.fromCurrentRequest()`), then only `page` and `size` are
+   replaced. Every other query parameter — `name`, `stat`, `status`, `sort` — survives untouched.
+   That is precisely the "išsaugančias filtrus" requirement, and it keeps working automatically
+   when a new filter is added later, because the link builder never enumerates the filters.
+2. **`prev` and `next` are `null` when they do not exist**, and are therefore omitted from the
+   JSON. A client can test "is there a next page?" by asking whether the link is there, instead
+   of comparing page numbers. `first`, `self` and `last` are always present — on an empty result
+   all three point at page 0.
+
+`PagedResponse.from(page, mapper)` takes the entity `Page` and a mapping function, so the
+conversion to DTO and the link building happen in one call. Controllers stay one line.
+
+Raw Spring Data `Page` is deliberately **not** returned. Its JSON serialisation is unstable
+across versions (Boot even warns about it), it exposes `pageable`, `sort` and `numberOfElements`
+internals the API never promised, and it carries no links.
+
+### 3.4 Pagination input
+
+Controllers take Spring's `Pageable` argument and the defaults live in configuration:
+
+```yaml
+spring.data.web.pageable:
+  default-page-size: 20
+  max-page-size: 100
+  one-indexed-parameters: false
+```
+
+* `max-page-size: 100` means `?size=100000` silently becomes 100 instead of trying to serialise
+  the whole table. A denial-of-service in one line of YAML.
+* `one-indexed-parameters: false` keeps `page=0` as the first page, matching what the links emit.
+* `sort` support (`?sort=name,asc`) comes free with the resolver.
+
+### 3.5 OpenAPI document metadata
+
+`OpenApiConfig` only sets the document-level `info` and `servers`. Every operation, parameter,
+status code and schema is annotated at the place it is defined, in the following branches — a
+hand-maintained central description would be out of date within a week.
+
+`springdoc-openapi` generates `/v3/api-docs` (JSON) and serves Swagger UI at `/swagger-ui.html`.
+The spec is generated from the code, so it cannot describe an endpoint that does not exist.
+
+### 3.6 The bug this branch hit
+
+`HandlerMethodValidationException.getAllValidationResults()` does not exist in Spring Framework 7
+— it is now `getParameterValidationResults()`. Another Boot 4 / Spring 7 rename to watch for.
