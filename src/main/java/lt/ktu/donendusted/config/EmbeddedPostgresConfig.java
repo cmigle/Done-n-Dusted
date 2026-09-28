@@ -16,6 +16,9 @@ import org.springframework.context.annotation.Profile;
 @Profile("dev")
 public class EmbeddedPostgresConfig {
 
+    // destroyMethod = "close": sustabdzius programa, Spring uzdaro ir PostgreSQL procesa.
+    // Portas fiksuotas (55432), kad demonstracijos metu butu galima prisijungti per DBeaver/psql.
+    // Duomenys laikini - kiekvienas paleidimas pradeda nuo svarios DB, Flyway vel ja uzpildo.
     @Bean(destroyMethod = "close")
     public EmbeddedPostgres embeddedPostgres() throws IOException {
         return EmbeddedPostgres.builder().setPort(55432).start();

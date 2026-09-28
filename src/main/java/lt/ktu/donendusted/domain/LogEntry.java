@@ -26,6 +26,7 @@ public class LogEntry {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    // LAZY: uzduotis is DB kraunama tik tada, kai jos tikrai prireikia (numatytasis @ManyToOne yra EAGER).
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "quest_id", nullable = false)
     private Quest quest;
@@ -37,6 +38,8 @@ public class LogEntry {
     @Column(name = "evidence_url", length = 500)
     private String evidenceUrl;
 
+    // STRING, o ne ORDINAL: DB saugomas "APPROVED", ne skaicius 1. Pakeitus enum tvarka duomenys nesugestu.
+    // Setterio statusui nera - busena keiciama tik per approve/reject/resetToPending.
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 10)
     private LogStatus status = LogStatus.PENDING;

@@ -46,6 +46,8 @@ public class LogEntryService {
 
     @Transactional(readOnly = true)
     public LogEntry get(Long guildId, Long questId, Long logId) {
+        // Tas pats principas kaip QuestService.get(): tikrinama visa grandine vienu SQL (JOIN i quest),
+        // o jei nerasta - lambda issiaiskina, kuris lygis luzo (grupe, uzduotis ar pats irasas).
         return logs.findByIdAndQuestIdAndQuestGuildId(logId, questId, guildId)
                 .orElseThrow(() -> {
                     quests.get(guildId, questId); // jei luzta auksciau, pranesame apie ta lygi
@@ -63,15 +65,21 @@ public class LogEntryService {
         return logs.save(new LogEntry(quest, request.note(), request.evidenceUrl(), request.occurredAt()));
     }
 
+    /**
+     * PUT - pilnas atnaujinimas, todel visi laukai perrasomi is uzklausos.
+     * Busenu perejimai (PENDING/APPROVED/REJECTED) atliekami per LogEntry metodus approve/reject/
+     * resetToPending, o ne per setterius - taip XP niekada negali atsidurti ne APPROVED irase.
+     */
     public LogEntry update(Long guildId, Long questId, Long logId, LogEntryUpdateRequest request) {
         LogEntry entry = get(guildId, questId, logId);
-        Quest quest = quests.get(guildId, questId);
+        Quest quest = quests.get(guildId, questId); // reikia sudetingumo XP apskaiciavimui
         requireNotInFuture(request.occurredAt());
 
         entry.setNote(request.note());
         entry.setEvidenceUrl(request.evidenceUrl());
         entry.setOccurredAt(request.occurredAt());
 
+        // Java 21 "arrow" switch per enum: kompiliatorius nereikalauja break, o kiekviena saka atskira.
         switch (request.status()) {
             case APPROVED -> {
                 // Praleidus xpAwarded, serveris isveda verte is uzduoties sudetingumo.

@@ -24,6 +24,8 @@ import org.springframework.web.servlet.resource.NoResourceFoundException;
 /**
  * Vienas taskas, kuriame kiekviena isimtis paverciama ApiError atsaku.
  * Kontroleriai niekada patys nekonstruoja klaidu atsakymu.
+ * Spring parenka labiausiai tinkanti (siauriausia) handleri, todel Exception.class apacioje
+ * pagauna tik tai, ko neapdorojo kiti - ir klientui neparodo stack trace.
  */
 @RestControllerAdvice
 public class ApiExceptionHandler {

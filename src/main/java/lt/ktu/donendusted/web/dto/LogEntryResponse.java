@@ -23,6 +23,8 @@ public record LogEntryResponse(
         @Schema(description = "Nera, kol irasas neperziuretas") Instant reviewedAt,
         Instant createdAt) {
 
+    // Entity niekada negrazinamas tiesiai - DTO leidzia valdyti, ka mato klientas.
+    // getQuest().getId() veikia ir uz transakcijos ribu: LAZY proxy id zino be papildomos uzklausos.
     public static LogEntryResponse from(LogEntry entry) {
         return new LogEntryResponse(
                 entry.getId(),

@@ -14,6 +14,7 @@ import org.hibernate.annotations.CreationTimestamp;
 @Table(name = "guild")
 public class Guild {
 
+    // IDENTITY: id sugeneruoja pati PostgreSQL (bigserial stulpelis V1__schema.sql).
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -29,7 +30,7 @@ public class Guild {
     private Instant createdAt;
 
     protected Guild() {
-        // JPA
+        // JPA reikalauja tuscio konstruktoriaus; protected - kad kode niekas nesukurtu grupes be vardo
     }
 
     public Guild(String name, String description) {

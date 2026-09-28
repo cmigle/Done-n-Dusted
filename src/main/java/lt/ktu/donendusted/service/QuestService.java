@@ -35,6 +35,8 @@ public class QuestService {
     public Page<Quest> list(Long guildId, Stat stat, QuestType type, Difficulty difficulty,
                             Boolean active, Pageable pageable) {
         guilds.get(guildId); // neegzistuojanti grupe -> 404, o ne tuscias sarasas
+        // Kiekvienas nepaduotas filtras (null) tiesiog nepridedamas, o visi likusieji sujungiami AND.
+        // Taip vienas metodas aptarnauja bet kokia filtru kombinacija be atskiru uzklausu kiekvienai.
         Specification<Quest> spec = (root, query, cb) -> {
             List<Predicate> predicates = new ArrayList<>();
             predicates.add(cb.equal(root.get("guild").get("id"), guildId));
@@ -57,6 +59,9 @@ public class QuestService {
 
     @Transactional(readOnly = true)
     public Quest get(Long guildId, Long questId) {
+        // Ieskome pagal abu id, todel /guilds/1/quests/5 grazins 404, jei quest 5 yra kitoje grupeje.
+        // Jei nerado - lambda dar patikrina grupe: kai nera pacios grupes, guilds.get() ismes
+        // "Guild X nerasta", ir klientas suzinos tikslesne priezasti nei "Quest nerasta".
         return quests.findByIdAndGuildId(questId, guildId)
                 .orElseThrow(() -> {
                     guilds.get(guildId); // jei nera ir grupes, pranesame apie ja
@@ -77,6 +82,8 @@ public class QuestService {
     public Quest update(Long guildId, Long questId, QuestRequest request) {
         Quest quest = get(guildId, questId);
         validate(request);
+        // "IdNot" - pavadinimas gali sutapti su pacia atnaujinama uzduotimi, bet ne su kita.
+        // Keiciant difficulty jau patvirtintu irasu XP nesikeicia - jis uzsaldytas LogEntry.
         if (quests.existsByGuildIdAndTitleIgnoreCaseAndIdNot(guildId, request.title(), questId)) {
             throw new ConflictException("Grupeje jau yra uzduotis pavadinimu '" + request.title() + "'");
         }

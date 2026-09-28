@@ -29,6 +29,11 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
+/**
+ * Kontroleris tik priima HTTP uzklausa ir grazina atsakyma - jokios logikos cia nera.
+ * Taisykles yra servise, o klaidos virsta ApiError per ApiExceptionHandler.
+ * produces = JSON: jei klientas prasys Accept: application/xml, gaus 406.
+ */
 @RestController
 @RequestMapping(path = "/api/guilds", produces = MediaType.APPLICATION_JSON_VALUE)
 @Tag(name = "Guilds", description = "Grupes - virsutinis hierarchijos lygis")
@@ -72,8 +77,12 @@ public class GuildController {
             @ApiResponse(responseCode = "409", description = "Toks pavadinimas jau uzimtas",
                     content = @Content(schema = @Schema(implementation = ApiError.class)))
     })
+    // consumes = JSON: kitoks Content-Type -> 415. @Valid paleidzia DTO anotacijas (@NotBlank ir pan.),
+    // nepraejus - MethodArgumentNotValidException -> 400 su lauku sarasu.
     public ResponseEntity<GuildResponse> create(@Valid @RequestBody GuildRequest request) {
         Guild created = guilds.create(request);
+        // REST: 201 Created + Location antraste su naujo resurso adresu, pvz. /api/guilds/4.
+        // fromCurrentRequest() paima dabartini URL (host, port, kelia), prie jo pridedamas id.
         URI location = ServletUriComponentsBuilder.fromCurrentRequest()
                 .path("/{guildId}")
                 .buildAndExpand(created.getId())

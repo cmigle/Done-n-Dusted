@@ -12,6 +12,11 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
+/**
+ * @Transactional ant klases: kiekvienas viesas metodas vyksta vienoje transakcijoje.
+ * Jei metodo viduje ismetama RuntimeException (pvz. ConflictException), viskas atsaukiama.
+ * Skaitymo metodai pazymeti readOnly = true - Hibernate tada netikrina objektu pakeitimu.
+ */
 @Service
 @Transactional
 public class GuildService {
@@ -24,6 +29,8 @@ public class GuildService {
 
     @Transactional(readOnly = true)
     public Page<Guild> list(String nameFilter, Pageable pageable) {
+        // Specification - dinamine WHERE salyga. Jei filtras nepaduotas, cb.conjunction()
+        // yra tiesiog "true", t.y. grazinamos visos grupes. LIKE su lower() - paieska be raidziu dydzio.
         Specification<Guild> spec = (root, query, cb) -> StringUtils.hasText(nameFilter)
                 ? cb.like(cb.lower(root.get("name")), "%" + nameFilter.toLowerCase() + "%")
                 : cb.conjunction();
@@ -47,6 +54,8 @@ public class GuildService {
         if (guilds.existsByNameIgnoreCaseAndIdNot(request.name(), id)) {
             throw new ConflictException("Grupe pavadinimu '" + request.name() + "' jau egzistuoja");
         }
+        // save() kviesti nereikia: guild yra "managed" objektas (gautas toje pacioje transakcijoje),
+        // todel Hibernate pats pastebi pakeitimus (dirty checking) ir transakcijos pabaigoje daro UPDATE.
         guild.setName(request.name());
         guild.setDescription(request.description());
         return guild;
