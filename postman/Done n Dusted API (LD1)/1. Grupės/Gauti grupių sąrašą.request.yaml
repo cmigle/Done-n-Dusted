@@ -1,0 +1,38 @@
+$kind: http-request
+url: "{{baseUrl}}/guilds?name=Postman&page=0&size=2"
+method: GET
+queryParams:
+  name: Postman
+  page: "0"
+  size: "2"
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test('200 OK', () => pm.response.to.have.status(200));
+      const body = pm.response.json();
+      pm.test('Yra content ir page informacija', () => {
+        pm.expect(body.content).to.be.an('array');
+        pm.expect(body.page.number).to.eql(0);
+        pm.expect(body.page.size).to.eql(2);
+        pm.expect(body.page.totalElements).to.be.at.least(2);
+      });
+      pm.test('Nuorodos self/first/last pateiktos', () => {
+        pm.expect(body.links.self).to.be.a('string');
+        pm.expect(body.links.first).to.be.a('string');
+        pm.expect(body.links.last).to.be.a('string');
+      });
+      pm.test('Nuorodose islaikomas filtras', () => {
+        pm.expect(body.links.self).to.include('name=Postman');
+      });
+    language: text/javascript
+order: 3000
+description: |-
+  Grąžina puslapiuotą grupių sąrašą.
+
+  * `name` filtruoja pagal pavadinimą.
+  * `page`, `size` ir `sort` (pvz. `sort=name,asc`) valdo puslapiavimą. Didžiausias `size` yra 100.
+
+  Atsakyme yra `content`, `page` ir `links`. Nuorodose `self`, `first` ir `last` išlieka visi filtrai. `prev` ir `next` pateikiami tik tada, kai toks puslapis yra.
+
+  README lentelės metodas **#1**.
+examples: './.resources/Gauti grupių sąrašą.resources/examples'

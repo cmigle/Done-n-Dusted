@@ -1,0 +1,32 @@
+$kind: http-request
+url: "{{baseUrl}}/guilds/{{guildA}}/quests"
+method: POST
+headers:
+  Content-Type: application/json
+body:
+  type: text
+  content: |-
+    {
+      "title": "Run 10 kilometers",
+      "description": "Postman demonstracijai sukurta uzduotis",
+      "stat": "CON",
+      "type": "MILESTONE",
+      "difficulty": "HARD"
+    }
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test('201 Created', () => pm.response.to.have.status(201));
+      const body = pm.response.json();
+      pm.test('Serveris pats isvede XP is sudetingumo (HARD = 10 * 5)', () => pm.expect(body.xpPerCompletion).to.eql(50));
+      pm.test('Tevine grupe teisinga', () => pm.expect(body.guildId).to.eql(Number(pm.collectionVariables.get('guildA'))));
+      pm.collectionVariables.set('questId', body.id);
+    language: text/javascript
+order: 1000
+description: |-
+  Sukuria `MILESTONE` tipo `HARD` sudėtingumo užduotį A grupėje ir išsaugo jos ID kintamajame `questId`.
+
+  `xpPerCompletion` apskaičiuoja serveris: 10 × 5 (`HARD`) = **50**.
+
+  README lentelės metodas **#8**.
+examples: './.resources/Sukurti užduotį.resources/examples'

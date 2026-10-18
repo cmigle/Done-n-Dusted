@@ -1,0 +1,27 @@
+$kind: http-example
+name: "200 OK"
+request:
+  url: "{{baseUrl}}/guilds/{{guildA}}/quests/{{questId}}"
+  method: GET
+response:
+  statusCode: 200
+  statusText: "OK"
+  headers:
+    - key: Content-Type
+      value: "application/json"
+  body:
+    type: json
+    content: |-
+      {
+        "id": 10,
+        "guildId": 4,
+        "title": "Run 10 kilometers",
+        "description": "Postman demonstracijai sukurta uzduotis",
+        "stat": "CON",
+        "type": "MILESTONE",
+        "difficulty": "HARD",
+        "active": true,
+        "xpPerCompletion": 50,
+        "createdAt": "2026-10-18T17:36:44.337402Z"
+      }
+order: 1000

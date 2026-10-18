@@ -1,0 +1,36 @@
+$kind: http-request
+url: "{{baseUrl}}/guilds/{{guildA}}/quests/{{questId}}/logs/{{logId}}"
+method: PUT
+headers:
+  Content-Type: application/json
+body:
+  type: text
+  content: |-
+    {
+      "note": "Nubegau 10 km per 52 minutes",
+      "evidenceUrl": "https://example.org/evidence/run.png",
+      "occurredAt": "{{occurredAt}}",
+      "status": "APPROVED",
+      "inspirationAwarded": 1,
+      "reviewerNote": "Uzskaitau, nuotrauka aiski"
+    }
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test('200 OK', () => pm.response.to.have.status(200));
+      const body = pm.response.json();
+      pm.test('XP paimtas is uzduoties sudetingumo, nors klientas jo nepadave', () => {
+        pm.expect(body.status).to.eql('APPROVED');
+        pm.expect(body.xpAwarded).to.eql(80);
+        pm.expect(body.inspirationAwarded).to.eql(1);
+        pm.expect(body.reviewedAt).to.be.a('string');
+      });
+    language: text/javascript
+order: 5000
+description: |-
+  Dungeon Master patvirtina įrašą: `status = APPROVED`, `inspirationAwarded = 1`.
+
+  `xpAwarded` nesiunčiamas, todėl serveris jį paima iš užduoties sudėtingumo (`LEGENDARY` = **80**). Užpildomas `reviewedAt`.
+
+  README lentelės metodas **#14**.
+examples: './.resources/Patvirtinti įrašą.resources/examples'

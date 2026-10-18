@@ -1,0 +1,23 @@
+$kind: http-request
+url: "{{baseUrl}}/guilds/{{guildA}}/quests/{{questId}}/logs?status=PENDING"
+method: GET
+queryParams:
+  status: PENDING
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test('200 OK', () => pm.response.to.have.status(200));
+      const body = pm.response.json();
+      pm.test('Rastas vienas PENDING irasas', () => {
+        pm.expect(body.page.totalElements).to.eql(1);
+        pm.expect(body.content[0].status).to.eql('PENDING');
+      });
+    language: text/javascript
+order: 3000
+description: |-
+  Grąžina puslapiuotą užduoties įrašų sąrašą.
+
+  Filtras `status` gali būti `PENDING`, `APPROVED` arba `REJECTED`. Čia ieškoma įrašų, kurie dar laukia peržiūros.
+
+  README lentelės metodas **#11**.
+examples: './.resources/Gauti laukiančius įrašus.resources/examples'

@@ -1,0 +1,42 @@
+$kind: http-example
+name: "200 OK"
+request:
+  url: "{{baseUrl}}/guilds?name=Postman&page=0&size=2"
+  method: GET
+response:
+  statusCode: 200
+  statusText: "OK"
+  headers:
+    - key: Content-Type
+      value: "application/json"
+  body:
+    type: json
+    content: |-
+      {
+        "content": [
+          {
+            "id": 4,
+            "name": "Postman Guild 1792345003168",
+            "description": "Postman demonstracijai sukurta grupe",
+            "createdAt": "2026-10-18T17:36:43.635648Z"
+          },
+          {
+            "id": 5,
+            "name": "Postman Guild 1792345003168 (B)",
+            "description": "Naudojama tik neteisingos grandines testui",
+            "createdAt": "2026-10-18T17:36:43.824545Z"
+          }
+        ],
+        "page": {
+          "number": 0,
+          "size": 2,
+          "totalElements": 2,
+          "totalPages": 1
+        },
+        "links": {
+          "self": "http://localhost:8080/api/guilds?name=Postman&page=0&size=2",
+          "first": "http://localhost:8080/api/guilds?name=Postman&page=0&size=2",
+          "last": "http://localhost:8080/api/guilds?name=Postman&page=0&size=2"
+        }
+      }
+order: 1000

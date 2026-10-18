@@ -1,0 +1,22 @@
+$kind: http-example
+name: "404 Not Found"
+request:
+  url: "{{baseUrl}}/guilds/{{guildA}}"
+  method: GET
+response:
+  statusCode: 404
+  statusText: "Not Found"
+  headers:
+    - key: Content-Type
+      value: "application/json"
+  body:
+    type: json
+    content: |-
+      {
+        "timestamp": "2026-10-18T17:36:45.431763Z",
+        "status": 404,
+        "error": "Not Found",
+        "message": "Guild 4 nerasta",
+        "path": "/api/guilds/4"
+      }
+order: 1000

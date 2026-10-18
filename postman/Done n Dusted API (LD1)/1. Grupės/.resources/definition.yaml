@@ -1,0 +1,6 @@
+$kind: collection
+description: |-
+  Grupių (Guild) valdymas: sukūrimas, sąrašas, gavimas, atnaujinimas ir validacijos klaidos.
+
+  Čia sukuriamos dvi grupės. `guildA` naudojama visoje kolekcijoje, o `guildB` reikalinga tik tėvinės grandinės testui.
+order: 1000

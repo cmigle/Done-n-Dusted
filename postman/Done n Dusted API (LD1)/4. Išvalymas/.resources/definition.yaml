@@ -1,0 +1,6 @@
+$kind: collection
+description: |-
+  Ištrina viską, ką sukūrė kolekcija, kad ją būtų galima leisti pakartotinai. Grupės trynimas pašalina ir visas jos užduotis bei įrašus.
+
+  Paskutinė užklausa patikrina, kad ištrinta grupė nebepasiekiama (`404`).
+order: 4000

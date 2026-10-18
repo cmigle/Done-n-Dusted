@@ -1,0 +1,62 @@
+$kind: collection
+description: |-
+  # Done n Dusted API (LD1)
+
+  DnD principu veikianti produktyvumo sistema: žaidėjas registruoja realaus gyvenimo progresą, grupės Dungeon Master jį patvirtina, ir tik patvirtinti įrašai suteikia XP.
+
+  Resursų hierarchija: **Guild (1:N) → Quest (1:N) → LogEntry**. Vaikinis objektas pasiekiamas tik per tėvinį, todėl neteisinga grandinė grąžina `404`.
+
+  ## Kaip paleisti
+
+  1. Paleiskite API (`./mvnw spring-boot:run`). Ji veikia adresu `http://localhost:8080/api`.
+  2. Postman programoje paleiskite visą kolekciją su **Run collection**. Aplankus ir užklausas leiskite iš eilės, nes vėlesnės užklausos naudoja ankstesnių sukurtus ID.
+
+  Kolekcija pati susikuria duomenis ir po savęs išsivalo, todėl ją galima leisti kiek norima kartų.
+
+  ## Aplankai
+
+  | Aplankas | Kas tikrinama |
+  | --- | --- |
+  | 1. Grupės | Grupių CRUD, puslapiavimas, `400`, `404`, `409`, `415` klaidos |
+  | 2. Užduotys | Užduočių kūrimas, filtrai, XP skaičiavimas, `422` ir tėvinės grandinės `404` |
+  | 3. Progreso įrašai | Įrašų registravimas, DM patvirtinimas, XP taisyklės |
+  | 4. Išvalymas | Sukurtų duomenų ištrynimas (`204`) ir patikra, kad jų nebėra |
+
+  ## Kolekcijos kintamieji
+
+  | Kintamasis | Reikšmė |
+  | --- | --- |
+  | `baseUrl` | API adresas, numatytai `http://localhost:8080/api` |
+  | `guildName` | Unikalus grupės pavadinimas, generuojamas pirmoje užklausoje |
+  | `guildA`, `guildB` | Sukurtų grupių ID |
+  | `questId`, `logId` | Sukurtos užduoties ir įrašo ID |
+  | `occurredAt` | Įvykio laikas (prieš valandą), naudojamas įrašams |
+
+  ## Klaidų formatas
+
+  Kiekviena klaida grąžinama vienoda `ApiError` struktūra:
+
+  ```json
+  {
+    "timestamp": "2026-09-21T09:15:30.123Z",
+    "status": 422,
+    "error": "Unprocessable Entity",
+    "message": "GRIND tipo uzduotis privalo tureti targetCount",
+    "path": "/api/guilds/2/quests",
+    "details": [ { "field": "title", "message": "must not be blank" } ]
+  }
+  ```
+
+  `details` pateikiamas tik tada, kai klaida susijusi su konkrečiais laukais.
+
+  **400 ar 422?** `400` reiškia, kad klaidą matyti vien iš užklausos (blogas JSON, tipas, lauko apribojimas, nežinomas laukas). `422` reiškia, kad užklausa teisinga, bet pažeidžia dalykinės srities taisyklę.
+
+  Kiekviena užklausa turi išsaugotą pavyzdinį atsakymą (*Examples*), įrašytą iš tikro API paleidimo.
+variables:
+  baseUrl: http://localhost:8080/api
+  guildName: ""
+  guildA: ""
+  guildB: ""
+  questId: ""
+  logId: ""
+  occurredAt: ""

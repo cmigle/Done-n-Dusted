@@ -1,0 +1,22 @@
+$kind: http-example
+name: "400 Bad Request"
+request:
+  url: "{{baseUrl}}/guilds"
+  method: POST
+response:
+  statusCode: 400
+  statusText: "Bad Request"
+  headers:
+    - key: Content-Type
+      value: "application/json"
+  body:
+    type: json
+    content: |-
+      {
+        "timestamp": "2026-10-18T17:36:44.200697600Z",
+        "status": 400,
+        "error": "Bad Request",
+        "message": "Uzklausos turinio nepavyko perskaityti: Unrecognized property \"xpAwarded\" (class lt.ktu.donendusted.web.dto.GuildRequest), not marked as ignorable (2 known properties: \"name\", \"description\")",
+        "path": "/api/guilds"
+      }
+order: 1000

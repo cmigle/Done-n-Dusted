@@ -1,0 +1,28 @@
+$kind: http-example
+name: "201 Created"
+request:
+  url: "{{baseUrl}}/guilds/{{guildA}}/quests/{{questId}}/logs"
+  method: POST
+response:
+  statusCode: 201
+  statusText: "Created"
+  headers:
+    - key: Content-Type
+      value: "application/json"
+    - key: Location
+      value: "http://localhost:8080/api/guilds/4/quests/10/logs/13"
+  body:
+    type: json
+    content: |-
+      {
+        "id": 13,
+        "questId": 10,
+        "note": "Nubegau 10 km per 52 minutes",
+        "evidenceUrl": "https://example.org/evidence/run.png",
+        "status": "PENDING",
+        "xpAwarded": 0,
+        "inspirationAwarded": 0,
+        "occurredAt": "2026-10-18T16:36:43.168Z",
+        "createdAt": "2026-10-18T17:36:44.756125Z"
+      }
+order: 1000

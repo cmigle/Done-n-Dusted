@@ -1,0 +1,32 @@
+$kind: http-request
+url: "{{baseUrl}}/guilds/{{guildA}}/quests/{{questId}}"
+method: PUT
+headers:
+  Content-Type: application/json
+body:
+  type: text
+  content: |-
+    {
+      "title": "Run 10 kilometers",
+      "description": "Sudetingumas pakeltas",
+      "stat": "CON",
+      "type": "MILESTONE",
+      "difficulty": "LEGENDARY"
+    }
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test('200 OK', () => pm.response.to.have.status(200));
+      pm.test('Sudetingumas pakeistas, XP perskaiciuotas (LEGENDARY = 10 * 8)', () => {
+        pm.expect(pm.response.json().difficulty).to.eql('LEGENDARY');
+        pm.expect(pm.response.json().xpPerCompletion).to.eql(80);
+      });
+    language: text/javascript
+order: 6000
+description: |-
+  Atnaujina užduotį ir pakelia sudėtingumą iki `LEGENDARY`.
+
+  Serveris perskaičiuoja `xpPerCompletion`: 10 × 8 = **80**. Jau patvirtintų įrašų XP nesikeičia.
+
+  README lentelės metodas **#9**.
+examples: './.resources/Atnaujinti užduotį.resources/examples'

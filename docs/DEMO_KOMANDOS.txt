@@ -9,43 +9,29 @@ Seed duomenys, kuriuos naudoju:
      Quest 7 = Winter swim challenge (NEAKTYVI)
   Guild 3 = The Quiet Library
 
-
 -----------------------------------------------------------------
 0. PALEIDIMAS
 -----------------------------------------------------------------
 
-Terminale projekto aplanke:
-
 ./mvnw spring-boot:run
 
-Laukiu eilutes "Started DoneNDustedApplication". Pirma karta ilgiau, nes siuncia PostgreSQL.
-Sustabdau su Ctrl+C tame paciame terminale (ne uzdarant langa!), kitaip postgres.exe
-lieka veikti ir kitas paleidimas nepavyks, nes 55432 portas uzimtas.
-Jei taip nutiko: PowerShell'yje  Get-Process postgres | Stop-Process -Force
+if occupied Get-Process postgres | Stop-Process -Force
 
-Narsykleje atsidarau:
   http://localhost:8080/swagger-ui.html     <- Swagger UI, visi 15 metodu su aprasymais
   http://localhost:8080/v3/api-docs         <- OpenAPI JSON (tas pats kas docs/openapi.json)
   http://localhost:8080/api/guilds          <- tiesiog API
 
-Duomenu baze (jei paklaus ar tikrai PostgreSQL) - DBeaver:
+PostgreSQL
   host localhost, port 55432, db postgres, user postgres, slaptazodzio nera
-  Ten matosi lenteles guild, quest, log_entry ir flyway_schema_history.
 
-Antrame terminale (Git Bash) paleidziu visa Postman kolekcija - 28 uzklausos, 57 patikros, ~5 s:
+visa Postman kolekcija - 28 uzklausos, 57 patikros, ~5 s:
+  npx newman run postman/DoneNDusted.postman_collection.json
 
-npx newman run postman/DoneNDusted.postman_collection.json
-
-Jei leidziu per PowerShell ir meta "running scripts is disabled on this system" - tai
-Windows neleidzia paleisti npx.ps1 skripto. Tada naudoju .cmd versija:
-
-npx.cmd newman run postman/DoneNDusted.postman_collection.json
-
-(arba Postman programoje: Import -> kolekcija -> Run)
-
+.cmd versija Postman 
+  npx.cmd newman run postman/DoneNDusted.postman_collection.json
 
 -----------------------------------------------------------------
-1. GUILD - 5 metodai
+1. GUILD
 -----------------------------------------------------------------
 
 # 1.1 Sarasas (200). Atsakyme content + page + links (self/first/next/last)
@@ -75,7 +61,7 @@ curl -s http://localhost:8080/api/guilds/$GID
 
 
 -----------------------------------------------------------------
-2. QUEST - 5 metodai (visada per grupe!)
+2. QUEST
 -----------------------------------------------------------------
 
 # 2.1 Grupes 2 uzduotys (200)
@@ -101,7 +87,7 @@ curl -i -X DELETE http://localhost:8080/api/guilds/2/quests/$QID
 
 
 -----------------------------------------------------------------
-3. LOG ENTRY - 5 metodai (per grupe ir uzduoti)
+3. LOG ENTRY
 -----------------------------------------------------------------
 
 # 3.1 Uzduoties 4 irasai (200), naujausi pirmi
@@ -126,7 +112,7 @@ curl -i -X DELETE http://localhost:8080/api/guilds/2/quests/6/logs/$LID
 
 
 -----------------------------------------------------------------
-4. KLAIDOS - visos grizta vienodu ApiError formatu
+4. KLAIDOS
 -----------------------------------------------------------------
 
 # 404 - neegzistuojantis resursas
@@ -185,13 +171,25 @@ curl -s -X PUT http://localhost:8080/api/guilds/2/quests/4/logs/7 -H "Content-Ty
 
 
 -----------------------------------------------------------------
-5. KASKADINIS TRYNIMAS (jei paklaus kas nutinka vaikams)
+5. DUOMENU BAZE
 -----------------------------------------------------------------
 
-# Sukuriu grupe -> uzduoti -> irasa, istrinu grupe, ir uzduotis dingsta kartu (ON DELETE CASCADE)
-R=$(curl -si -X POST http://localhost:8080/api/guilds -H "Content-Type: application/json" -d '{"name":"Kaskados grupe"}'); echo "$R"
-CG=$(echo "$R" | tr -d '\r' | grep -i '^location' | grep -o '[0-9]*$')
-curl -s -X POST http://localhost:8080/api/guilds/$CG/quests -H "Content-Type: application/json" -d '{"title":"Laikina","stat":"WIS","type":"HABIT","difficulty":"EASY"}'
-curl -i -X DELETE http://localhost:8080/api/guilds/$CG
-curl -s http://localhost:8080/api/guilds/$CG/quests
+DBeaver: New Connection -> PostgreSQL
+  host localhost, port 55432, db postgres, user postgres, slaptazodzio nera
+  (prod/Docker: port 5432, db/user/slaptazodis donendusted)
 
+psql (jei idiegtas):
+  psql -h localhost -p 55432 -U postgres postgres
+  docker exec -it donendusted-db psql -U donendusted donendusted    <- prod
+
+\dt
+SELECT * FROM guild;
+SELECT * FROM quest;
+SELECT * FROM log_entry;
+
+-- grupe -> uzduociu ir irasu skaicius
+SELECT g.id, g.name, COUNT(DISTINCT q.id) AS quests, COUNT(l.id) AS logs
+FROM guild g LEFT JOIN quest q ON q.guild_id = g.id LEFT JOIN log_entry l ON l.quest_id = q.id
+GROUP BY g.id, g.name ORDER BY g.id;
+
+Duomenys laikini - kiekvienas paleidimas pradeda nuo svarios DB su seed duomenimis.

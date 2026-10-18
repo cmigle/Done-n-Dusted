@@ -1,0 +1,25 @@
+$kind: http-request
+url: "{{baseUrl}}/guilds"
+method: POST
+headers:
+  Content-Type: application/json
+body:
+  type: text
+  content: |-
+    {
+      "name": "ab"
+    }
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test('400 Bad Request', () => pm.response.to.have.status(400));
+      const e = pm.response.json();
+      pm.test('Nurodomas konkretus laukas', () => {
+        pm.expect(e.details).to.be.an('array').that.is.not.empty;
+        pm.expect(e.details[0].field).to.eql('name');
+      });
+    language: text/javascript
+order: 7000
+description: |-
+  Pavadinimas `ab` pažeidžia lauko apribojimą, todėl grąžinamas `400 Bad Request`. Masyve `details` nurodomas konkretus laukas (`name`).
+examples: './.resources/Klaida 400 – per trumpas pavadinimas.resources/examples'

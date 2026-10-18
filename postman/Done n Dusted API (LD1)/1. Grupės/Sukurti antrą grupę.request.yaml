@@ -1,0 +1,24 @@
+$kind: http-request
+url: "{{baseUrl}}/guilds"
+method: POST
+headers:
+  Content-Type: application/json
+body:
+  type: text
+  content: |-
+    {
+      "name": "{{guildName}} (B)",
+      "description": "Naudojama tik neteisingos grandines testui"
+    }
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test('201 Created', () => pm.response.to.have.status(201));
+      pm.collectionVariables.set('guildB', pm.response.json().id);
+    language: text/javascript
+order: 2000
+description: |-
+  Sukuria antrą grupę ir išsaugo jos ID kintamajame `guildB`.
+
+  Ji reikalinga tik tėvinės grandinės testui: vėliau bandoma pasiekti A grupės užduotį per B grupę.
+examples: './.resources/Sukurti antrą grupę.resources/examples'

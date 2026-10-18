@@ -1,0 +1,29 @@
+$kind: http-example
+name: "201 Created"
+request:
+  url: "{{baseUrl}}/guilds/{{guildA}}/quests"
+  method: POST
+response:
+  statusCode: 201
+  statusText: "Created"
+  headers:
+    - key: Content-Type
+      value: "application/json"
+    - key: Location
+      value: "http://localhost:8080/api/guilds/4/quests/10"
+  body:
+    type: json
+    content: |-
+      {
+        "id": 10,
+        "guildId": 4,
+        "title": "Run 10 kilometers",
+        "description": "Postman demonstracijai sukurta uzduotis",
+        "stat": "CON",
+        "type": "MILESTONE",
+        "difficulty": "HARD",
+        "active": true,
+        "xpPerCompletion": 50,
+        "createdAt": "2026-10-18T17:36:44.337402Z"
+      }
+order: 1000

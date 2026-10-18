@@ -1,0 +1,22 @@
+$kind: http-example
+name: "422 Unprocessable Entity"
+request:
+  url: "{{baseUrl}}/guilds/{{guildA}}/quests/{{questId}}/logs/{{logId}}"
+  method: PUT
+response:
+  statusCode: 422
+  statusText: "Unprocessable Entity"
+  headers:
+    - key: Content-Type
+      value: "application/json"
+  body:
+    type: json
+    content: |-
+      {
+        "timestamp": "2026-10-18T17:36:45.089057200Z",
+        "status": 422,
+        "error": "Unprocessable Entity",
+        "message": "PENDING busenos irasas negali tureti XP ar inspiration",
+        "path": "/api/guilds/4/quests/10/logs/13"
+      }
+order: 1000
