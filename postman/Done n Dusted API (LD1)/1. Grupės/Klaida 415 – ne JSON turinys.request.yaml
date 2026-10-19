@@ -14,5 +14,5 @@ scripts:
     language: text/javascript
 order: 8000
 description: |-
-  Kūnas siunčiamas `text/plain` tipu. API priima tik `application/json`, todėl grąžinamas `415 Unsupported Media Type`.
+  Užklausos turinys siunčiamas `text/plain` tipu. API priima tik `application/json`, todėl grąžinamas `415 Unsupported Media Type`.
 examples: './.resources/Klaida 415 – ne JSON turinys.resources/examples'

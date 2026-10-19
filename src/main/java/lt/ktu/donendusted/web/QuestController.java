@@ -120,7 +120,7 @@ public class QuestController {
     @DeleteMapping("/{questId}")
     @Operation(summary = "Istrinti uzduoti", description = "Kartu istrinami visi jos progreso irasai.")
     @ApiResponses({
-            @ApiResponse(responseCode = "204", description = "Istrinta; atsakymo kuno nera"),
+            @ApiResponse(responseCode = "204", description = "Istrinta; atsakymas be turinio"),
             @ApiResponse(responseCode = "404", description = "Neteisinga grandine arba uzduoties nera",
                     content = @Content(schema = @Schema(implementation = ApiError.class)))
     })

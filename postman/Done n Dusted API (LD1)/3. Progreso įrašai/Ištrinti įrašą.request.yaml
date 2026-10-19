@@ -5,11 +5,11 @@ scripts:
   - type: afterResponse
     code: |-
       pm.test('204 No Content', () => pm.response.to.have.status(204));
-      pm.test('Atsakymo kuno nera', () => pm.expect(pm.response.text()).to.be.empty);
+      pm.test('Atsakymas be turinio', () => pm.expect(pm.response.text()).to.be.empty);
     language: text/javascript
 order: 7000
 description: |-
-  Ištrina progreso įrašą. Atsakymas yra `204 No Content` be kūno.
+  Ištrina progreso įrašą. Atsakymas yra `204 No Content` — atsakymas be turinio.
 
   README lentelės metodas **#15**.
 examples: './.resources/Ištrinti įrašą.resources/examples'

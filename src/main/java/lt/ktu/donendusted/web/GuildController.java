@@ -109,7 +109,7 @@ public class GuildController {
     @Operation(summary = "Istrinti grupe",
             description = "Kartu istrinamos visos grupes uzduotys ir ju progreso irasai.")
     @ApiResponses({
-            @ApiResponse(responseCode = "204", description = "Istrinta; atsakymo kuno nera"),
+            @ApiResponse(responseCode = "204", description = "Istrinta; atsakymas be turinio"),
             @ApiResponse(responseCode = "404", description = "Grupe neegzistuoja",
                     content = @Content(schema = @Schema(implementation = ApiError.class)))
     })

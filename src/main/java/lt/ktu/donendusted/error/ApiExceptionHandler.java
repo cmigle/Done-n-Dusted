@@ -59,7 +59,7 @@ public class ApiExceptionHandler {
         return build(HttpStatus.UNPROCESSABLE_ENTITY, ex.getMessage(), request);
     }
 
-    /** @Valid nepraejo kuno laukams - 400, nes payload neatitinka deklaruotos schemos. */
+    /** @Valid nepraejo uzklausos turinio (body) laukams - 400, nes payload neatitinka deklaruotos schemos. */
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<ApiError> handleBodyValidation(MethodArgumentNotValidException ex,
                                                          HttpServletRequest request) {
@@ -90,7 +90,7 @@ public class ApiExceptionHandler {
         return build(HttpStatus.BAD_REQUEST, "Neteisingi uzklausos parametrai", request, details);
     }
 
-    /** Netinkamas JSON, nezinoma enum reiksme kune, blogas datos formatas. */
+    /** Netinkamas JSON, nezinoma enum reiksme uzklausos turinyje, blogas datos formatas. */
     @ExceptionHandler(HttpMessageNotReadableException.class)
     public ResponseEntity<ApiError> handleUnreadableBody(HttpMessageNotReadableException ex,
                                                          HttpServletRequest request) {
@@ -115,7 +115,7 @@ public class ApiExceptionHandler {
         return build(HttpStatus.METHOD_NOT_ALLOWED, ex.getMessage(), request);
     }
 
-    /** Kunas atsiustas ne kaip JSON. */
+    /** Uzklausos turinys (body) atsiustas ne kaip JSON - netinkama Content-Type antraste. */
     @ExceptionHandler(HttpMediaTypeNotSupportedException.class)
     public ResponseEntity<ApiError> handleUnsupportedMediaType(HttpMediaTypeNotSupportedException ex,
                                                                HttpServletRequest request) {

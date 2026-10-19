@@ -925,7 +925,7 @@
             "type": "text/javascript",
             "exec": [
               "pm.test('204 No Content', () => pm.response.to.have.status(204));",
-              "pm.test('Atsakymo kuno nera', () => pm.expect(pm.response.text()).to.be.empty);"
+              "pm.test('Atsakymas be turinio', () => pm.expect(pm.response.text()).to.be.empty);"
             ]
           }
         }

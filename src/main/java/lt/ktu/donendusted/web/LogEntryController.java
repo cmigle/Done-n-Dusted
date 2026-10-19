@@ -118,7 +118,7 @@ public class LogEntryController {
     @DeleteMapping("/{logId}")
     @Operation(summary = "Istrinti irasa")
     @ApiResponses({
-            @ApiResponse(responseCode = "204", description = "Istrinta; atsakymo kuno nera"),
+            @ApiResponse(responseCode = "204", description = "Istrinta; atsakymas be turinio"),
             @ApiResponse(responseCode = "404", description = "Neteisinga grandine arba iraso nera",
                     content = @Content(schema = @Schema(implementation = ApiError.class)))
     })

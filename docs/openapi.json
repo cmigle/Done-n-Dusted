@@ -163,7 +163,7 @@
         ],
         "responses": {
           "204": {
-            "description": "Istrinta; atsakymo kuno nera"
+            "description": "Istrinta; atsakymas be turinio"
           },
           "404": {
             "description": "Grupe neegzistuoja",
@@ -348,7 +348,7 @@
         ],
         "responses": {
           "204": {
-            "description": "Istrinta; atsakymo kuno nera"
+            "description": "Istrinta; atsakymas be turinio"
           },
           "404": {
             "description": "Neteisinga grandine arba uzduoties nera",
@@ -548,7 +548,7 @@
         ],
         "responses": {
           "204": {
-            "description": "Istrinta; atsakymo kuno nera"
+            "description": "Istrinta; atsakymas be turinio"
           },
           "404": {
             "description": "Neteisinga grandine arba iraso nera",

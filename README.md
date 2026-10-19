@@ -130,7 +130,7 @@ Kiekviena klaida — vienoda `ApiError` struktūra:
 | `405` | Teisingas kelias, netinkamas HTTP metodas |
 | `406` | Klientas `Accept` antraštėje paprašė formato, kurio API neturi |
 | `409` | Užklausa teisinga, bet prieštarauja esamai būsenai (pvz., užimtas pavadinimas) |
-| `415` | Kūnas atsiųstas ne `application/json` tipu |
+| `415` | Užklausos turinys (body) atsiųstas ne `application/json` tipu |
 | `422` | JSON suprastas, laukai teisingi, bet pažeista dalykinės srities taisyklė |
 | `500` | Netikėta serverio klaida |
 
@@ -155,7 +155,7 @@ Arba Postman programoje: *Import* → *Runner* → *Run*. Trukmė — apie **5 s
 Kolekcija paeiliui iškviečia **visus 15 metodų** ir papildomai parodo:
 
 * `201 Created` su `Location` antrašte;
-* `204 No Content` be atsakymo kūno;
+* `204 No Content` — atsakymas be turinio;
 * `404` neegzistuojančiam resursui, ištrintam resursui ir **neteisingai tėvinei grandinei**
   (užduotis egzistuoja, bet ne toje grupėje);
 * `400` blogam payload (nurodomas konkretus laukas) ir `422` pažeistoms dalykinėms taisyklėms;
