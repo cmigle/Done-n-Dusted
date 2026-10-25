@@ -66,18 +66,34 @@ public class LogEntryService {
     }
 
     /**
-     * PUT - pilnas atnaujinimas, todel visi laukai perrasomi is uzklausos.
+     * PATCH - dalinis atnaujinimas: keiciami tik atsiusti (ne null) laukai.
+     * xpAwarded, inspirationAwarded ir reviewerNote yra DM sprendimo dalis, todel priimami tik kartu su status.
      * Busenu perejimai (PENDING/APPROVED/REJECTED) atliekami per LogEntry metodus approve/reject/
      * resetToPending, o ne per setterius - taip XP niekada negali atsidurti ne APPROVED irase.
      */
     public LogEntry update(Long guildId, Long questId, Long logId, LogEntryUpdateRequest request) {
         LogEntry entry = get(guildId, questId, logId);
         Quest quest = quests.get(guildId, questId); // reikia sudetingumo XP apskaiciavimui
-        requireNotInFuture(request.occurredAt());
 
-        entry.setNote(request.note());
-        entry.setEvidenceUrl(request.evidenceUrl());
-        entry.setOccurredAt(request.occurredAt());
+        if (request.note() != null) {
+            entry.setNote(request.note());
+        }
+        if (request.evidenceUrl() != null) {
+            entry.setEvidenceUrl(request.evidenceUrl());
+        }
+        if (request.occurredAt() != null) {
+            requireNotInFuture(request.occurredAt());
+            entry.setOccurredAt(request.occurredAt());
+        }
+
+        if (request.status() == null) {
+            boolean reviewFieldsSent = request.xpAwarded() != null || request.inspirationAwarded() != null
+                    || request.reviewerNote() != null;
+            if (reviewFieldsSent) {
+                throw new BusinessRuleException("xpAwarded, inspirationAwarded ir reviewerNote keiciami tik kartu su status");
+            }
+            return entry;
+        }
 
         // Java 21 "arrow" switch per enum: kompiliatorius nereikalauja break, o kiekviena saka atskira.
         switch (request.status()) {

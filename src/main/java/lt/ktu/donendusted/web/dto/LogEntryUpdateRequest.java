@@ -1,7 +1,6 @@
 package lt.ktu.donendusted.web.dto;
 
 import io.swagger.v3.oas.annotations.media.Schema;
-import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.PositiveOrZero;
 import jakarta.validation.constraints.Size;
 import java.time.Instant;
@@ -9,10 +8,11 @@ import lt.ktu.donendusted.domain.LogStatus;
 import org.hibernate.validator.constraints.URL;
 
 /**
- * Pilnas iraso atnaujinimas: iraso turinys ir DM sprendimas. Tai vienintele vieta,
- * kurioje XP apskritai gali buti paduotas is kliento.
+ * PATCH - dalinis iraso atnaujinimas: iraso turinys ir/arba DM sprendimas. Visi laukai neprivalomi,
+ * neatsiustas (null) laukas nekeiciamas. Tai vienintele vieta, kurioje XP apskritai gali buti
+ * paduotas is kliento - ir tik kartu su status.
  */
-@Schema(name = "LogEntryUpdateRequest", description = "Iraso turinio ir perziuros rezultato atnaujinimas")
+@Schema(name = "LogEntryUpdateRequest", description = "Dalinis iraso turinio ir perziuros rezultato atnaujinimas")
 public record LogEntryUpdateRequest(
 
         @Schema(example = "Begau 8 km palei upe.")
@@ -23,24 +23,23 @@ public record LogEntryUpdateRequest(
         @URL @Size(max = 500)
         String evidenceUrl,
 
-        @Schema(example = "2026-09-19T15:20:00Z")
-        @NotNull
+        @Schema(description = "Negali buti ateityje", example = "2026-09-19T15:20:00Z")
         Instant occurredAt,
 
-        @Schema(description = "Nauja iraso busena", example = "APPROVED")
-        @NotNull
+        @Schema(description = "Nauja iraso busena (DM sprendimas)", example = "APPROVED")
         LogStatus status,
 
-        @Schema(description = "DM perrasytas XP ivertis. Praleidus, tvirtinant naudojama uzduoties verte.",
-                example = "50")
+        @Schema(description = "DM perrasytas XP ivertis; tik kartu su status. Praleidus, tvirtinant "
+                + "naudojama uzduoties verte.", example = "50")
         @PositiveOrZero
         Integer xpAwarded,
 
-        @Schema(description = "Skiriamas heroic inspiration; praleidus laikoma 0", example = "1")
+        @Schema(description = "Skiriamas heroic inspiration; tik kartu su status, praleidus laikoma 0",
+                example = "1")
         @PositiveOrZero
         Integer inspirationAwarded,
 
-        @Schema(example = "Uzskaitau, nors nuotrauka neryski.")
+        @Schema(description = "DM komentaras; tik kartu su status", example = "Uzskaitau, nors nuotrauka neryski.")
         @Size(max = 500)
         String reviewerNote) {
 }

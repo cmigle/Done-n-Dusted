@@ -4,7 +4,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 
-@Schema(name = "GuildRequest", description = "Grupes kurimo ir atnaujinimo duomenys")
+@Schema(name = "GuildRequest", description = "Grupes kurimo duomenys")
 public record GuildRequest(
 
         @Schema(description = "Unikalus grupes pavadinimas", example = "Thursday Night Crew")
@@ -12,7 +12,8 @@ public record GuildRequest(
         @Size(min = 3, max = 60)
         String name,
 
-        @Schema(description = "Laisvas grupes aprasymas", example = "Ketvirtadieniais renkasi kampanija.")
+        @Schema(description = "Laisvas grupes aprasymas; nenurodzius issaugomas tuscias \"\"",
+                example = "Ketvirtadieniais renkasi kampanija.")
         @Size(max = 500)
         String description) {
 }

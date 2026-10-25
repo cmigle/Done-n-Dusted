@@ -12,6 +12,7 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import java.time.Instant;
+import java.util.Objects;
 import org.hibernate.annotations.CreationTimestamp;
 
 /** Uzduotis - konkretus issukis grupes viduje. Priklauso lygiai vienai grupei. */
@@ -30,8 +31,9 @@ public class Quest {
     @Column(nullable = false, length = 120)
     private String title;
 
-    @Column(length = 1000)
-    private String description;
+    // Kaip ir Guild: nenurodytas aprasymas saugomas kaip "", kad laukas atsakyme niekada nedingtu.
+    @Column(nullable = false, length = 1000)
+    private String description = "";
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 3)
@@ -64,7 +66,7 @@ public class Quest {
                  Difficulty difficulty, Integer targetCount, boolean active) {
         this.guild = guild;
         this.title = title;
-        this.description = description;
+        setDescription(description);
         this.stat = stat;
         this.type = type;
         this.difficulty = difficulty;
@@ -93,7 +95,7 @@ public class Quest {
     }
 
     public void setDescription(String description) {
-        this.description = description;
+        this.description = Objects.requireNonNullElse(description, "");
     }
 
     public Stat getStat() {
