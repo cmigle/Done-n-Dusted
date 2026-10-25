@@ -9,14 +9,15 @@ import lt.ktu.donendusted.domain.Difficulty;
 import lt.ktu.donendusted.domain.QuestType;
 import lt.ktu.donendusted.domain.Stat;
 
-@Schema(name = "QuestRequest", description = "Uzduoties kurimo ir atnaujinimo duomenys")
+@Schema(name = "QuestRequest", description = "Uzduoties kurimo duomenys")
 public record QuestRequest(
 
         @Schema(example = "Run 50 kilometers")
         @NotBlank @Size(min = 3, max = 120)
         String title,
 
-        @Schema(example = "Kaupiamoji uzduotis - kiekvienas patvirtintas irasas priartina prie tikslo.")
+        @Schema(description = "Nenurodzius issaugomas tuscias \"\"",
+                example = "Kaupiamoji uzduotis - kiekvienas patvirtintas irasas priartina prie tikslo.")
         @Size(max = 1000)
         String description,
 

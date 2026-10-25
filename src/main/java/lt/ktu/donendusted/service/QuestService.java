@@ -13,6 +13,7 @@ import lt.ktu.donendusted.error.ConflictException;
 import lt.ktu.donendusted.error.ResourceNotFoundException;
 import lt.ktu.donendusted.repository.QuestRepository;
 import lt.ktu.donendusted.web.dto.QuestRequest;
+import lt.ktu.donendusted.web.dto.QuestUpdateRequest;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
@@ -71,7 +72,7 @@ public class QuestService {
 
     public Quest create(Long guildId, QuestRequest request) {
         Guild guild = guilds.get(guildId);
-        validate(request);
+        validate(request.type(), request.targetCount());
         if (quests.existsByGuildIdAndTitleIgnoreCase(guildId, request.title())) {
             throw new ConflictException("Grupeje jau yra uzduotis pavadinimu '" + request.title() + "'");
         }
@@ -79,21 +80,46 @@ public class QuestService {
                 request.type(), request.difficulty(), request.targetCount(), request.activeOrDefault()));
     }
 
-    public Quest update(Long guildId, Long questId, QuestRequest request) {
+    /**
+     * PATCH: keiciami tik atsiusti (ne null) laukai. GRIND/targetCount taisykle tikrinama galutinei
+     * busenai - atsiustos reiksmes sujungiamos su esamomis.
+     */
+    public Quest update(Long guildId, Long questId, QuestUpdateRequest request) {
         Quest quest = get(guildId, questId);
-        validate(request);
-        // "IdNot" - pavadinimas gali sutapti su pacia atnaujinama uzduotimi, bet ne su kita.
-        // Keiciant difficulty jau patvirtintu irasu XP nesikeicia - jis uzsaldytas LogEntry.
-        if (quests.existsByGuildIdAndTitleIgnoreCaseAndIdNot(guildId, request.title(), questId)) {
-            throw new ConflictException("Grupeje jau yra uzduotis pavadinimu '" + request.title() + "'");
+
+        QuestType type = request.type() != null ? request.type() : quest.getType();
+        Integer targetCount;
+        if (request.targetCount() != null) {
+            targetCount = request.targetCount();
+        } else if (type == QuestType.GRIND) {
+            targetCount = quest.getTargetCount();
+        } else {
+            targetCount = null; // tipas nebe GRIND - tikslo skaicius nebeturi prasmes, todel isvalomas
         }
-        quest.setTitle(request.title());
-        quest.setDescription(request.description());
-        quest.setStat(request.stat());
-        quest.setType(request.type());
-        quest.setDifficulty(request.difficulty());
-        quest.setTargetCount(request.targetCount());
-        quest.setActive(request.activeOrDefault());
+        validate(type, targetCount);
+
+        if (request.title() != null) {
+            // "IdNot" - pavadinimas gali sutapti su pacia atnaujinama uzduotimi, bet ne su kita.
+            if (quests.existsByGuildIdAndTitleIgnoreCaseAndIdNot(guildId, request.title(), questId)) {
+                throw new ConflictException("Grupeje jau yra uzduotis pavadinimu '" + request.title() + "'");
+            }
+            quest.setTitle(request.title());
+        }
+        if (request.description() != null) {
+            quest.setDescription(request.description());
+        }
+        if (request.stat() != null) {
+            quest.setStat(request.stat());
+        }
+        // Keiciant difficulty jau patvirtintu irasu XP nesikeicia - jis uzsaldytas LogEntry.
+        if (request.difficulty() != null) {
+            quest.setDifficulty(request.difficulty());
+        }
+        if (request.active() != null) {
+            quest.setActive(request.active());
+        }
+        quest.setType(type);
+        quest.setTargetCount(targetCount);
         return quest;
     }
 
@@ -104,11 +130,11 @@ public class QuestService {
     /**
      * Taisykles, kuriu negalima isreiksti anotacijomis prie atskiro lauko - todel 422, o ne 400.
      */
-    private void validate(QuestRequest request) {
-        if (request.type() == QuestType.GRIND && request.targetCount() == null) {
+    private void validate(QuestType type, Integer targetCount) {
+        if (type == QuestType.GRIND && targetCount == null) {
             throw new BusinessRuleException("GRIND tipo uzduotis privalo tureti targetCount");
         }
-        if (request.type() != QuestType.GRIND && request.targetCount() != null) {
+        if (type != QuestType.GRIND && targetCount != null) {
             throw new BusinessRuleException("targetCount leidziamas tik GRIND tipo uzduotims");
         }
     }

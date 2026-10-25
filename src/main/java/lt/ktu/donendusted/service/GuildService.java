@@ -5,6 +5,7 @@ import lt.ktu.donendusted.error.ConflictException;
 import lt.ktu.donendusted.error.ResourceNotFoundException;
 import lt.ktu.donendusted.repository.GuildRepository;
 import lt.ktu.donendusted.web.dto.GuildRequest;
+import lt.ktu.donendusted.web.dto.GuildUpdateRequest;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
@@ -49,15 +50,20 @@ public class GuildService {
         return guilds.save(new Guild(request.name(), request.description()));
     }
 
-    public Guild update(Long id, GuildRequest request) {
+    /** PATCH: null laukas reiskia "neatsiustas" - tokia reiksme paliekama kokia buvo. */
+    public Guild update(Long id, GuildUpdateRequest request) {
         Guild guild = get(id);
-        if (guilds.existsByNameIgnoreCaseAndIdNot(request.name(), id)) {
-            throw new ConflictException("Grupe pavadinimu '" + request.name() + "' jau egzistuoja");
-        }
         // save() kviesti nereikia: guild yra "managed" objektas (gautas toje pacioje transakcijoje),
         // todel Hibernate pats pastebi pakeitimus (dirty checking) ir transakcijos pabaigoje daro UPDATE.
-        guild.setName(request.name());
-        guild.setDescription(request.description());
+        if (request.name() != null) {
+            if (guilds.existsByNameIgnoreCaseAndIdNot(request.name(), id)) {
+                throw new ConflictException("Grupe pavadinimu '" + request.name() + "' jau egzistuoja");
+            }
+            guild.setName(request.name());
+        }
+        if (request.description() != null) {
+            guild.setDescription(request.description());
+        }
         return guild;
     }
 

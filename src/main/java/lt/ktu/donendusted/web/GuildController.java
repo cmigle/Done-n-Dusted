@@ -14,15 +14,16 @@ import lt.ktu.donendusted.error.ApiError;
 import lt.ktu.donendusted.service.GuildService;
 import lt.ktu.donendusted.web.dto.GuildRequest;
 import lt.ktu.donendusted.web.dto.GuildResponse;
+import lt.ktu.donendusted.web.dto.GuildUpdateRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -90,8 +91,11 @@ public class GuildController {
         return ResponseEntity.created(location).body(GuildResponse.from(created));
     }
 
-    @PutMapping(path = "/{guildId}", consumes = MediaType.APPLICATION_JSON_VALUE)
-    @Operation(summary = "Atnaujinti grupe")
+    // PATCH, ne PUT: keiciami tik atsiusti laukai. Su PUT neatsiustas aprasymas butu perrasytas null
+    // ir dingtu is atsakymo.
+    @PatchMapping(path = "/{guildId}", consumes = MediaType.APPLICATION_JSON_VALUE)
+    @Operation(summary = "Atnaujinti grupe",
+            description = "Dalinis atnaujinimas: keiciami tik atsiusti laukai, neatsiusti lieka nepakeisti.")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Grupe atnaujinta"),
             @ApiResponse(responseCode = "400", description = "Neteisingas payload",
@@ -101,7 +105,7 @@ public class GuildController {
             @ApiResponse(responseCode = "409", description = "Toks pavadinimas jau uzimtas",
                     content = @Content(schema = @Schema(implementation = ApiError.class)))
     })
-    public GuildResponse update(@PathVariable Long guildId, @Valid @RequestBody GuildRequest request) {
+    public GuildResponse update(@PathVariable Long guildId, @Valid @RequestBody GuildUpdateRequest request) {
         return GuildResponse.from(guilds.update(guildId, request));
     }
 

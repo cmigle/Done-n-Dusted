@@ -22,6 +22,7 @@ scripts:
         pm.expect(body.inspirationAwarded).to.eql(0);
         pm.expect(body.reviewedAt).to.be.undefined;
       });
+      pm.test('Irasas priklauso sukurtai uzduociai', () => pm.expect(body.questId).to.eql(Number(pm.collectionVariables.get('questId'))));
       pm.collectionVariables.set('logId', body.id);
     language: text/javascript
 order: 1000

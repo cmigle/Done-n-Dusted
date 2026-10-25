@@ -73,7 +73,7 @@
           }
         }
       },
-      "put": {
+      "patch": {
         "tags": [
           "Guilds"
         ],
@@ -94,7 +94,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/GuildRequest"
+                "$ref": "#/components/schemas/GuildUpdateRequest"
               }
             }
           },
@@ -141,7 +141,8 @@
               }
             }
           }
-        }
+        },
+        "description": "Dalinis atnaujinimas: keiciami tik atsiusti laukai, neatsiusti lieka nepakeisti."
       },
       "delete": {
         "tags": [
@@ -229,12 +230,12 @@
           }
         }
       },
-      "put": {
+      "patch": {
         "tags": [
           "Quests"
         ],
         "summary": "Atnaujinti uzduoti",
-        "description": "Sudetingumo keitimas veikia tik busimus irasus - jau patvirtintu irasu XP nekeiciamas.",
+        "description": "Dalinis atnaujinimas: keiciami tik atsiusti laukai. Sudetingumo keitimas veikia tik busimus\nirasus - jau patvirtintu irasu XP nekeiciamas.\n",
         "operationId": "update_1",
         "parameters": [
           {
@@ -260,7 +261,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/QuestRequest"
+                "$ref": "#/components/schemas/QuestUpdateRequest"
               }
             }
           },
@@ -422,12 +423,12 @@
           }
         }
       },
-      "put": {
+      "patch": {
         "tags": [
           "Log entries"
         ],
         "summary": "Atnaujinti irasa ir jo perziuros rezultata",
-        "description": "Tvirtinant (APPROVED) praleistas xpAwarded reiskia, kad XP imamas is uzduoties\nsudetingumo. PENDING ir REJECTED irasai privalo likti be XP ir inspiration.\n",
+        "description": "Dalinis atnaujinimas: keiciami tik atsiusti laukai. xpAwarded, inspirationAwarded ir\nreviewerNote priimami tik kartu su status. Tvirtinant (APPROVED) praleistas xpAwarded\nreiskia, kad XP imamas is uzduoties sudetingumo. PENDING ir REJECTED irasai privalo\nlikti be XP ir inspiration.\n",
         "operationId": "update_2",
         "parameters": [
           {
@@ -1000,7 +1001,7 @@
     "schemas": {
       "GuildRequest": {
         "type": "object",
-        "description": "Grupes kurimo ir atnaujinimo duomenys",
+        "description": "Grupes kurimo duomenys",
         "properties": {
           "name": {
             "type": "string",
@@ -1011,7 +1012,7 @@
           },
           "description": {
             "type": "string",
-            "description": "Laisvas grupes aprasymas",
+            "description": "Laisvas grupes aprasymas; nenurodzius issaugomas tuscias \"\"",
             "example": "Ketvirtadieniais renkasi kampanija.",
             "maxLength": 500,
             "minLength": 0
@@ -1095,7 +1096,7 @@
       },
       "QuestRequest": {
         "type": "object",
-        "description": "Uzduoties kurimo ir atnaujinimo duomenys",
+        "description": "Uzduoties kurimo duomenys",
         "properties": {
           "title": {
             "type": "string",
@@ -1107,7 +1108,8 @@
             "type": "string",
             "example": "Kaupiamoji uzduotis - kiekvienas patvirtintas irasas priartina prie tikslo.",
             "maxLength": 1000,
-            "minLength": 0
+            "minLength": 0,
+            "description": "Nenurodzius issaugomas tuscias \"\""
           },
           "stat": {
             "type": "string",
@@ -1242,7 +1244,7 @@
       },
       "LogEntryUpdateRequest": {
         "type": "object",
-        "description": "Iraso turinio ir perziuros rezultato atnaujinimas",
+        "description": "Dalinis iraso turinio ir perziuros rezultato atnaujinimas",
         "properties": {
           "note": {
             "type": "string",
@@ -1259,11 +1261,12 @@
           "occurredAt": {
             "type": "string",
             "format": "date-time",
-            "example": "2026-09-19T15:20:00Z"
+            "example": "2026-09-19T15:20:00Z",
+            "description": "Negali buti ateityje"
           },
           "status": {
             "type": "string",
-            "description": "Nauja iraso busena",
+            "description": "Nauja iraso busena (DM sprendimas)",
             "enum": [
               "PENDING",
               "APPROVED",
@@ -1274,14 +1277,14 @@
           "xpAwarded": {
             "type": "integer",
             "format": "int32",
-            "description": "DM perrasytas XP ivertis. Praleidus, tvirtinant naudojama uzduoties verte.",
+            "description": "DM perrasytas XP ivertis; tik kartu su status. Praleidus, tvirtinant naudojama uzduoties verte.",
             "example": 50,
             "minimum": 0
           },
           "inspirationAwarded": {
             "type": "integer",
             "format": "int32",
-            "description": "Skiriamas heroic inspiration; praleidus laikoma 0",
+            "description": "Skiriamas heroic inspiration; tik kartu su status, praleidus laikoma 0",
             "example": 1,
             "minimum": 0
           },
@@ -1289,13 +1292,10 @@
             "type": "string",
             "example": "Uzskaitau, nors nuotrauka neryski.",
             "maxLength": 500,
-            "minLength": 0
+            "minLength": 0,
+            "description": "DM komentaras; tik kartu su status"
           }
-        },
-        "required": [
-          "occurredAt",
-          "status"
-        ]
+        }
       },
       "LogEntryResponse": {
         "type": "object",
@@ -1466,6 +1466,92 @@
           },
           "links": {
             "$ref": "#/components/schemas/PageLinks"
+          }
+        }
+      },
+      "GuildUpdateRequest": {
+        "type": "object",
+        "description": "Dalinis grupes atnaujinimas - keiciami tik atsiusti laukai",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Naujas unikalus pavadinimas; nenurodzius nekeiciamas",
+            "example": "Thursday Night Crew",
+            "maxLength": 60,
+            "minLength": 3,
+            "pattern": ".*\\S.*"
+          },
+          "description": {
+            "type": "string",
+            "description": "Naujas aprasymas; nenurodzius nekeiciamas, \"\" isvalo",
+            "example": "Ketvirtadieniais renkasi kampanija.",
+            "maxLength": 500,
+            "minLength": 0
+          }
+        }
+      },
+      "QuestUpdateRequest": {
+        "type": "object",
+        "description": "Dalinis uzduoties atnaujinimas - keiciami tik atsiusti laukai",
+        "properties": {
+          "title": {
+            "type": "string",
+            "example": "Run 50 kilometers",
+            "maxLength": 120,
+            "minLength": 3,
+            "pattern": ".*\\S.*"
+          },
+          "description": {
+            "type": "string",
+            "description": "Naujas aprasymas; nenurodzius nekeiciamas, \"\" isvalo",
+            "example": "Kaupiamoji uzduotis - kiekvienas patvirtintas irasas priartina prie tikslo.",
+            "maxLength": 1000,
+            "minLength": 0
+          },
+          "stat": {
+            "type": "string",
+            "enum": [
+              "STR",
+              "DEX",
+              "CON",
+              "INT",
+              "WIS",
+              "CHA"
+            ],
+            "example": "CON"
+          },
+          "type": {
+            "type": "string",
+            "description": "Pakeitus i ne GRIND tipa, targetCount isvalomas",
+            "enum": [
+              "MILESTONE",
+              "HABIT",
+              "GRIND",
+              "SIDE_QUEST"
+            ],
+            "example": "GRIND"
+          },
+          "difficulty": {
+            "type": "string",
+            "enum": [
+              "TRIVIAL",
+              "EASY",
+              "MEDIUM",
+              "HARD",
+              "LEGENDARY"
+            ],
+            "example": "HARD"
+          },
+          "targetCount": {
+            "type": "integer",
+            "format": "int32",
+            "description": "Leidziamas tik GRIND tipo uzduociai",
+            "example": 50,
+            "exclusiveMinimum": 0
+          },
+          "active": {
+            "type": "boolean",
+            "example": false
           }
         }
       }

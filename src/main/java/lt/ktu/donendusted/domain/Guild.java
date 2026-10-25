@@ -7,6 +7,7 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 import java.time.Instant;
+import java.util.Objects;
 import org.hibernate.annotations.CreationTimestamp;
 
 /** Grupe (komanda) - virsutinis hierarchijos Guild -> Quest -> LogEntry lygis. */
@@ -22,8 +23,10 @@ public class Guild {
     @Column(nullable = false, unique = true, length = 60)
     private String name;
 
-    @Column(length = 500)
-    private String description;
+    // Niekada ne null: nenurodytas aprasymas saugomas kaip "", todel JSON atsakyme laukas visada yra
+    // (null laukai i JSON neirasomi - zr. application.yml). DB tai uztikrina V3 migracija.
+    @Column(nullable = false, length = 500)
+    private String description = "";
 
     @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)
@@ -35,7 +38,7 @@ public class Guild {
 
     public Guild(String name, String description) {
         this.name = name;
-        this.description = description;
+        setDescription(description);
     }
 
     public Long getId() {
@@ -55,7 +58,7 @@ public class Guild {
     }
 
     public void setDescription(String description) {
-        this.description = description;
+        this.description = Objects.requireNonNullElse(description, "");
     }
 
     public Instant getCreatedAt() {

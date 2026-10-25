@@ -1,15 +1,12 @@
 $kind: http-request
 url: "{{baseUrl}}/guilds/{{guildA}}/quests/{{questId}}/logs/{{logId}}"
-method: PUT
+method: PATCH
 headers:
   Content-Type: application/json
 body:
   type: text
   content: |-
     {
-      "note": "Nubegau 10 km per 52 minutes",
-      "evidenceUrl": "https://example.org/evidence/run.png",
-      "occurredAt": "{{occurredAt}}",
       "status": "APPROVED",
       "inspirationAwarded": 1,
       "reviewerNote": "Uzskaitau, nuotrauka aiski"
@@ -25,10 +22,14 @@ scripts:
         pm.expect(body.inspirationAwarded).to.eql(1);
         pm.expect(body.reviewedAt).to.be.a('string');
       });
+      pm.test('Neatsiusti laukai (note, evidenceUrl) nepakito', () => {
+        pm.expect(body.note).to.eql('Nubegau 10 km per 52 minutes');
+        pm.expect(body.evidenceUrl).to.eql('https://example.org/evidence/run.png');
+      });
     language: text/javascript
 order: 5000
 description: |-
-  Dungeon Master patvirtina įrašą: `status = APPROVED`, `inspirationAwarded = 1`.
+  Dungeon Master patvirtina įrašą (`PATCH`): siunčiami tik peržiūros laukai `status = APPROVED`, `inspirationAwarded = 1` ir `reviewerNote`. Įrašo turinys (`note`, `evidenceUrl`, `occurredAt`) lieka nepakeistas.
 
   `xpAwarded` nesiunčiamas, todėl serveris jį paima iš užduoties sudėtingumo (`LEGENDARY` = **80**). Užpildomas `reviewedAt`.
 

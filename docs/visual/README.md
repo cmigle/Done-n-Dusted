@@ -7,7 +7,7 @@ diagram twice:
 - **Technical:** the terms you would use in a report or an exam answer.
 - **Plain English:** what the same thing means, in everyday words.
 
-The older text walkthrough is still in [`../WALKTHROUGH.md`](../WALKTHROUGH.md). This guide
+The older text walkthrough is still in [`../WALKTHROUGH.md`](WALKTHROUGH.md). This guide
 does not replace it; it explains the pictures.
 
 ---
@@ -178,7 +178,7 @@ The Dungeon Master approves log entry 9 of quest 6 ("Deadlift bodyweight x2", LE
 guild 2:
 
 ```
-PUT /api/guilds/2/quests/6/logs/9
+PATCH /api/guilds/2/quests/6/logs/9
 { "occurredAt": "2026-09-20T14:45:00Z", "status": "APPROVED" }
 ```
 
@@ -186,7 +186,7 @@ PUT /api/guilds/2/quests/6/logs/9
 
 | Stage | Technical | Plain English |
 | --- | --- | --- |
-| 1 · Bind JSON + @Valid | Jackson deserialises the body into `LogEntryUpdateRequest`; Bean Validation checks `@NotNull`, `@PositiveOrZero`, `@URL`. On failure: **400**. | The app reads the message and checks it's filled in properly. If not: "your form is wrong". |
+| 1 · Bind JSON + @Valid | Jackson deserialises the body into `LogEntryUpdateRequest`; Bean Validation checks `@PositiveOrZero`, `@URL`, `@Size`. On failure: **400**. | The app reads the message and checks it's filled in properly. If not: "your form is wrong". |
 | 2 · Load through the chain | `LogEntryRepository.findByIdAndQuestIdAndQuestGuildId(9, 6, 2)`, one SQL query joining log_entry to quest. If empty: **404**, naming the level that's missing. | It checks that entry 9 really belongs to quest 6, and quest 6 really belongs to guild 2. If not: "not found". |
 | 3 · Difficulty + rules | `QuestService.get` loads the quest; `requireNotInFuture` rejects future dates with **422**; the switch on `APPROVED` computes XP = `Difficulty.LEGENDARY.xpValue()` = 8 × 10 = **80**. | It checks the date makes sense, then works out the reward from how hard the quest is. |
 | 4 · Approve, commit, respond | `LogEntry.approve(80, 0, null, now)` changes the entity; at transaction commit Hibernate's *dirty checking* issues an SQL `UPDATE`; the controller maps to `LogEntryResponse` and returns **200** with JSON. | It marks the entry approved, saves it, and sends back the updated entry. |
@@ -197,8 +197,8 @@ They all end up as the same `ApiError` JSON.
 ### Things the diagram makes visible
 
 - **The client never sends XP here.** The server calculates it. That's the anti-cheating rule.
-- **PUT is a full replacement.** The example body has no `note` or `evidenceUrl`, so those
-  become empty (null). To keep them, send them in the body too.
+- **PATCH is a partial update.** The example body has no `note` or `evidenceUrl`, so those
+  stay exactly as they were. Only the fields that are sent change.
 - **No `save()` call.** Hibernate notices the change itself when the transaction ends; this
   is called *dirty checking*.
 - **Order matters:** a wrong URL chain (404) is detected *before* a future date (422).
@@ -221,9 +221,9 @@ shipped → delivered". It shows every status an entry can have and how it moves
 | From | Event | To | What happens in code |
 | --- | --- | --- | --- |
 | (start) | `POST .../logs` | **PENDING** | Constructor sets PENDING, 0 XP. Rejected with 422 if the quest is inactive or the date is in the future. |
-| any | `PUT` with `APPROVED` | **APPROVED** | `approve()`: XP = DM's number or the difficulty value, inspiration default 0, `reviewedAt = now`. Re-approving recalculates XP. |
-| any | `PUT` with `REJECTED` | **REJECTED** | `reject()`: XP and inspiration forced to 0. Sending non-zero awards gives 422. |
-| any | `PUT` with `PENDING` | **PENDING** | `resetToPending()`: awards cleared, `reviewedAt` emptied. Non-zero awards give 422. |
+| any | `PATCH` with `APPROVED` | **APPROVED** | `approve()`: XP = DM's number or the difficulty value, inspiration default 0, `reviewedAt = now`. Re-approving recalculates XP. |
+| any | `PATCH` with `REJECTED` | **REJECTED** | `reject()`: XP and inspiration forced to 0. Sending non-zero awards gives 422. |
+| any | `PATCH` with `PENDING` | **PENDING** | `resetToPending()`: awards cleared, `reviewedAt` emptied. Non-zero awards give 422. |
 | any | `DELETE`, or parent quest/guild deleted | **Deleted** (end) | Row removed; the cascade is done by the database (`ON DELETE CASCADE`). |
 
 ### Why it's designed this way
@@ -259,7 +259,7 @@ all of them, you reach the gate (a success code).
 
 | Gate | Fails with | Example |
 | --- | --- | --- |
-| URL and method match a controller? | **404** / **405** | `/api/nothing`, or `PATCH /api/guilds/2` |
+| URL and method match a controller? | **404** / **405** | `/api/nothing`, or `PUT /api/guilds/2` |
 | Content-Type is JSON? | **415** | sending `text/plain` |
 | Client accepts JSON? | **406** (empty body) | `Accept: application/xml` |
 | IDs in the URL are numbers? | **400** | `/api/guilds/abc` |
@@ -387,7 +387,7 @@ crossing that can't be avoided on a flat page. Nothing was left out to hide it.
 | **REST** | A style of API where everything is a "thing" with a web address, and you use standard verbs on it |
 | **Resource** | One of those things: a guild, a quest, a log entry |
 | **Endpoint** | One address + verb combination, e.g. `GET /api/guilds` |
-| **HTTP method / verb** | GET = read, POST = create, PUT = replace, DELETE = remove |
+| **HTTP method / verb** | GET = read, POST = create, PATCH = partial update (PUT is not used: 405), DELETE = remove |
 | **Status code** | A three-digit result: 2xx success, 4xx your mistake, 5xx server's mistake |
 | **JSON** | A text format for data: `{"name": "Iron Vow"}` |
 | **Content-Type / Accept** | Headers saying "I'm sending JSON" / "I want JSON back" |

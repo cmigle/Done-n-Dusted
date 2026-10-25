@@ -7,18 +7,19 @@ scripts:
   - type: afterResponse
     code: |-
       pm.test('200 OK', () => pm.response.to.have.status(200));
-      const body = pm.response.json();
-      pm.test('Filtras pagal stat suveike', () => {
-        pm.expect(body.page.totalElements).to.eql(1);
-        pm.expect(body.content[0].stat).to.eql('CON');
+      const quests = pm.response.json().content;
+      pm.test('Filtras pagal stat suveike, ID: ' + quests.map(q => q.id).join(', '), () => {
+        pm.expect(quests).to.have.lengthOf(1);
+        pm.expect(quests[0].stat).to.eql('CON');
+        pm.expect(quests[0].id).to.eql(Number(pm.collectionVariables.get('questId')));
       });
-      pm.test('Filtras islieka nuorodose', () => pm.expect(body.links.self).to.include('stat=CON'));
+      pm.test('Uzduotis priklauso A grupei', () => pm.expect(quests[0].guildId).to.eql(Number(pm.collectionVariables.get('guildA'))));
     language: text/javascript
 order: 3000
 description: |-
-  Grąžina puslapiuotą grupės užduočių sąrašą.
+  Grąžina grupės užduočių sąrašą.
 
-  Galimi filtrai: `stat`, `type`, `difficulty`, `active`. Čia filtruojama pagal `stat=CON`, o filtras išlieka ir `links` nuorodose.
+  Galimi filtrai: `stat`, `type`, `difficulty`, `active`. Čia filtruojama pagal `stat=CON`.
 
   README lentelės metodas **#6**.
 examples: './.resources/Gauti užduočių sąrašą pagal charakteristiką.resources/examples'
