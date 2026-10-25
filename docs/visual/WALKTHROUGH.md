@@ -412,7 +412,7 @@ that follow, so it is longer than they will be.
 | 1 | `GET` | `/api/guilds` | 200 — paged, filtered list |
 | 2 | `GET` | `/api/guilds/{guildId}` | 200 |
 | 3 | `POST` | `/api/guilds` | **201** + `Location` header |
-| 4 | `PUT` | `/api/guilds/{guildId}` | 200 — updated resource in the body |
+| 4 | `PATCH` | `/api/guilds/{guildId}` | 200 — updated resource in the body |
 | 5 | `DELETE` | `/api/guilds/{guildId}` | **204** — no body |
 
 Why those particular codes:
@@ -421,9 +421,9 @@ Why those particular codes:
   header is built from the actual request URI plus the new id, so the client is told where the
   thing it just made lives. The created resource is also in the body, which saves the client a
   follow-up GET.
-* **200 on PUT, 204 on DELETE.** The lab says *"Kai resursas ištrinamas - 200/204 priklausomai,
+* **200 on PATCH, 204 on DELETE.** The lab says *"Kai resursas ištrinamas - 200/204 priklausomai,
   ar grąžinamas response body"*. There is nothing meaningful to return after a delete, so the
-  honest answer is 204 No Content. PUT does have something to return — the new state, including
+  honest answer is 204 No Content. PATCH does have something to return — the new state, including
   fields the server owns like `createdAt` — so it is 200 with a body.
 
 ### 4.2 Three layers, and what each is allowed to do
@@ -450,7 +450,7 @@ serialised directly. Three concrete reasons, not style:
 
 1. **The client must not be able to set server-owned fields.** `GuildRequest` has no `id` and no
    `createdAt`, so a request that includes them cannot do anything. If the entity were bound
-   directly, a `PUT` carrying `"id": 7` would be a small privilege-escalation bug.
+   directly, a `PATCH` carrying `"id": 7` would be a small privilege-escalation bug.
 2. **Lazy associations.** Serialising an entity with a lazy `@ManyToOne` outside a transaction
    throws. A DTO is already fully materialised.
 3. **The API shape can stay stable while the schema changes.** They are allowed to diverge.
@@ -542,10 +542,10 @@ POST   /api/guilds                        → 201 + Location: /api/guilds/4
 POST   /api/guilds (duplicate name)       → 409 ApiError
 POST   /api/guilds {"name":"ab"}          → 400 ApiError + details[].field = "name"
 POST   /api/guilds (truncated JSON)       → 400 ApiError
-PUT    /api/guilds/4                      → 200, updated body
+PATCH  /api/guilds/4                      → 200, updated body
 DELETE /api/guilds/4                      → 204, empty body
 DELETE /api/guilds/4 (again)              → 404 ApiError
-PATCH  /api/guilds/1                      → 405 ApiError
+PUT    /api/guilds/1                      → 405 ApiError
 ```
 
 While checking this, the raw Jackson parse message turned out to be multi-line and full of
@@ -566,7 +566,7 @@ All under `/api/guilds/{guildId}/quests`:
 | 6 | `GET` | `…/quests` | 200 — paged, four filters |
 | 7 | `GET` | `…/quests/{questId}` | 200 |
 | 8 | `POST` | `…/quests` | 201 + `Location` |
-| 9 | `PUT` | `…/quests/{questId}` | 200 |
+| 9 | `PATCH` | `…/quests/{questId}` | 200 |
 | 10 | `DELETE` | `…/quests/{questId}` | 204 |
 
 There is **no** `/api/quests/{id}` shortcut. The report says a child is reachable only through its
@@ -668,7 +668,7 @@ POST   … MILESTONE with targetCount             → 422
 POST   … missing "stat"                         → 400 + details[].field = "stat"
 POST   … "stat":"LUCK"                          → 400, message lists accepted values
 POST   … duplicate title in same guild          → 409
-PUT    /api/guilds/1/quests/10                  → 200, xpPerCompletion recalculated to 50
+PATCH  /api/guilds/1/quests/10                  → 200, xpPerCompletion recalculated to 50
 DELETE /api/guilds/1/quests/10                  → 204, then 404 on repeat
 ```
 
@@ -686,7 +686,7 @@ path the report names, and it is where the domain rules about XP actually live.
 | 11 | `GET` | `…/logs` | 200 — paged, filter by `status` |
 | 12 | `GET` | `…/logs/{logId}` | 200 |
 | 13 | `POST` | `…/logs` | 201 + `Location` |
-| 14 | `PUT` | `…/logs/{logId}` | 200 — content **and** DM review |
+| 14 | `PATCH` | `…/logs/{logId}` | 200 — content **and** DM review |
 | 15 | `DELETE` | `…/logs/{logId}` | 204 |
 
 The list is sorted by `occurredAt` **descending** by default — a log is read newest-first.
@@ -707,7 +707,7 @@ put them. A client cannot send what the schema does not define — and the gener
 document says so too.
 
 `LogEntryUpdateRequest` does have `status`, `xpAwarded`, `inspirationAwarded` and `reviewerNote`,
-because `PUT` is the DM review: *"DM peržiūri įrašą ir nustato būseną APPROVED arba REJECTED, gali
+because `PATCH` is the DM review: *"DM peržiūri įrašą ir nustato būseną APPROVED arba REJECTED, gali
 perrašyti XP įvertį ir palikti pastabą"*, plus *"Tvirtindamas DM gali skirti inspiration"*.
 
 ### 6.3 How approval works
@@ -795,8 +795,8 @@ the one that removed something.
 GET    …/quests/4/logs?size=2              → 200, newest first, all statuses present
 GET    …/quests/4/logs?status=PENDING      → 200, totalElements = 1
 POST   …/quests/4/logs                     → 201 + Location, status PENDING, xpAwarded 0
-PUT    …/logs/13 status=APPROVED (no xp)   → 200, xpAwarded 50 (derived), reviewedAt stamped
-PUT    …/logs/13 status=PENDING, xp 50     → 422
+PATCH  …/logs/13 status=APPROVED (no xp)   → 200, xpAwarded 50 (derived), reviewedAt stamped
+PATCH  …/logs/13 status=PENDING, xp 50     → 422
 POST   …/logs occurredAt in 2030           → 422
 POST   …/quests/7/logs (inactive quest)    → 422
 POST   …/logs evidenceUrl="not a url"      → 400 + details[].field = "evidenceUrl"
@@ -822,7 +822,7 @@ themselves: the OpenAPI specification, the demonstration, and the repository doc
 to the code they describe — that is the only way they stay true.
 
 The generated document was then pretty-printed and committed as
-[`docs/openapi.json`](openapi.json). Both forms matter:
+[`docs/openapi.json`](../openapi.json). Both forms matter:
 
 * the **live** endpoint is what Swagger UI reads, and it is what you show during the defence;
 * the **committed file** is a reviewable artefact — it diffs when the API changes, and the lab
@@ -832,12 +832,12 @@ Verification that the spec really covers everything:
 
 ```
 paths: 6   operations: 15
-  GET,POST        /api/guilds
-  GET,PUT,DELETE  /api/guilds/{guildId}
-  GET,POST        /api/guilds/{guildId}/quests
-  GET,PUT,DELETE  /api/guilds/{guildId}/quests/{questId}
-  GET,POST        /api/guilds/{guildId}/quests/{questId}/logs
-  GET,PUT,DELETE  /api/guilds/{guildId}/quests/{questId}/logs/{logId}
+  GET,POST          /api/guilds
+  GET,PATCH,DELETE  /api/guilds/{guildId}
+  GET,POST          /api/guilds/{guildId}/quests
+  GET,PATCH,DELETE  /api/guilds/{guildId}/quests/{questId}
+  GET,POST          /api/guilds/{guildId}/quests/{questId}/logs
+  GET,PATCH,DELETE  /api/guilds/{guildId}/quests/{questId}/logs/{logId}
 ```
 
 Six path templates, **exactly fifteen operations** — matching the fifteen methods the lab
@@ -847,7 +847,7 @@ contract rather than an implementation detail.
 
 ### 7.2 The Postman collection
 
-[`postman/DoneNDusted.postman_collection.json`](../postman/DoneNDusted.postman_collection.json) —
+[`postman/DoneNDusted.postman_collection.json`](../../postman/DoneNDusted.postman_collection.json) —
 26 requests, 53 assertions, **5.2 seconds** end to end (the lab asks for roughly 15).
 
 Three properties were designed in deliberately:
@@ -888,7 +888,7 @@ requests 26 / failed 0     assertions 53 / failed 0     duration 5.2s
 
 ### 7.3 README
 
-[`README.md`](../README.md) is written **in Lithuanian**, unlike this walkthrough. Different
+[`README.md`](../../README.md) is written **in Lithuanian**, unlike this walkthrough. Different
 audiences: the README is the document the reviewer opens first, and it is the "dokumentacija
 projekto Git saugykloje" the lab asks for; this walkthrough is written for you, to explain the
 reasoning.
@@ -913,7 +913,7 @@ serve different purposes and neither depends on the other.
 After the feature branches were merged, the whole thing was reviewed against the assignment's
 requirement list as a grader would: by sending requests the Postman collection did **not** yet
 cover, rather than by re-reading the code. Five problems turned up. The findings are written up
-in Lithuanian in [`docs/REVIEW.md`](REVIEW.md); the reasoning behind each fix is here.
+in Lithuanian in a separate review report (no longer in the repository); the reasoning behind each fix is here.
 
 ### 8.1 `?sort=bogus` returned 500
 
@@ -1029,3 +1029,42 @@ Two requests were added to the Postman collection for the new behaviour — `07a
 `text/plain`) and `07b` (400 on an unknown field carrying `xpAwarded`). The suite is now
 **28 requests, 57 assertions, 4.9 seconds, zero failures**. The README error table gained `406`
 and `415`, and the demonstration section mentions the two new cases.
+
+## Branch 9 — defense feedback: PATCH, empty descriptions, Postman summary
+
+Feedback from the first defense run, and what changed:
+
+### 9.1 PUT made an omitted description disappear
+
+With `PUT` (full replacement) a body without `description` overwrote it with `null`, and because
+`default-property-inclusion: non_null` drops null fields, the field vanished from the response.
+All three update endpoints are now `PATCH`:
+
+* separate `GuildUpdateRequest` / `QuestUpdateRequest` DTOs with every field optional; the services
+  copy only non-null fields. `@NotBlank` cannot be used there (it rejects `null`, i.e. "not
+  sent"), so a sent name/title must match `.*\S.*` instead;
+* `LogEntryUpdateRequest` lost its `@NotNull`s. `xpAwarded`, `inspirationAwarded` and
+  `reviewerNote` are part of the DM decision, so sending them without `status` is a 422;
+* for quests the GRIND rule is checked on the merged state. Changing the type away from `GRIND`
+  clears `targetCount` automatically, because a record DTO cannot tell "not sent" from `null`.
+  For the same reason a description is cleared by sending `""`.
+
+`PUT` on these paths now returns 405, which became the new 405 demo.
+
+### 9.2 A description is never null
+
+Creating a guild or quest without `description` stores `""`. The entities normalise `null` to `""`,
+and migration `V3__description_not_null.sql` backs it with `NOT NULL DEFAULT ''`, the same
+belt-and-braces approach as the XP CHECK constraints.
+
+### 9.3 Postman: summary, real list, pagination on its own
+
+* New folder `0. Suvestinė` walks Guild → Quest → LogEntry with `pm.sendRequest`, following
+  `links.next` when a list spans several pages, and reports the totals (`grupiu: 3, uzduociu: 9,
+  irasu: 12` on a fresh database) with every id. It also checks that each `guildId` / `questId`
+  points at the parent it was listed under.
+* "Gauti grupių sąrašą" no longer sends `?name=Postman&size=2`, which showed only two ids. It
+  returns all guilds; pagination is shown by two dedicated requests (`size=2`, then the
+  `links.next` URL). Other list requests assert on content and ids, not on page metadata.
+* The v3 YAML folder is the source; the v2.1 JSON for newman is generated from it. The suite is
+  now **31 requests, 75 assertions** on a fresh database.

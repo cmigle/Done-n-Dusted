@@ -24,7 +24,8 @@ if occupied Get-Process postgres | Stop-Process -Force
 PostgreSQL
   host localhost, port 55432, db postgres, user postgres, slaptazodzio nera
 
-visa Postman kolekcija - 28 uzklausos, 57 patikros, ~5 s:
+visa Postman kolekcija - 31 uzklausa, 75 patikros, ~5 s (pirmas aplankas "0. Suvestine"
+parodo, kiek DB yra grupiu, uzduociu ir irasu su visais ID):
   npx newman run postman/DoneNDusted.postman_collection.json
 
 .cmd versija Postman 
@@ -52,12 +53,18 @@ R=$(curl -si -X POST http://localhost:8080/api/guilds -H "Content-Type: applicat
 # (POST ir id paemimas is Location antrastes i kintamaji GID, kad toliau nereiktu ranka rasyti)
 GID=$(echo "$R" | tr -d '\r' | grep -i '^location' | grep -o '[0-9]*$'); echo "Nauja grupe: $GID"
 
-# 1.6 Atnaujinti (200)
-curl -s -X PUT http://localhost:8080/api/guilds/$GID -H "Content-Type: application/json" -d '{"name":"Gynimo grupe v2","description":"Pakeistas aprasymas"}'
+# 1.6 Dalinis atnaujinimas PATCH (200) - siunciu tik description, name lieka koks buvo
+curl -s -X PATCH http://localhost:8080/api/guilds/$GID -H "Content-Type: application/json" -d '{"description":"Pakeistas aprasymas"}'
+
+# 1.6b PATCH tik name - description NEDINGSTA (su PUT butu perrasytas null ir dinges is atsakymo)
+curl -s -X PATCH http://localhost:8080/api/guilds/$GID -H "Content-Type: application/json" -d '{"name":"Gynimo grupe v2"}'
 
 # 1.7 Istrinti (204, atsakymas be turinio). Paskui GET -> 404
 curl -i -X DELETE http://localhost:8080/api/guilds/$GID
 curl -s http://localhost:8080/api/guilds/$GID
+
+# 1.8 Grupe BE aprasymo (201) -> atsakyme "description":"" (laukas nedingsta)
+curl -s -X POST http://localhost:8080/api/guilds -H "Content-Type: application/json" -d '{"name":"Be aprasymo"}'
 
 
 -----------------------------------------------------------------
@@ -79,8 +86,9 @@ R=$(curl -si -X POST http://localhost:8080/api/guilds/2/quests -H "Content-Type:
 
 QID=$(echo "$R" | tr -d '\r' | grep -i '^location' | grep -o '[0-9]*$'); echo "Nauja uzduotis: $QID"
 
-# 2.5 Atnaujinti (200) - pakeiciu i HABIT, tada targetCount nebeduodu
-curl -s -X PUT http://localhost:8080/api/guilds/2/quests/$QID -H "Content-Type: application/json" -d '{"title":"Gynimo push-ups","stat":"STR","type":"HABIT","difficulty":"EASY","active":true}'
+# 2.5 PATCH (200) - keiciu tik tipa i HABIT ir sudetinguma; title lieka, o targetCount
+#     serveris isvalo pats, nes jis leidziamas tik GRIND tipui
+curl -s -X PATCH http://localhost:8080/api/guilds/2/quests/$QID -H "Content-Type: application/json" -d '{"type":"HABIT","difficulty":"EASY"}'
 
 # 2.6 Istrinti (204)
 curl -i -X DELETE http://localhost:8080/api/guilds/2/quests/$QID
@@ -104,8 +112,9 @@ R=$(curl -si -X POST http://localhost:8080/api/guilds/2/quests/6/logs -H "Conten
 
 LID=$(echo "$R" | tr -d '\r' | grep -i '^location' | grep -o '[0-9]*$'); echo "Naujas irasas: $LID"
 
-# 3.5 DM patvirtina BE xpAwarded -> serveris pats paskaiciuoja 80 XP (LEGENDARY 8 x 10)
-curl -s -X PUT http://localhost:8080/api/guilds/2/quests/6/logs/$LID -H "Content-Type: application/json" -d '{"note":"Pakeliau 140 kg!","evidenceUrl":"https://example.org/deadlift.mp4","occurredAt":"2026-09-20T10:00:00Z","status":"APPROVED","reviewerNote":"Video matosi, uzskaitau"}'
+# 3.5 DM patvirtina BE xpAwarded -> serveris pats paskaiciuoja 80 XP (LEGENDARY 8 x 10).
+#     PATCH: siunciu tik perziuros laukus, note/evidenceUrl/occurredAt lieka nepakeisti
+curl -s -X PATCH http://localhost:8080/api/guilds/2/quests/6/logs/$LID -H "Content-Type: application/json" -d '{"status":"APPROVED","reviewerNote":"Video matosi, uzskaitau"}'
 
 # 3.6 Istrinti (204)
 curl -i -X DELETE http://localhost:8080/api/guilds/2/quests/6/logs/$LID
@@ -151,8 +160,8 @@ curl -s -X POST http://localhost:8080/api/guilds -H "Content-Type: text/plain" -
 # 406 - prasau XML, o API grazina tik JSON
 curl -s -i http://localhost:8080/api/guilds -H "Accept: application/xml" | head -1
 
-# 405 - metodas netinka siam keliui
-curl -s -X PATCH http://localhost:8080/api/guilds/2
+# 405 - metodas netinka siam keliui (atnaujinimas yra PATCH, PUT nepalaikomas)
+curl -s -X PUT http://localhost:8080/api/guilds/2
 
 # 422 - GRIND be targetCount (JSON geras, bet pazeista taisykle)
 curl -s -X POST http://localhost:8080/api/guilds/2/quests -H "Content-Type: application/json" -d '{"title":"Grind be tikslo","stat":"STR","type":"GRIND","difficulty":"EASY"}'
@@ -167,7 +176,10 @@ curl -s -X POST http://localhost:8080/api/guilds/2/quests/7/logs -H "Content-Typ
 curl -s -X POST http://localhost:8080/api/guilds/2/quests/4/logs -H "Content-Type: application/json" -d '{"note":"Rytoj begsiu","occurredAt":"2099-01-01T10:00:00Z"}'
 
 # 422 - REJECTED irasui bandau duoti XP
-curl -s -X PUT http://localhost:8080/api/guilds/2/quests/4/logs/7 -H "Content-Type: application/json" -d '{"occurredAt":"2026-09-20T10:00:00Z","status":"REJECTED","xpAwarded":50}'
+curl -s -X PATCH http://localhost:8080/api/guilds/2/quests/4/logs/7 -H "Content-Type: application/json" -d '{"status":"REJECTED","xpAwarded":50}'
+
+# 422 - XP be status (perziuros laukai keiciami tik kartu su DM sprendimu)
+curl -s -X PATCH http://localhost:8080/api/guilds/2/quests/4/logs/7 -H "Content-Type: application/json" -d '{"xpAwarded":50}'
 
 
 -----------------------------------------------------------------

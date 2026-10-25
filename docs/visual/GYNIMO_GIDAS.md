@@ -29,7 +29,7 @@ Išmok šitą beveik mintinai. Nuo jo pradėk, kai paklaus „papasakok apie pro
 > Tai REST API, parašytas su Java 21 ir Spring Boot. Jame yra 15 metodų: kiekvienam resursui po
 > 5 (sąrašas, vienas, sukurti, atnaujinti, ištrinti). Duomenys saugomi PostgreSQL, schemą sukuria
 > Flyway. Dokumentacija — OpenAPI / Swagger, o visi metodai patikrinti Postman kolekcija
-> (28 užklausos, 57 patikros).
+> (31 užklausa, 75 patikros).
 >
 > Kodas suskirstytas sluoksniais: **Controller** priima HTTP užklausą, **Service** tikrina
 > taisykles, **Repository** kalba su duomenų baze. Klientui grąžinami **DTO**, o visos klaidos
@@ -41,7 +41,7 @@ Išmok šitą beveik mintinai. Nuo jo pradėk, kai paklaus „papasakok apie pro
 
 ### REST
 - **Tiksliai:** architektūros stilius, kuriame sistema pateikiama kaip **resursai** su URL adresais
-  (`/api/guilds/2`). Su jais dirbama standartiniais HTTP metodais (GET, POST, PUT, DELETE).
+  (`/api/guilds/2`). Su jais dirbama standartiniais HTTP metodais (GET, POST, PATCH, DELETE).
   Serveris neatsimena kliento tarp užklausų (*stateless*).
 - **Paprastai:** kiekvienas daiktas turi savo adresą, o veiksmą nusako HTTP metodas.
 
@@ -58,7 +58,8 @@ Išmok šitą beveik mintinai. Nuo jo pradėk, kai paklaus „papasakok apie pro
 | --- | --- | --- |
 | `GET` | gauna duomenis, nieko nekeičia | taip |
 | `POST` | sukuria naują resursą | **ne** — du kartus = du įrašai |
-| `PUT` | **pilnai** pakeičia resursą | taip — kartojant rezultatas tas pats |
+| `PATCH` | **dalinai** pakeičia resursą — tik atsiųstus laukus (pas tave atnaujinimas yra šis) | pagal HTTP nebūtinai; pas tave taip, nes PATCH nustato reikšmes, o ne „prideda +1“ |
+| `PUT` | **pilnai** pakeičia resursą — neatsiųstas laukas tampa `null` (pas tave nenaudojamas → `405`) | taip — kartojant rezultatas tas pats |
 | `DELETE` | ištrina | taip — būsena po antro karto ta pati (nors atsakymas jau 404) |
 
 - **Paprastai (idempotentiškumas):** paspaudus tą patį mygtuką 10 kartų, sistemos būsena tokia pati kaip paspaudus 1 kartą.
@@ -69,7 +70,7 @@ Išmok šitą beveik mintinai. Nuo jo pradėk, kai paklaus „papasakok apie pro
 
 ### Užklausos turinys (request body) / payload
 - **Tiksliai:** duomenys, siunčiami HTTP užklausos viduje (pas tave — JSON), pvz. naujos grupės
-  pavadinimas. Siunčiami su `POST` ir `PUT`. `GET` ir `DELETE` turinio neturi.
+  pavadinimas. Siunčiami su `POST` ir `PATCH`. `GET` ir `DELETE` turinio neturi.
 - **Paprastai:** „laiško tekstas“. URL yra adresas ant voko, o body — kas voke viduje.
 - Lietuviškai sakyk **„užklausos turinys“**, ne „kūnas“. Tai jau pataisyta visuose failuose.
 
@@ -176,8 +177,8 @@ Išmok šitą beveik mintinai. Nuo jo pradėk, kai paklaus „papasakok apie pro
 
 ### 3.1 Kuo skiriasi `EnumType.STRING` nuo `ORDINAL`? Kodėl STRING geriau?
 
-Vieta kode: [LogEntry.java:41-43](../src/main/java/lt/ktu/donendusted/domain/LogEntry.java#L41-L43)
-(tas pats naudojama [Quest.java](../src/main/java/lt/ktu/donendusted/domain/Quest.java) laukams `stat`, `type`, `difficulty`).
+Vieta kode: [LogEntry.java:41-43](../../src/main/java/lt/ktu/donendusted/domain/LogEntry.java#L41-L43)
+(tas pats naudojama [Quest.java](../../src/main/java/lt/ktu/donendusted/domain/Quest.java) laukams `stat`, `type`, `difficulty`).
 
 **Tiksliai.** `@Enumerated` nurodo, kaip enum reikšmė įrašoma į DB stulpelį:
 
@@ -195,7 +196,7 @@ tampa CANCELLED, o buvę APPROVED (`1`) — PENDING. Jokios klaidos nebus, duome
 sugadinti. Su STRING DB toliau saugo `'PENDING'` ir viskas veikia.
 
 Dar vienas privalumas: tavo SQL schemoje yra `CHECK (status in ('PENDING','APPROVED','REJECTED'))`
-([V1__schema.sql](../src/main/resources/db/migration/V1__schema.sql)). Taip DB pati saugo nuo
+([V1__schema.sql](../../src/main/resources/db/migration/V1__schema.sql)). Taip DB pati saugo nuo
 neleistinų reikšmių, o su skaičiais tai būtų mažiau aišku.
 
 **Paprastai (atsimink):** *ORDINAL įsimena vietą eilėje, STRING — vardą. Jei eilė pasikeis,
@@ -287,20 +288,52 @@ paprašyti kito: `?page=0&size=20&sort=name,asc`.
 **Kodėl reikia:**
 - jei DB turės 100 000 įrašų, vienas GET be puslapiavimo apkrautų serverį, DB ir tinklą;
 - klientas (UI) vis tiek rodo po kelias dešimtis;
-- apsauga: `max-page-size: 100` ([application.yml](../src/main/resources/application.yml)) —
+- apsauga: `max-page-size: 100` ([application.yml](../../src/main/resources/application.yml)) —
   net `?size=100000` bus apkarpytas iki 100.
 
 **Kaip realizuota:**
 1. Kontroleryje `@PageableDefault(size = 20, sort = "name") Pageable pageable` — Spring pats
    perskaito `page`, `size`, `sort` iš URL.
 2. Repozitorija `findAll(spec, pageable)` sugeneruoja SQL su `LIMIT` / `OFFSET` ir papildomą `COUNT`.
-3. [PagedResponse.java](../src/main/java/lt/ktu/donendusted/web/PagedResponse.java) supakuoja
+3. [PagedResponse.java](../../src/main/java/lt/ktu/donendusted/web/PagedResponse.java) supakuoja
    atsakymą: `content` (įrašai), `page` (numeris, dydis, kiek iš viso) ir `links`
    (`self`, `first`, `prev`, `next`, `last`). Nuorodose išlieka visi filtrai.
 4. Puslapiai skaičiuojami nuo 0.
 5. Rūšiavimas pagal neegzistuojantį lauką (`?sort=bogus`) grąžina `400`.
 
 **Paprastai (atsimink):** *kaip knyga — skaitai po puslapį, o apačioje yra „kitas“ ir „ankstesnis“.*
+
+**Kaip parodyti Postman:** aplanke `1. Grupės` užklausa *Puslapiavimas – pirmas puslapis*
+(`?page=0&size=2&sort=id,asc`) grąžina 2 grupes ir `links.next`, o *Puslapiavimas – kitas puslapis
+pagal links.next* atidaro tą nuorodą. Kitos sąrašų užklausos rodo tiesiog duomenis — page info
+tikrinti visur nebūtina. *Gauti grupių sąrašą* be parametrų grąžina **visas** grupes (iki 20).
+
+### 3.5a Hypermedia — ne tik puslapiavimui, o patogumui
+
+**Kas tai.** Atsakyme kartu su duomenimis pateikiamos **nuorodos** į susijusius resursus ar
+galimus veiksmus. Klientas pats nekonstruoja URL — jis eina serverio duotomis nuorodomis
+(REST principas HATEOAS: *Hypermedia As The Engine Of Application State*).
+
+**Kur tai yra pas tave:**
+- sąrašų `links` (`self`, `first`, `prev`, `next`, `last`) — klientui nereikia žinoti, kaip
+  sudaromas kito puslapio URL ir kad reikia išlaikyti filtrus; jis tiesiog seka `next`;
+- `Location` antraštė po `POST` — nuoroda į ką tik sukurtą resursą. Tai irgi hypermedia ir
+  su puslapiavimu nesusijusi: klientas iškart žino naujo resurso adresą;
+- Postman *Suvestinės* testas seka `links.next`, kol jos nebėra — todėl veiktų ir su 1000 grupių.
+
+**Kodėl tai patogu, net kai puslapiavimo nėra:**
+- nuorodos į **vaikinius** resursus (grupė → `/guilds/2/quests`) ir **tėvinį** (užduotis →
+  `/guilds/2`) leidžia naršyti API kaip svetainę;
+- nuorodos į **galimus veiksmus** pagal būseną: pvz. `PENDING` įrašas galėtų turėti nuorodą
+  „patvirtinti“, o `APPROVED` — nebe. Klientas iš nuorodų mato, ką dabar galima daryti;
+- pasikeitus URL struktūrai serveryje, klientas, sekantis nuorodas, nesulūžta.
+
+**Sąžiningai:** pavieniai resursai (`GuildResponse` ir kt.) nuorodų dar neturi — jos yra tik
+sąrašuose ir `Location` antraštėje. Pridėti būtų paprasta: `links: { self, quests }` grupei,
+`links: { self, guild, logs }` užduočiai.
+
+**Paprastai (atsimink):** *kaip svetainė su mygtukais — nereikia mintinai žinoti adresų, tiesiog
+spaudi nuorodas, kurias duoda puslapis.*
 
 ### 3.6 Kaip kalbėti apie Service klases, DTO ir kitus sluoksnius?
 
@@ -425,169 +458,171 @@ Kiekvienam failui: **Rodyk** (į kurią vietą užvesti pelę) ir **Sakyk** (1�
 
 ### Šaknis
 
-**[pom.xml](../pom.xml)**
+**[pom.xml](../../pom.xml)**
 - **Rodyk:** `<parent>` su Spring Boot 4.1.1, `java.version` 21, priklausomybių sąrašą.
 - **Sakyk:** „Maven projekto aprašas. Starter'iai: `web` — REST, `data-jpa` — DB, `validation` —
   laukų tikrinimas, `flyway` — migracijos. `springdoc` generuoja Swagger, `embedded-postgres`
   leidžia paleisti tikrą PostgreSQL be diegimo.“
 
-**[application.yml](../src/main/resources/application.yml)**
+**[application.yml](../../src/main/resources/application.yml)**
 - **Rodyk:** `ddl-auto: validate`, `open-in-view: false`, `fail-on-unknown-properties: true`, `max-page-size: 100`.
 - **Sakyk:** „Schemą kuria Flyway, Hibernate tik patikrina, ar entity atitinka lenteles. Nežinomas
   JSON laukas grąžina 400 — taip klientas negali įsiųsti, pvz., `xpAwarded`. Puslapio dydis ribojamas iki 100.“
 
-**[application-prod.yml](../src/main/resources/application-prod.yml)**
+**[application-prod.yml](../../src/main/resources/application-prod.yml)**
 - **Sakyk:** „`prod` profilis: DB prisijungimas iš aplinkos kintamųjų, slaptažodžiai kode neįrašyti.“
 
-**[docker-compose.yml](../docker-compose.yml)**
+**[docker-compose.yml](../../docker-compose.yml)**
 - **Sakyk:** žr. [3.8](#38-jei-docker-neimplementuotas-kodėl-yra-docker-failas).
 
 ### Paleidimas ir konfigūracija
 
-**[DoneNDustedApplication.java](../src/main/java/lt/ktu/donendusted/DoneNDustedApplication.java)**
+**[DoneNDustedApplication.java](../../src/main/java/lt/ktu/donendusted/DoneNDustedApplication.java)**
 - **Sakyk:** „Įėjimo taškas. `@SpringBootApplication` įjungia automatinę konfigūraciją ir
   susiranda visus kontrolerius, servisus ir repozitorijas šiame pakete.“
 
-**[EmbeddedPostgresConfig.java](../src/main/java/lt/ktu/donendusted/config/EmbeddedPostgresConfig.java)**
-- **Rodyk:** `@Profile("dev")`, [eilutė 24](../src/main/java/lt/ktu/donendusted/config/EmbeddedPostgresConfig.java#L24) `setPort(55432)`.
+**[EmbeddedPostgresConfig.java](../../src/main/java/lt/ktu/donendusted/config/EmbeddedPostgresConfig.java)**
+- **Rodyk:** `@Profile("dev")`, [eilutė 24](../../src/main/java/lt/ktu/donendusted/config/EmbeddedPostgresConfig.java#L24) `setPort(55432)`.
 - **Sakyk:** „Tik `dev` profilyje paleidžiamas tikras PostgreSQL 18 procesas — ne H2 ir ne emuliacija.
   Portas fiksuotas, kad galėčiau parodyti lenteles DBeaver'yje. Sustabdžius programą, DB irgi sustoja.“
 
-**[OpenApiConfig.java](../src/main/java/lt/ktu/donendusted/config/OpenApiConfig.java)**
+**[OpenApiConfig.java](../../src/main/java/lt/ktu/donendusted/config/OpenApiConfig.java)**
 - **Sakyk:** „Bendra OpenAPI informacija: pavadinimas, versija, aprašymas. Endpoint'ų aprašai
   ateina iš `@Operation` / `@ApiResponse` anotacijų kontroleriuose.“
 
 ### Duomenų bazė
 
-**[V1__schema.sql](../src/main/resources/db/migration/V1__schema.sql)**
+**[V1__schema.sql](../../src/main/resources/db/migration/V1__schema.sql)**
 - **Rodyk:** `references guild (id) on delete cascade`, `unique (guild_id, title)`, `ck_log_pending_is_empty`.
 - **Sakyk:** „Trys lentelės su išoriniais raktais. Ištrynus grupę, kaskadiškai dingsta jos užduotys
   ir įrašai. Taisyklės dubliuojamos DB lygyje per CHECK — net jei Java kode būtų klaida,
   PENDING įrašas negalėtų turėti XP.“
 
-**[V2__seed_data.sql](../src/main/resources/db/migration/V2__seed_data.sql)**
+**[V2__seed_data.sql](../../src/main/resources/db/migration/V2__seed_data.sql)**
 - **Sakyk:** „Prasmingi demonstraciniai duomenys: 3 grupės, 9 užduotys, 12 įrašų visose būsenose.“
 
 ### `domain/` — Entity ir enum
 
-**[Guild.java](../src/main/java/lt/ktu/donendusted/domain/Guild.java)**
+**[Guild.java](../../src/main/java/lt/ktu/donendusted/domain/Guild.java)**
 - **Rodyk:** `@Entity`, `@GeneratedValue(strategy = IDENTITY)`, `protected Guild()`.
 - **Sakyk:** „Entity — viena `guild` lentelės eilutė. ID generuoja PostgreSQL. Tuščias
   konstruktorius `protected`, nes jo reikia JPA, bet kode grupės be vardo sukurti negalima.“
 
-**[Quest.java](../src/main/java/lt/ktu/donendusted/domain/Quest.java)**
+**[Quest.java](../../src/main/java/lt/ktu/donendusted/domain/Quest.java)**
 - **Rodyk:** `@ManyToOne(fetch = LAZY)` į Guild, `@Enumerated(STRING)`.
 - **Sakyk:** „Užduotis priklauso vienai grupei — ryšys daug-su-vienu. LAZY reiškia, kad grupė iš DB
   kraunama tik kai jos prireikia.“
 
-**[LogEntry.java](../src/main/java/lt/ktu/donendusted/domain/LogEntry.java)**
-- **Rodyk:** [STRING komentarą (41)](../src/main/java/lt/ktu/donendusted/domain/LogEntry.java#L41),
-  [`approve()` (79)](../src/main/java/lt/ktu/donendusted/domain/LogEntry.java#L79), kad status setterio nėra.
+**[LogEntry.java](../../src/main/java/lt/ktu/donendusted/domain/LogEntry.java)**
+- **Rodyk:** [STRING komentarą (41)](../../src/main/java/lt/ktu/donendusted/domain/LogEntry.java#L41),
+  [`approve()` (79)](../../src/main/java/lt/ktu/donendusted/domain/LogEntry.java#L79), kad status setterio nėra.
 - **Sakyk:** „Būsena keičiama tik per metodus `approve`, `reject`, `resetToPending`, ne per setterį.
   Taip XP gali atsirasti tik patvirtintame įraše. XP užšaldomas — pakeitus užduoties sudėtingumą,
   istorija nesikeičia.“
 
-**[Difficulty.java](../src/main/java/lt/ktu/donendusted/domain/Difficulty.java)**
+**[Difficulty.java](../../src/main/java/lt/ktu/donendusted/domain/Difficulty.java)**
 - **Rodyk:** `HARD(5)`, `xpValue()`.
 - **Sakyk:** „Enum su reikšme: sudėtingumas yra XP daugiklis, XP = 10 × daugiklis. Serveris
   pats apskaičiuoja XP, klientas jo neduoda.“
 
-**[LogStatus.java](../src/main/java/lt/ktu/donendusted/domain/LogStatus.java)**, **[QuestType.java](../src/main/java/lt/ktu/donendusted/domain/QuestType.java)**, **[Stat.java](../src/main/java/lt/ktu/donendusted/domain/Stat.java)**
+**[LogStatus.java](../../src/main/java/lt/ktu/donendusted/domain/LogStatus.java)**, **[QuestType.java](../../src/main/java/lt/ktu/donendusted/domain/QuestType.java)**, **[Stat.java](../../src/main/java/lt/ktu/donendusted/domain/Stat.java)**
 - **Sakyk:** „Fiksuoti pasirinkimai. Neteisinga reikšmė JSON'e ar URL'e grąžina 400.“
 
 ### `repository/`
 
-**[GuildRepository.java](../src/main/java/lt/ktu/donendusted/repository/GuildRepository.java)**
+**[GuildRepository.java](../../src/main/java/lt/ktu/donendusted/repository/GuildRepository.java)**
 - **Rodyk:** `existsByNameIgnoreCase`.
 - **Sakyk:** „SQL nerašau — Spring Data sugeneruoja užklausą iš metodo pavadinimo.
   `JpaSpecificationExecutor` leidžia dinaminius filtrus.“
 
-**[QuestRepository.java](../src/main/java/lt/ktu/donendusted/repository/QuestRepository.java)**
+**[QuestRepository.java](../../src/main/java/lt/ktu/donendusted/repository/QuestRepository.java)**
 - **Rodyk:** `findByIdAndGuildId`.
 - **Sakyk:** „Užduoties ieškau pagal **abu** ID, todėl užduotis iš kitos grupės grąžina 404.“
 
-**[LogEntryRepository.java](../src/main/java/lt/ktu/donendusted/repository/LogEntryRepository.java)**
-- **Rodyk:** [`findByIdAndQuestIdAndQuestGuildId` (15)](../src/main/java/lt/ktu/donendusted/repository/LogEntryRepository.java#L15).
+**[LogEntryRepository.java](../../src/main/java/lt/ktu/donendusted/repository/LogEntryRepository.java)**
+- **Rodyk:** [`findByIdAndQuestIdAndQuestGuildId` (15)](../../src/main/java/lt/ktu/donendusted/repository/LogEntryRepository.java#L15).
 - **Sakyk:** „Tikrinama visa grandinė grupė → užduotis → įrašas viena SQL užklausa.“
 
 ### `service/` — logika
 
-**[GuildService.java](../src/main/java/lt/ktu/donendusted/service/GuildService.java)**
-- **Rodyk:** `@Transactional` ant klasės, [`Specification` (34)](../src/main/java/lt/ktu/donendusted/service/GuildService.java#L34),
-  [komentarą apie `save()` (57)](../src/main/java/lt/ktu/donendusted/service/GuildService.java#L57).
+**[GuildService.java](../../src/main/java/lt/ktu/donendusted/service/GuildService.java)**
+- **Rodyk:** `@Transactional` ant klasės, [`Specification` (34)](../../src/main/java/lt/ktu/donendusted/service/GuildService.java#L34),
+  [komentarą apie `save()` (57)](../../src/main/java/lt/ktu/donendusted/service/GuildService.java#L57).
 - **Sakyk:** „Kiekvienas metodas — viena transakcija. Prieš kuriant tikrinu, ar pavadinimas laisvas
   (409). Atnaujinant `save()` nekviečiu — Hibernate pats pastebi pakeitimus (*dirty checking*).“
 
-**[QuestService.java](../src/main/java/lt/ktu/donendusted/service/QuestService.java)**
-- **Rodyk:** [`get()` (61)](../src/main/java/lt/ktu/donendusted/service/QuestService.java#L61),
-  [`validate()` (107)](../src/main/java/lt/ktu/donendusted/service/QuestService.java#L107).
+**[QuestService.java](../../src/main/java/lt/ktu/donendusted/service/QuestService.java)**
+- **Rodyk:** [`get()` (61)](../../src/main/java/lt/ktu/donendusted/service/QuestService.java#L61),
+  [`validate()` (107)](../../src/main/java/lt/ktu/donendusted/service/QuestService.java#L107).
 - **Sakyk:** „Jei užduotis nerasta, papildomai tikrinu grupę — klientas sužino tikslią priežastį.
   `validate()` — taisyklė tarp kelių laukų (GRIND ⇔ targetCount). Anotacija prie vieno lauko jos
   neišreikš, todėl tai 422, ne 400.“
 
-**[LogEntryService.java](../src/main/java/lt/ktu/donendusted/service/LogEntryService.java)**
-- **Rodyk:** [`create()` (58)](../src/main/java/lt/ktu/donendusted/service/LogEntryService.java#L58),
-  [`switch` (83)](../src/main/java/lt/ktu/donendusted/service/LogEntryService.java#L83).
+**[LogEntryService.java](../../src/main/java/lt/ktu/donendusted/service/LogEntryService.java)**
+- **Rodyk:** [`create()` (58)](../../src/main/java/lt/ktu/donendusted/service/LogEntryService.java#L58),
+  [`switch` (83)](../../src/main/java/lt/ktu/donendusted/service/LogEntryService.java#L83).
 - **Sakyk:** „Naujas įrašas visada PENDING su 0 XP. Data negali būti ateityje, užduotis turi būti
   aktyvi. Tvirtinant be `xpAwarded`, XP imamas iš sudėtingumo. PENDING ir REJECTED negali turėti XP.“
 
 ### `web/` — kontroleriai
 
-**[GuildController.java](../src/main/java/lt/ktu/donendusted/web/GuildController.java)**
-- **Rodyk:** `@RequestMapping(produces = JSON)`, [`create()` (82)](../src/main/java/lt/ktu/donendusted/web/GuildController.java#L82), `delete()` → `noContent()`.
+**[GuildController.java](../../src/main/java/lt/ktu/donendusted/web/GuildController.java)**
+- **Rodyk:** `@RequestMapping(produces = JSON)`, [`create()` (82)](../../src/main/java/lt/ktu/donendusted/web/GuildController.java#L82), `delete()` → `noContent()`.
 - **Sakyk:** „Kontroleris neturi logikos: priima, paleidžia `@Valid`, kviečia servisą, verčia į DTO.
   POST grąžina `201` ir `Location` antraštę, DELETE — `204` be turinio. `consumes = JSON` duoda
   415, `produces = JSON` — 406.“
 
-**[QuestController.java](../src/main/java/lt/ktu/donendusted/web/QuestController.java)**, **[LogEntryController.java](../src/main/java/lt/ktu/donendusted/web/LogEntryController.java)**
+**[QuestController.java](../../src/main/java/lt/ktu/donendusted/web/QuestController.java)**, **[LogEntryController.java](../../src/main/java/lt/ktu/donendusted/web/LogEntryController.java)**
 - **Rodyk:** kelią `/api/guilds/{guildId}/quests/{questId}/logs`.
 - **Sakyk:** „Hierarchiniai keliai — vaikas pasiekiamas tik per tėvą. Filtrai yra užklausos parametrai (`?stat=CON&active=true`).“
 
-**[PagedResponse.java](../src/main/java/lt/ktu/donendusted/web/PagedResponse.java)**
-- **Rodyk:** [`from()` (30)](../src/main/java/lt/ktu/donendusted/web/PagedResponse.java#L30), `cloneBuilder()`.
+**[PagedResponse.java](../../src/main/java/lt/ktu/donendusted/web/PagedResponse.java)**
+- **Rodyk:** [`from()` (30)](../../src/main/java/lt/ktu/donendusted/web/PagedResponse.java#L30), `cloneBuilder()`.
 - **Sakyk:** „Vienoda puslapiuoto sąrašo struktūra su navigacijos nuorodomis. Nuorodos statomos iš
   dabartinio URL, todėl filtrai išlieka.“
 
 ### `web/dto/`
 
-**[GuildRequest.java](../src/main/java/lt/ktu/donendusted/web/dto/GuildRequest.java)**, **[QuestRequest.java](../src/main/java/lt/ktu/donendusted/web/dto/QuestRequest.java)**
+**[GuildRequest.java](../../src/main/java/lt/ktu/donendusted/web/dto/GuildRequest.java)**, **[QuestRequest.java](../../src/main/java/lt/ktu/donendusted/web/dto/QuestRequest.java)**
 - **Rodyk:** `@NotBlank @Size(min = 3, max = 60)`.
 - **Sakyk:** „Request DTO — ką klientas gali atsiųsti. Apribojimai prie laukų tikrinami dar prieš servisą.“
 
-**[LogEntryCreateRequest.java](../src/main/java/lt/ktu/donendusted/web/dto/LogEntryCreateRequest.java)**
+**[LogEntryCreateRequest.java](../../src/main/java/lt/ktu/donendusted/web/dto/LogEntryCreateRequest.java)**
 - **Sakyk (svarbu!):** „Čia **specialiai nėra** nei XP, nei status lauko. Kuriant įrašą klientas
   negali sau prisiskirti taškų — nei per kodą, nei per JSON (nežinomas laukas → 400).“
 
-**[LogEntryUpdateRequest.java](../src/main/java/lt/ktu/donendusted/web/dto/LogEntryUpdateRequest.java)**
+**[LogEntryUpdateRequest.java](../../src/main/java/lt/ktu/donendusted/web/dto/LogEntryUpdateRequest.java)**
 - **Sakyk:** „Vienintelė vieta, kur XP gali būti paduotas — DM tvirtinimo metu. `@PositiveOrZero` neleidžia neigiamo.“
 
-**[GuildResponse.java](../src/main/java/lt/ktu/donendusted/web/dto/GuildResponse.java)**, **[QuestResponse.java](../src/main/java/lt/ktu/donendusted/web/dto/QuestResponse.java)**, **[LogEntryResponse.java](../src/main/java/lt/ktu/donendusted/web/dto/LogEntryResponse.java)**
+**[GuildResponse.java](../../src/main/java/lt/ktu/donendusted/web/dto/GuildResponse.java)**, **[QuestResponse.java](../../src/main/java/lt/ktu/donendusted/web/dto/QuestResponse.java)**, **[LogEntryResponse.java](../../src/main/java/lt/ktu/donendusted/web/dto/LogEntryResponse.java)**
 - **Rodyk:** `static from(...)`, `xpPerCompletion` QuestResponse'e.
 - **Sakyk:** „Response DTO — ką klientas mato. Entity niekada negrąžinamas tiesiai. Galiu pridėti
   apskaičiuotų laukų, pvz. `xpPerCompletion`.“
 
 ### `error/`
 
-**[ApiExceptionHandler.java](../src/main/java/lt/ktu/donendusted/error/ApiExceptionHandler.java)**
-- **Rodyk:** `@RestControllerAdvice`, kelis `@ExceptionHandler`, paskutinį `Exception.class` ([141](../src/main/java/lt/ktu/donendusted/error/ApiExceptionHandler.java#L141)).
+**[ApiExceptionHandler.java](../../src/main/java/lt/ktu/donendusted/error/ApiExceptionHandler.java)**
+- **Rodyk:** `@RestControllerAdvice`, kelis `@ExceptionHandler`, paskutinį `Exception.class` ([141](../../src/main/java/lt/ktu/donendusted/error/ApiExceptionHandler.java#L141)).
 - **Sakyk:** „Viena vieta, kur bet kuri išimtis virsta `ApiError` atsakymu su teisingu kodu.
   Spring parenka tiksliausią handlerį. `Exception.class` — paskutinė apsauga: grąžina 500 be
   stack trace, o klaida tik įrašoma į log'ą.“
 
-**[ApiError.java](../src/main/java/lt/ktu/donendusted/error/ApiError.java)**
+**[ApiError.java](../../src/main/java/lt/ktu/donendusted/error/ApiError.java)**
 - **Sakyk:** „Vienodas klaidos formatas: timestamp, status, error, message, path ir `details` —
   kuris laukas blogas. Klientui užtenka vienos klaidų apdorojimo logikos.“
 
-**[ResourceNotFoundException](../src/main/java/lt/ktu/donendusted/error/ResourceNotFoundException.java)** (404), **[ConflictException](../src/main/java/lt/ktu/donendusted/error/ConflictException.java)** (409), **[BusinessRuleException](../src/main/java/lt/ktu/donendusted/error/BusinessRuleException.java)** (422)
+**[ResourceNotFoundException](../../src/main/java/lt/ktu/donendusted/error/ResourceNotFoundException.java)** (404), **[ConflictException](../../src/main/java/lt/ktu/donendusted/error/ConflictException.java)** (409), **[BusinessRuleException](../../src/main/java/lt/ktu/donendusted/error/BusinessRuleException.java)** (422)
 - **Sakyk:** „Savos išimtys su prasme. Servisas tik išmeta, o handleris parenka kodą. Servisas
   apie HTTP nieko nežino.“
 
 ### Dokumentacija ir testai
 
-- **[docs/openapi.json](openapi.json)** / Swagger UI — „OpenAPI specifikacija, sugeneruota iš kodo anotacijų.“
-- **[Postman kolekcija](../postman/DoneNDusted.postman_collection.json)** — „28 užklausos, 57
-  automatinės patikros. Kolekcija pati susikuria duomenis ir po savęs išsivalo.“
-- **[README.md](../README.md)** — paleidimas, metodų lentelė, klaidų kodai.
+- **[docs/openapi.json](../openapi.json)** / Swagger UI — „OpenAPI specifikacija, sugeneruota iš kodo anotacijų.“
+- **[Postman kolekcija](../../postman/DoneNDusted.postman_collection.json)** — „31 užklausa, 75
+  automatinės patikros. Kolekcija pati susikuria duomenis ir po savęs išsivalo. Pirmas aplankas
+  *0. Suvestinė* parodo, kiek DB yra grupių, užduočių ir įrašų (pvz. `grupiu: 3, uzduociu: 9,
+  irasu: 12`) su visais ID ir patikrina, ar vaikų `guildId` / `questId` rodo į teisingą tėvą.“
+- **[README.md](../../README.md)** — paleidimas, metodų lentelė, klaidų kodai.
 
 ---
 
@@ -600,14 +635,18 @@ A: Resursai turi URI (`/api/guilds/2`), naudojami standartiniai HTTP metodai ir 
 kodai, serveris *stateless*, atsakymai JSON. Po POST grąžinamas `201` + `Location`, sąrašuose yra navigacijos nuorodos.
 *Paprastai: daiktai turi adresus, veiksmai — HTTP metodai.*
 
-**K: Kuo skiriasi PUT ir PATCH? Kodėl PUT?**
-A: PUT pakeičia **visą** resursą — reikia atsiųsti visus laukus. PATCH keičia tik atsiųstus.
-Naudojau PUT, nes jis paprastesnis ir idempotentiškas, o LD1 to užtenka.
+**K: Kuo skiriasi PUT ir PATCH? Kodėl PATCH?**
+A: PUT pakeičia **visą** resursą — ko neatsiuntei, tas tampa `null`. Anksčiau su PUT, neatsiuntus
+`description`, aprašymas dingdavo iš atsakymo (null laukai į JSON neįrašomi). Todėl atnaujinimas
+dabar `PATCH`: keičiami tik atsiųsti laukai, `null` / neatsiųstas reiškia „palik kaip yra“, o
+aprašymui išvalyti siunčiamas `""`. Kuriant be `description` išsaugomas `""` (DB: `NOT NULL
+DEFAULT ''`, migracija V3), todėl laukas atsakyme **visada** yra.
 *Paprastai: PUT — perrašyti visą lapą, PATCH — pataisyti vieną žodį.*
 
 **K: Kas yra idempotentiškumas?**
 A: Kartojant užklausą sistemos būsena nesikeičia po pirmo karto. GET, PUT ir DELETE
-idempotentiški, POST — ne (kiekvienas sukuria naują resursą).
+idempotentiški, POST — ne (kiekvienas sukuria naują resursą). PATCH pagal HTTP nebūtinai
+(pvz. „padidink 1“), bet mano PATCH tik nustato reikšmes, todėl kartojant būsena ta pati.
 
 **K: Kodėl POST grąžina 201, o ne 200?**
 A: 201 Created konkrečiai reiškia „sukurtas naujas resursas“, o `Location` antraštė pasako jo adresą.
@@ -743,9 +782,9 @@ Geriau pačiai pasakyti, nei būti „pagautai“. Formulė: **„Žinau → kod
 | Silpna vieta | Ką sakyti |
 | --- | --- |
 | Nėra autentifikacijos / rolių | „LD1 apimtis — REST sluoksnis. JWT ir rolės — LD2. Struktūra paruošta: pridėsiu Spring Security filtrą, kontrolerių keisti nereikės.“ |
-| Nėra JUnit testų | „Testuota Postman kolekcija su 57 patikromis. Kitas žingsnis — `@SpringBootTest` + MockMvc integraciniai testai.“ |
+| Nėra JUnit testų | „Testuota Postman kolekcija su 75 patikromis. Kitas žingsnis — `@SpringBootTest` + MockMvc integraciniai testai.“ |
 | Nuoseklūs ID | žr. 3.4 |
-| PUT, ne PATCH | „Sąmoningai — paprasčiau ir idempotentiška. PATCH galima pridėti vėliau.“ |
+| PATCH: `null` = „nesiųsta“ | „Record DTO negali atskirti neatsiųsto lauko nuo `null`, todėl aprašymui išvalyti siunčiamas `\"\"`. Tikslesnis variantas — JSON Merge Patch (`application/merge-patch+json`).“ |
 | Dev DB duomenys dingsta | „Specialiai — kiekviena demonstracija prasideda nuo švarių duomenų. Nuolatinei DB — `prod` profilis.“ |
 | Nėra Dockerfile | žr. 3.8 |
 

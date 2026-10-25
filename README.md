@@ -1,6 +1,6 @@
 # Done n Dusted — REST API (LD1)
 
-KTU T120B165 *Saityno taikomųjų programų projektavimas*. Antras laboratorinis darbas: REST
+KTU T120B165 *Saityno taikomųjų programų projektavimas*. Pirmas laboratorinis darbas: REST
 principais veikianti API sąsaja, OpenAPI specifikacija, PostgreSQL duomenų bazė su prasmingais
 duomenimis ir paruošta demonstracija.
 
@@ -56,7 +56,7 @@ grandinė grąžina `404`.
 | 1 | `GET` | `/api/guilds` | Sąrašas; filtras `name`, puslapiavimas, rikiavimas | `200` |
 | 2 | `GET` | `/api/guilds/{guildId}` | Viena grupė | `200` |
 | 3 | `POST` | `/api/guilds` | Sukurti grupę | `201` + `Location` |
-| 4 | `PUT` | `/api/guilds/{guildId}` | Atnaujinti grupę | `200` |
+| 4 | `PATCH` | `/api/guilds/{guildId}` | Dalinai atnaujinti grupę | `200` |
 | 5 | `DELETE` | `/api/guilds/{guildId}` | Ištrinti grupę su visu turiniu | `204` |
 
 ### Užduotys (Quest)
@@ -66,7 +66,7 @@ grandinė grąžina `404`.
 | 6 | `GET` | `/api/guilds/{guildId}/quests` | Sąrašas; filtrai `stat`, `type`, `difficulty`, `active` | `200` |
 | 7 | `GET` | `/api/guilds/{guildId}/quests/{questId}` | Viena užduotis | `200` |
 | 8 | `POST` | `/api/guilds/{guildId}/quests` | Sukurti užduotį | `201` + `Location` |
-| 9 | `PUT` | `/api/guilds/{guildId}/quests/{questId}` | Atnaujinti užduotį | `200` |
+| 9 | `PATCH` | `/api/guilds/{guildId}/quests/{questId}` | Dalinai atnaujinti užduotį | `200` |
 | 10 | `DELETE` | `/api/guilds/{guildId}/quests/{questId}` | Ištrinti užduotį su įrašais | `204` |
 
 ### Progreso įrašai (LogEntry)
@@ -76,8 +76,16 @@ grandinė grąžina `404`.
 | 11 | `GET` | `/api/guilds/{guildId}/quests/{questId}/logs` | Sąrašas; filtras `status` | `200` |
 | 12 | `GET` | `/api/guilds/{guildId}/quests/{questId}/logs/{logId}` | Vienas įrašas | `200` |
 | 13 | `POST` | `/api/guilds/{guildId}/quests/{questId}/logs` | Registruoti progresą (visada `PENDING`, 0 XP) | `201` + `Location` |
-| 14 | `PUT` | `/api/guilds/{guildId}/quests/{questId}/logs/{logId}` | Atnaujinti įrašą ir DM peržiūros rezultatą | `200` |
+| 14 | `PATCH` | `/api/guilds/{guildId}/quests/{questId}/logs/{logId}` | Dalinai atnaujinti įrašą ir DM peržiūros rezultatą | `200` |
 | 15 | `DELETE` | `/api/guilds/{guildId}/quests/{questId}/logs/{logId}` | Ištrinti įrašą | `204` |
+
+**Atnaujinimas — `PATCH` (dalinis).** Keičiami tik atsiųsti laukai, neatsiųsti lieka tokie, kokie
+buvo. Todėl, pvz., keičiant tik užduoties sudėtingumą, aprašymas niekur nedingsta. Įrašo
+peržiūros laukai (`xpAwarded`, `inspirationAwarded`, `reviewerNote`) priimami tik kartu su `status`.
+
+**Aprašymas niekada nedingsta.** Sukūrus grupę ar užduotį be `description`, jis išsaugomas kaip
+tuščias tekstas `""`, todėl atsakyme laukas visada yra. Tą užtikrina ir duomenų bazė (`NOT NULL
+DEFAULT ''`, migracija `V3`).
 
 Pilna specifikacija kiekvienam metodui — [`docs/openapi.json`](docs/openapi.json) arba gyvai
 Swagger UI.
@@ -105,6 +113,10 @@ puslapio nėra.
 ```
 
 Puslapiavimo parametrai: `?page=0&size=20&sort=name,asc`. Didžiausias leidžiamas `size` — 100.
+Numatytasis dydis — 20, puslapiai skaičiuojami nuo 0.
+
+Nuorodos (`links`) yra hypermedia elementas: klientas pats nekonstruoja kito puslapio URL, o tiesiog
+eina serverio duota `links.next` nuoroda, kol jos nebėra. Taip veikia ir Postman suvestinės testas.
 
 ### Klaidos
 
@@ -143,7 +155,7 @@ ateityje, XP neperžiūrėtam įrašui, naujas įrašas prie neaktyvios užduoti
 ## Demonstracija su Postman
 
 [`postman/DoneNDusted.postman_collection.json`](postman/DoneNDusted.postman_collection.json) —
-28 užklausų, 57 patikros. Kolekcija pati susikuria duomenis ir po savęs išsivalo, todėl ją
+31 užklausa, 75 patikros (švariai paleistoje DB). Kolekcija pati susikuria duomenis ir po savęs išsivalo, todėl ją
 galima paleisti kiek nori kartų iš eilės.
 
 ```bash
@@ -152,7 +164,19 @@ npx newman run postman/DoneNDusted.postman_collection.json
 
 Arba Postman programoje: *Import* → *Runner* → *Run*. Trukmė — apie **5 sekundes**.
 
+Ta pati kolekcija Postman v3 formatu (atskiri YAML failai) yra
+[`postman/Done n Dusted API (LD1)/`](postman/Done%20n%20Dusted%20API%20%28LD1%29/); JSON failas sugeneruotas iš
+jos. Ją galima paleisti ir Postman CLI: `postman collection run "postman/Done n Dusted API (LD1)"`.
+
 Kolekcija paeiliui iškviečia **visus 15 metodų** ir papildomai parodo:
+
+* **suvestinę** (aplankas `0. Suvestinė`): kiek DB yra grupių, užduočių ir įrašų su visais jų ID,
+  pvz. `Is viso - grupiu: 3, uzduociu: 9, irasu: 12`, ir ar kiekvienos užduoties `guildId` bei
+  kiekvieno įrašo `questId` rodo į tikrą tėvą;
+* visų grupių sąrašą ir atskirai **puslapiavimą**: puslapis po 2 grupes, tada kitas puslapis
+  atidaromas pagal serverio grąžintą `links.next`;
+* `PATCH` atnaujinimą: neatsiųsti laukai (pvz., `description`) lieka nepakeisti, o grupė, sukurta
+  be aprašymo, gauna `"description": ""`;
 
 * `201 Created` su `Location` antrašte;
 * `204 No Content` — atsakymas be turinio;
@@ -209,12 +233,13 @@ src/main/java/lt/ktu/donendusted/
 src/main/resources/db/migration/
   V1__schema.sql        lentelės, indeksai, CHECK apribojimai
   V2__seed_data.sql     demonstraciniai duomenys
+  V3__description_not_null.sql  aprašymas NOT NULL DEFAULT ''
 docs/
   openapi.json          sugeneruota OpenAPI specifikacija
-  WALKTHROUGH.md        detalus kiekvieno sprendimo paaiškinimas
-  REVIEW.md             patikros ataskaita pagal užduoties reikalavimus
+  visual/               gynimo gidas, demo komandos, WALKTHROUGH.md ir diagramos
 postman/
-  DoneNDusted.postman_collection.json
+  Done n Dusted API (LD1)/              kolekcija Postman v3 formatu (YAML)
+  DoneNDusted.postman_collection.json   ta pati kolekcija v2.1 JSON (newman)
 ```
 
 ## Ko šiame darbe dar nėra
@@ -228,7 +253,7 @@ LD0 ataskaitoje aprašyta sistema yra platesnė nei LD1 apimtis. Sąmoningai **n
 
 Visos likusios taisyklės yra autorizacijos taisyklės („kas turi teisę tai daryti“), todėl jos
 ateina kartu su autentifikacija kitame laboratoriniame darbe. Sprendimo pagrindimas —
-[`docs/WALKTHROUGH.md`](docs/WALKTHROUGH.md), skyrius 2.2.
+[`docs/visual/WALKTHROUGH.md`](docs/visual/WALKTHROUGH.md), skyrius 2.2.
 
 ---
 
