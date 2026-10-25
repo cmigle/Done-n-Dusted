@@ -1,9 +1,1050 @@
 {
   "info": {
     "name": "Done n Dusted API (LD1)",
-    "description": "Visi 15 API metodu plius klaidu demonstracija (404, 400, 409, 422, 201, 204).\nKolekcija pati susikuria ir po saves issivalo, todel ja galima paleisti kiek nori kartu.\nPaleidimas: Postman Runner arba `npx newman run postman/DoneNDusted.postman_collection.json`.",
+    "description": "# Done n Dusted API (LD1)\n\nDnD principu veikianti produktyvumo sistema: žaidėjas registruoja realaus gyvenimo progresą, grupės Dungeon Master jį patvirtina, ir tik patvirtinti įrašai suteikia XP.\n\nResursų hierarchija: **Guild (1:N) → Quest (1:N) → LogEntry**. Vaikinis objektas pasiekiamas tik per tėvinį, todėl neteisinga grandinė grąžina `404`.\n\n## Kaip paleisti\n\n1. Paleiskite API (`./mvnw spring-boot:run`). Ji veikia adresu `http://localhost:8080/api`.\n2. Postman programoje paleiskite visą kolekciją su **Run collection**. Aplankus ir užklausas leiskite iš eilės, nes vėlesnės užklausos naudoja ankstesnių sukurtus ID.\n\nKolekcija pati susikuria duomenis ir po savęs išsivalo, todėl ją galima leisti kiek norima kartų.\n\n## Aplankai\n\n| Aplankas | Kas tikrinama |\n| --- | --- |\n| 0. Suvestinė | Kiek DB yra grupių, užduočių ir įrašų (su ID), ar vaikų ID rodo į teisingą tėvą |\n| 1. Grupės | Grupių CRUD, puslapiavimas per `links.next`, `400`, `404`, `409`, `415` klaidos |\n| 2. Užduotys | Užduočių kūrimas, filtrai, XP skaičiavimas, `422` ir tėvinės grandinės `404` |\n| 3. Progreso įrašai | Įrašų registravimas, DM patvirtinimas, XP taisyklės |\n| 4. Išvalymas | Sukurtų duomenų ištrynimas (`204`) ir patikra, kad jų nebėra |\n\nAtnaujinimas visur yra `PATCH` (dalinis): keičiami tik atsiųsti laukai, todėl neatsiųstas aprašymas nedingsta. Sukūrus resursą be `description`, jis išsaugomas kaip `\"\"`.\n\n## Kolekcijos kintamieji\n\n| Kintamasis | Reikšmė |\n| --- | --- |\n| `baseUrl` | API adresas, numatytai `http://localhost:8080/api` |\n| `guildName` | Unikalus grupės pavadinimas, generuojamas pirmoje užklausoje |\n| `guildA`, `guildB` | Sukurtų grupių ID |\n| `questId`, `logId` | Sukurtos užduoties ir įrašo ID |\n| `occurredAt` | Įvykio laikas (prieš valandą), naudojamas įrašams |\n| `nextPage`, `pageIds` | Puslapiavimo demonstracijai: `links.next` nuoroda ir pirmo puslapio ID |\n\n## Klaidų formatas\n\nKiekviena klaida grąžinama vienoda `ApiError` struktūra:\n\n```json\n{\n  \"timestamp\": \"2026-09-21T09:15:30.123Z\",\n  \"status\": 422,\n  \"error\": \"Unprocessable Entity\",\n  \"message\": \"GRIND tipo uzduotis privalo tureti targetCount\",\n  \"path\": \"/api/guilds/2/quests\",\n  \"details\": [ { \"field\": \"title\", \"message\": \"must not be blank\" } ]\n}\n```\n\n`details` pateikiamas tik tada, kai klaida susijusi su konkrečiais laukais.\n\n**400 ar 422?** `400` reiškia, kad klaidą matyti vien iš užklausos (blogas JSON, tipas, lauko apribojimas, nežinomas laukas). `422` reiškia, kad užklausa teisinga, bet pažeidžia dalykinės srities taisyklę.\n\nKiekviena užklausa turi išsaugotą pavyzdinį atsakymą (*Examples*), įrašytą iš tikro API paleidimo.",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
+  "item": [
+    {
+      "name": "0. Suvestinė",
+      "item": [
+        {
+          "name": "Suvestinė – grupės, užduotys ir įrašai",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/guilds?size=100",
+            "description": "Apibendrina visus duomenis: kiek yra grupių, kiek jose užduočių ir kiek užduotyse progreso įrašų.\n\nTestas eina per visą hierarchiją **Guild → Quest → LogEntry**: kiekvienai grupei paima jos užduotis, kiekvienai užduočiai — jos įrašus. Jei sąrašas netelpa į vieną puslapį, jis seka serverio grąžinamą `links.next` nuorodą.\n\n*Test Results* skiltyje matyti:\n\n* po eilutę kiekvienai grupei su jos užduočių ir įrašų ID;\n* bendra eilutė, pvz. `Is viso - grupiu: 3, uzduociu: 9, irasu: 12` (taip atrodo švariai paleista DB).\n\nKartu patikrinama, kad kiekvienos užduoties `guildId` ir kiekvieno įrašo `questId` rodo į tikrą tėvinį objektą, o ID nesikartoja."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200 OK', () => pm.response.to.have.status(200));",
+                  "",
+                  "const baseUrl = pm.variables.get('baseUrl');",
+                  "const sortedIds = items => items.map(x => x.id).sort((a, b) => a - b).join(', ');",
+                  "const get = url => new Promise((resolve, reject) =>",
+                  "  pm.sendRequest(url, (err, res) => (err ? reject(err) : resolve(res.json()))));",
+                  "",
+                  "// Surenka visus saraso puslapius: eina serverio duota links.next nuoroda, kol jos nebera.",
+                  "async function getAll(firstPage) {",
+                  "  const items = [...firstPage.content];",
+                  "  for (let next = firstPage.links.next; next; ) {",
+                  "    const page = await get(next);",
+                  "    items.push(...page.content);",
+                  "    next = page.links.next;",
+                  "  }",
+                  "  return items;",
+                  "}",
+                  "",
+                  "(async () => {",
+                  "  const guilds = (await getAll(pm.response.json())).sort((a, b) => a.id - b.id);",
+                  "  const questIds = [];",
+                  "  const logIds = [];",
+                  "",
+                  "  for (const guild of guilds) {",
+                  "    const quests = await getAll(await get(`${baseUrl}/guilds/${guild.id}/quests?size=100`));",
+                  "    const guildLogs = [];",
+                  "    const wrongParent = [];",
+                  "    quests.forEach(q => { if (q.guildId !== guild.id) wrongParent.push(`uzduotis ${q.id} rodo i grupe ${q.guildId}`); });",
+                  "",
+                  "    for (const quest of quests) {",
+                  "      const logs = await getAll(await get(`${baseUrl}/guilds/${guild.id}/quests/${quest.id}/logs?size=100`));",
+                  "      logs.forEach(l => { if (l.questId !== quest.id) wrongParent.push(`irasas ${l.id} rodo i uzduoti ${l.questId}`); });",
+                  "      guildLogs.push(...logs);",
+                  "    }",
+                  "",
+                  "    questIds.push(...quests.map(q => q.id));",
+                  "    logIds.push(...guildLogs.map(l => l.id));",
+                  "    const line = `Grupe ${guild.id} \"${guild.name}\" - uzduotys [${sortedIds(quests)}], irasai [${sortedIds(guildLogs)}]`;",
+                  "    console.log(line);",
+                  "    pm.test(line, () => pm.expect(wrongParent, 'vaikiniai objektai rodo i teisinga tevini ID').to.be.empty);",
+                  "  }",
+                  "",
+                  "  const summary = `Is viso - grupiu: ${guilds.length}, uzduociu: ${questIds.length}, irasu: ${logIds.length}`;",
+                  "  console.log(summary);",
+                  "  pm.test(summary, () => {",
+                  "    pm.expect(guilds.length).to.eql(pm.response.json().page.totalElements);",
+                  "    pm.expect(new Set(questIds).size, 'uzduociu ID nesikartoja').to.eql(questIds.length);",
+                  "    pm.expect(new Set(logIds).size, 'irasu ID nesikartoja').to.eql(logIds.length);",
+                  "  });",
+                  "})().catch(err => pm.test('Suvestine sudaryta be klaidu', () => { throw err; }));"
+                ]
+              }
+            }
+          ]
+        }
+      ],
+      "description": "Duomenų bazės suvestinė: kiek yra grupių, užduočių ir progreso įrašų, su visais jų ID.\n\nAplanką galima leisti ir atskirai (*Run folder*) bet kuriuo metu — jis nieko nekeičia, tik skaito."
+    },
+    {
+      "name": "1. Grupės",
+      "item": [
+        {
+          "name": "Sukurti grupę",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/guilds",
+            "description": "Sukuria naują grupę.\n\nPrieš užklausą sugeneruojamas unikalus pavadinimas `Postman Guild <laikas>`, kad kolekciją būtų galima leisti kartotinai. Atsakymas yra `201 Created` su `Location` antrašte, o naujos grupės ID išsaugomas kintamajame `guildA`.\n\nREADME lentelės metodas **#3**.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"{{guildName}}\",\n  \"description\": \"Postman demonstracijai sukurta grupe\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.collectionVariables.set('guildName', 'Postman Guild ' + Date.now());",
+                  "pm.collectionVariables.set('occurredAt', new Date(Date.now() - 3600000).toISOString());"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('201 Created', () => pm.response.to.have.status(201));",
+                  "pm.test('Location antraste nurodo nauja resursa', () => {",
+                  "  pm.expect(pm.response.headers.get('Location')).to.include('/api/guilds/');",
+                  "});",
+                  "pm.test('JSON turinio tipas', () => pm.expect(pm.response.headers.get('Content-Type')).to.include('application/json'));",
+                  "const body = pm.response.json();",
+                  "pm.test('Grazintas sukurtas resursas su id ir createdAt', () => {",
+                  "  pm.expect(body.id).to.be.a('number');",
+                  "  pm.expect(body.name).to.eql(pm.collectionVariables.get('guildName'));",
+                  "  pm.expect(body.createdAt).to.be.a('string');",
+                  "});",
+                  "pm.collectionVariables.set('guildA', body.id);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Sukurti antrą grupę be aprašymo",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/guilds",
+            "description": "Sukuria antrą grupę **be aprašymo** ir išsaugo jos ID kintamajame `guildB`.\n\nNeatsiųstas `description` išsaugomas kaip tuščias tekstas `\"\"`, todėl atsakyme laukas lieka (nedingsta).\n\nGrupė reikalinga ir tėvinės grandinės testui: vėliau bandoma pasiekti A grupės užduotį per B grupę.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"{{guildName}} (B)\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('201 Created', () => pm.response.to.have.status(201));",
+                  "const body = pm.response.json();",
+                  "pm.test('Neatsiustas aprasymas issaugotas kaip tuscias, laukas nedingsta', () => {",
+                  "  pm.expect(body).to.have.property('description');",
+                  "  pm.expect(body.description).to.eql('');",
+                  "});",
+                  "pm.collectionVariables.set('guildB', body.id);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Gauti grupių sąrašą",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/guilds",
+            "description": "Grąžina visų grupių sąrašą su numatytaisiais parametrais (iki 20 grupių puslapyje, rikiuojama pagal pavadinimą).\n\n* `name` filtruoja pagal pavadinimo dalį.\n* `page`, `size` ir `sort` (pvz. `sort=name,asc`) valdo puslapiavimą. Didžiausias `size` yra 100.\n\nPuslapiavimas atskirai parodomas dviejose kitose užklausose.\n\nREADME lentelės metodas **#1**."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200 OK', () => pm.response.to.have.status(200));",
+                  "const guilds = pm.response.json().content;",
+                  "const ids = guilds.map(g => g.id);",
+                  "pm.test('Grazintos visos grupes, ID: ' + [...ids].sort((a, b) => a - b).join(', '), () => {",
+                  "  pm.expect(ids).to.include(Number(pm.collectionVariables.get('guildA')));",
+                  "  pm.expect(ids).to.include(Number(pm.collectionVariables.get('guildB')));",
+                  "});",
+                  "pm.test('Kiekviena grupe turi id, pavadinima ir aprasyma', () => {",
+                  "  guilds.forEach(g => {",
+                  "    pm.expect(g.id).to.be.a('number');",
+                  "    pm.expect(g.name).to.be.a('string');",
+                  "    pm.expect(g.description).to.be.a('string');",
+                  "  });",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Puslapiavimas – pirmas puslapis",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/guilds?page=0&size=2&sort=id,asc",
+            "description": "Puslapiavimo demonstracija: prašoma tik **2 grupių** puslapyje (`size=2`), rikiuojant pagal ID.\n\nAtsakyme `page` nurodo puslapio numerį, dydį ir kiek iš viso yra grupių bei puslapių, o `links` pateikia `self`, `first`, `next` ir `last` nuorodas. `prev` nėra, nes tai pirmas puslapis.\n\n`links.next` išsaugomas kintamajame `nextPage`."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200 OK', () => pm.response.to.have.status(200));",
+                  "const body = pm.response.json();",
+                  "const ids = body.content.map(g => g.id);",
+                  "pm.test('Puslapis ' + (body.page.number + 1) + ' is ' + body.page.totalPages + ', ID: ' + ids.join(', '), () => {",
+                  "  pm.expect(body.page.number).to.eql(0);",
+                  "  pm.expect(body.page.size).to.eql(2);",
+                  "  pm.expect(body.content).to.have.lengthOf(2);",
+                  "  pm.expect(body.page.totalPages).to.eql(Math.ceil(body.page.totalElements / 2));",
+                  "});",
+                  "pm.test('Pirmame puslapyje yra next, bet nera prev', () => {",
+                  "  pm.expect(body.links.prev).to.be.undefined;",
+                  "  pm.expect(body.links.next).to.include('page=1');",
+                  "});",
+                  "pm.test('Nuorodose islieka size ir sort', () => {",
+                  "  pm.expect(body.links.next).to.include('size=2');",
+                  "  pm.expect(body.links.next).to.include('sort=id');",
+                  "});",
+                  "// Kita uzklausa nekonstruoja URL pati - ji eina serverio duota links.next nuoroda.",
+                  "pm.collectionVariables.set('nextPage', body.links.next);",
+                  "pm.collectionVariables.set('pageIds', JSON.stringify(ids));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Puslapiavimas – kitas puslapis pagal links.next",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{nextPage}}",
+            "description": "Atidaro kitą puslapį pagal ankstesnio atsakymo nuorodą `links.next` (kintamasis `nextPage`) — klientas pats URL nekonstruoja.\n\nPatikrinama, kad tai 2-as puslapis, jo grupės nesikartoja su 1-uoju, o `links.prev` jau yra."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200 OK', () => pm.response.to.have.status(200));",
+                  "const body = pm.response.json();",
+                  "const ids = body.content.map(g => g.id);",
+                  "const previousIds = JSON.parse(pm.collectionVariables.get('pageIds'));",
+                  "pm.test('Puslapis ' + (body.page.number + 1) + ' is ' + body.page.totalPages + ', ID: ' + ids.join(', '), () => {",
+                  "  pm.expect(body.page.number).to.eql(1);",
+                  "  pm.expect(body.content.length).to.be.within(1, 2);",
+                  "});",
+                  "pm.test('Grupes nesikartoja su ankstesniu puslapiu', () => {",
+                  "  ids.forEach(id => pm.expect(previousIds).to.not.include(id));",
+                  "  pm.expect(Math.min(...ids)).to.be.above(Math.max(...previousIds));",
+                  "});",
+                  "pm.test('Antrame puslapyje jau yra prev nuoroda', () => pm.expect(body.links.prev).to.include('page=0'));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Gauti grupę pagal ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/guilds/{{guildA}}",
+            "description": "Grąžina vieną grupę pagal ID.\n\nREADME lentelės metodas **#2**."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200 OK', () => pm.response.to.have.status(200));",
+                  "pm.test('Grazinta ta pati grupe', () => pm.expect(pm.response.json().id).to.eql(Number(pm.collectionVariables.get('guildA'))));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Atnaujinti grupę",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/guilds/{{guildA}}",
+            "description": "Dalinai atnaujina grupę (`PATCH`): siunčiamas tik `description`. Neatsiųsti laukai (`name`) lieka nepakeisti.\n\nREADME lentelės metodas **#4**.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"description\": \"Aprasymas po redagavimo\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200 OK', () => pm.response.to.have.status(200));",
+                  "const body = pm.response.json();",
+                  "pm.test('Pakeitimas issaugotas', () => pm.expect(body.description).to.eql('Aprasymas po redagavimo'));",
+                  "pm.test('Neatsiustas pavadinimas nepakito', () => pm.expect(body.name).to.eql(pm.collectionVariables.get('guildName')));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Klaida 409 – pavadinimas jau užimtas",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/guilds",
+            "description": "Grupės pavadinimas turi būti unikalus. Bandant sukurti grupę jau naudojamu pavadinimu, grąžinamas `409 Conflict`.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"{{guildName}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('409 Conflict', () => pm.response.to.have.status(409));",
+                  "const e = pm.response.json();",
+                  "pm.test('ApiError struktura', () => {",
+                  "  pm.expect(e.status).to.eql(409);",
+                  "  pm.expect(e.error).to.eql('Conflict');",
+                  "  pm.expect(e.path).to.eql('/api/guilds');",
+                  "  pm.expect(e.message).to.be.a('string');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Klaida 400 – per trumpas pavadinimas",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/guilds",
+            "description": "Pavadinimas `ab` pažeidžia lauko apribojimą, todėl grąžinamas `400 Bad Request`. Masyve `details` nurodomas konkretus laukas (`name`).",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"ab\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('400 Bad Request', () => pm.response.to.have.status(400));",
+                  "const e = pm.response.json();",
+                  "pm.test('Nurodomas konkretus laukas', () => {",
+                  "  pm.expect(e.details).to.be.an('array').that.is.not.empty;",
+                  "  pm.expect(e.details[0].field).to.eql('name');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Klaida 415 – ne JSON turinys",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "text/plain"
+              }
+            ],
+            "url": "{{baseUrl}}/guilds",
+            "description": "Užklausos turinys siunčiamas `text/plain` tipu. API priima tik `application/json`, todėl grąžinamas `415 Unsupported Media Type`.",
+            "body": {
+              "mode": "raw",
+              "raw": "sveiki"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('415 Unsupported Media Type', () => pm.response.to.have.status(415));",
+                  "pm.test('ApiError paaiskina palaikoma tipa', () => pm.expect(pm.response.json().message).to.include('application/json'));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Klaida 400 – nežinomas laukas",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/guilds",
+            "description": "Užklausoje yra nedeklaruotas laukas `xpAwarded`. Serveris tokių laukų neignoruoja, o atmeta užklausą su `400 Bad Request`.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"{{guildName}} (C)\",\n  \"xpAwarded\": 9999\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('400 Bad Request', () => pm.response.to.have.status(400));",
+                  "pm.test('Serveris atmeta nedeklaruotus laukus', () => pm.expect(pm.response.json().message).to.include('xpAwarded'));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Klaida 404 – grupė nerasta",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/guilds/999999",
+            "description": "Neegzistuojančiai grupei grąžinamas `404 Not Found`, o pranešime nurodomas ieškotas ID."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('404 Not Found', () => pm.response.to.have.status(404));",
+                  "pm.test('ApiError su prasmingu pranesimu', () => {",
+                  "  const e = pm.response.json();",
+                  "  pm.expect(e.status).to.eql(404);",
+                  "  pm.expect(e.message).to.include('999999');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        }
+      ],
+      "description": "Grupių (Guild) valdymas: sukūrimas, sąrašas, puslapiavimas, gavimas, dalinis atnaujinimas (`PATCH`) ir validacijos klaidos.\n\nČia sukuriamos dvi grupės. `guildA` naudojama visoje kolekcijoje, o `guildB` sukuriama be aprašymo (parodo, kad `description` tampa `\"\"`, o ne dingsta) ir reikalinga tėvinės grandinės testui."
+    },
+    {
+      "name": "2. Užduotys",
+      "item": [
+        {
+          "name": "Sukurti užduotį",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/guilds/{{guildA}}/quests",
+            "description": "Sukuria `MILESTONE` tipo `HARD` sudėtingumo užduotį A grupėje ir išsaugo jos ID kintamajame `questId`.\n\n`xpPerCompletion` apskaičiuoja serveris: 10 × 5 (`HARD`) = **50**.\n\nREADME lentelės metodas **#8**.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Run 10 kilometers\",\n  \"description\": \"Postman demonstracijai sukurta uzduotis\",\n  \"stat\": \"CON\",\n  \"type\": \"MILESTONE\",\n  \"difficulty\": \"HARD\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('201 Created', () => pm.response.to.have.status(201));",
+                  "const body = pm.response.json();",
+                  "pm.test('Serveris pats isvede XP is sudetingumo (HARD = 10 * 5)', () => pm.expect(body.xpPerCompletion).to.eql(50));",
+                  "pm.test('Tevine grupe teisinga', () => pm.expect(body.guildId).to.eql(Number(pm.collectionVariables.get('guildA'))));",
+                  "pm.collectionVariables.set('questId', body.id);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Klaida 422 – GRIND užduotis be targetCount",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/guilds/{{guildA}}/quests",
+            "description": "`GRIND` tipo užduotis privalo turėti `targetCount`. JSON teisingas, bet pažeista dalykinė taisyklė, todėl grąžinamas `422 Unprocessable Entity`.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Grind be tikslo\",\n  \"stat\": \"STR\",\n  \"type\": \"GRIND\",\n  \"difficulty\": \"EASY\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('422 Unprocessable Entity', () => pm.response.to.have.status(422));",
+                  "pm.test('Pranesimas paaiskina taisykle', () => pm.expect(pm.response.json().message).to.include('targetCount'));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Gauti užduočių sąrašą pagal charakteristiką",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/guilds/{{guildA}}/quests?stat=CON",
+            "description": "Grąžina grupės užduočių sąrašą.\n\nGalimi filtrai: `stat`, `type`, `difficulty`, `active`. Čia filtruojama pagal `stat=CON`.\n\nREADME lentelės metodas **#6**."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200 OK', () => pm.response.to.have.status(200));",
+                  "const quests = pm.response.json().content;",
+                  "pm.test('Filtras pagal stat suveike, ID: ' + quests.map(q => q.id).join(', '), () => {",
+                  "  pm.expect(quests).to.have.lengthOf(1);",
+                  "  pm.expect(quests[0].stat).to.eql('CON');",
+                  "  pm.expect(quests[0].id).to.eql(Number(pm.collectionVariables.get('questId')));",
+                  "});",
+                  "pm.test('Uzduotis priklauso A grupei', () => pm.expect(quests[0].guildId).to.eql(Number(pm.collectionVariables.get('guildA'))));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Gauti užduotį pagal ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/guilds/{{guildA}}/quests/{{questId}}",
+            "description": "Grąžina vieną užduotį per jos tėvinę grupę.\n\nREADME lentelės metodas **#7**."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200 OK', () => pm.response.to.have.status(200));",
+                  "pm.test('Ta pati uzduotis', () => pm.expect(pm.response.json().id).to.eql(Number(pm.collectionVariables.get('questId'))));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Klaida 404 – užduotis per svetimą grupę",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/guilds/{{guildB}}/quests/{{questId}}",
+            "description": "Užduotis egzistuoja, bet priklauso grupei A, o užklausa siunčiama per grupę B. Vaikinis resursas pasiekiamas tik per teisingą tėvinį, todėl grąžinamas `404 Not Found`."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('404 Not Found', () => pm.response.to.have.status(404));",
+                  "pm.test('Uzduotis egzistuoja, bet ne sioje grupeje', () => pm.expect(pm.response.json().message).to.include('nerasta grupeje'));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Atnaujinti užduotį",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/guilds/{{guildA}}/quests/{{questId}}",
+            "description": "Dalinai atnaujina užduotį (`PATCH`): siunčiamas tik `difficulty = LEGENDARY`. Pavadinimas ir aprašymas lieka tokie, kokie buvo — nedingsta.\n\nServeris perskaičiuoja `xpPerCompletion`: 10 × 8 = **80**. Jau patvirtintų įrašų XP nesikeičia.\n\nREADME lentelės metodas **#9**.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"difficulty\": \"LEGENDARY\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200 OK', () => pm.response.to.have.status(200));",
+                  "const body = pm.response.json();",
+                  "pm.test('Sudetingumas pakeistas, XP perskaiciuotas (LEGENDARY = 10 * 8)', () => {",
+                  "  pm.expect(body.difficulty).to.eql('LEGENDARY');",
+                  "  pm.expect(body.xpPerCompletion).to.eql(80);",
+                  "});",
+                  "pm.test('Neatsiusti laukai (title, description) nepakito', () => {",
+                  "  pm.expect(body.title).to.eql('Run 10 kilometers');",
+                  "  pm.expect(body.description).to.eql('Postman demonstracijai sukurta uzduotis');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        }
+      ],
+      "description": "Užduotys (Quest) priklauso grupei: `/guilds/{guildId}/quests`.\n\n* Charakteristika `stat`: `STR`, `DEX`, `CON`, `INT`, `WIS`, `CHA`.\n* Tipas `type`: `MILESTONE`, `HABIT`, `GRIND`, `SIDE_QUEST`. `targetCount` privalomas ir leidžiamas tik `GRIND` tipui.\n* Sudėtingumas `difficulty` yra bazinio XP (10) daugiklis: `TRIVIAL` ×1, `EASY` ×2, `MEDIUM` ×3, `HARD` ×5, `LEGENDARY` ×8.\n\n`xpPerCompletion` visada apskaičiuoja serveris."
+    },
+    {
+      "name": "3. Progreso įrašai",
+      "item": [
+        {
+          "name": "Užregistruoti progresą",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/guilds/{{guildA}}/quests/{{questId}}/logs",
+            "description": "Užregistruoja progresą užduočiai ir išsaugo įrašo ID kintamajame `logId`.\n\nNaujas įrašas visada yra `PENDING` būsenos, su `xpAwarded = 0` ir `inspirationAwarded = 0`. Laukas `occurredAt` negali būti ateityje.\n\nREADME lentelės metodas **#13**.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"note\": \"Nubegau 10 km per 52 minutes\",\n  \"evidenceUrl\": \"https://example.org/evidence/run.png\",\n  \"occurredAt\": \"{{occurredAt}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('201 Created', () => pm.response.to.have.status(201));",
+                  "const body = pm.response.json();",
+                  "pm.test('Naujas irasas visada PENDING ir be tasku', () => {",
+                  "  pm.expect(body.status).to.eql('PENDING');",
+                  "  pm.expect(body.xpAwarded).to.eql(0);",
+                  "  pm.expect(body.inspirationAwarded).to.eql(0);",
+                  "  pm.expect(body.reviewedAt).to.be.undefined;",
+                  "});",
+                  "pm.test('Irasas priklauso sukurtai uzduociai', () => pm.expect(body.questId).to.eql(Number(pm.collectionVariables.get('questId'))));",
+                  "pm.collectionVariables.set('logId', body.id);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Klaida 422 – įvykio data ateityje",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/guilds/{{guildA}}/quests/{{questId}}/logs",
+            "description": "`occurredAt` nurodytas ateityje (2099 m.). Tai dalykinės taisyklės pažeidimas, todėl grąžinamas `422 Unprocessable Entity`.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"occurredAt\": \"2099-01-01T00:00:00Z\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('422 Unprocessable Entity', () => pm.response.to.have.status(422));",
+                  "pm.test('Pranesimas apie occurredAt', () => pm.expect(pm.response.json().message).to.include('occurredAt'));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Gauti laukiančius įrašus",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/guilds/{{guildA}}/quests/{{questId}}/logs?status=PENDING",
+            "description": "Grąžina užduoties įrašų sąrašą.\n\nFiltras `status` gali būti `PENDING`, `APPROVED` arba `REJECTED`. Čia ieškoma įrašų, kurie dar laukia peržiūros.\n\nREADME lentelės metodas **#11**."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200 OK', () => pm.response.to.have.status(200));",
+                  "const logs = pm.response.json().content;",
+                  "pm.test('Rastas vienas PENDING irasas, ID: ' + logs.map(l => l.id).join(', '), () => {",
+                  "  pm.expect(logs).to.have.lengthOf(1);",
+                  "  pm.expect(logs[0].status).to.eql('PENDING');",
+                  "  pm.expect(logs[0].id).to.eql(Number(pm.collectionVariables.get('logId')));",
+                  "});",
+                  "pm.test('Irasas priklauso sukurtai uzduociai', () => pm.expect(logs[0].questId).to.eql(Number(pm.collectionVariables.get('questId'))));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Gauti įrašą pagal ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/guilds/{{guildA}}/quests/{{questId}}/logs/{{logId}}",
+            "description": "Grąžina vieną progreso įrašą per užduotį ir grupę.\n\nREADME lentelės metodas **#12**."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200 OK', () => pm.response.to.have.status(200));",
+                  "pm.test('Tas pats irasas', () => pm.expect(pm.response.json().id).to.eql(Number(pm.collectionVariables.get('logId'))));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Patvirtinti įrašą",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/guilds/{{guildA}}/quests/{{questId}}/logs/{{logId}}",
+            "description": "Dungeon Master patvirtina įrašą (`PATCH`): siunčiami tik peržiūros laukai `status = APPROVED`, `inspirationAwarded = 1` ir `reviewerNote`. Įrašo turinys (`note`, `evidenceUrl`, `occurredAt`) lieka nepakeistas.\n\n`xpAwarded` nesiunčiamas, todėl serveris jį paima iš užduoties sudėtingumo (`LEGENDARY` = **80**). Užpildomas `reviewedAt`.\n\nREADME lentelės metodas **#14**.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"APPROVED\",\n  \"inspirationAwarded\": 1,\n  \"reviewerNote\": \"Uzskaitau, nuotrauka aiski\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200 OK', () => pm.response.to.have.status(200));",
+                  "const body = pm.response.json();",
+                  "pm.test('XP paimtas is uzduoties sudetingumo, nors klientas jo nepadave', () => {",
+                  "  pm.expect(body.status).to.eql('APPROVED');",
+                  "  pm.expect(body.xpAwarded).to.eql(80);",
+                  "  pm.expect(body.inspirationAwarded).to.eql(1);",
+                  "  pm.expect(body.reviewedAt).to.be.a('string');",
+                  "});",
+                  "pm.test('Neatsiusti laukai (note, evidenceUrl) nepakito', () => {",
+                  "  pm.expect(body.note).to.eql('Nubegau 10 km per 52 minutes');",
+                  "  pm.expect(body.evidenceUrl).to.eql('https://example.org/evidence/run.png');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Klaida 422 – XP neperžiūrėtam įrašui",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/guilds/{{guildA}}/quests/{{questId}}/logs/{{logId}}",
+            "description": "Bandoma `PENDING` įrašui priskirti `xpAwarded = 500`. Neperžiūrėtas įrašas negali turėti XP, todėl grąžinamas `422 Unprocessable Entity`.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"PENDING\",\n  \"xpAwarded\": 500\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('422 Unprocessable Entity', () => pm.response.to.have.status(422));",
+                  "pm.test('Neperziuretas irasas negali tureti tasku', () => pm.expect(pm.response.json().message).to.include('PENDING'));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Ištrinti įrašą",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": "{{baseUrl}}/guilds/{{guildA}}/quests/{{questId}}/logs/{{logId}}",
+            "description": "Ištrina progreso įrašą. Atsakymas yra `204 No Content` — atsakymas be turinio.\n\nREADME lentelės metodas **#15**."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('204 No Content', () => pm.response.to.have.status(204));",
+                  "pm.test('Atsakymas be turinio', () => pm.expect(pm.response.text()).to.be.empty);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Klaida 404 – įrašas jau ištrintas",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": "{{baseUrl}}/guilds/{{guildA}}/quests/{{questId}}/logs/{{logId}}",
+            "description": "Pakartotinai trinant tą patį įrašą grąžinamas `404 Not Found`."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('404 Not Found', () => pm.response.to.have.status(404));"
+                ]
+              }
+            }
+          ]
+        }
+      ],
+      "description": "Progreso įrašai (LogEntry) priklauso užduočiai: `/guilds/{guildId}/quests/{questId}/logs`.\n\n* Naujas įrašas visada sukuriamas `PENDING` būsenos ir su 0 XP. Kuriant XP iš kliento nepriimamas.\n* Dungeon Master įrašą patvirtina (`APPROVED`) arba atmeta (`REJECTED`) per `PUT`. Nepateikus `xpAwarded`, serveris XP paima iš užduoties sudėtingumo.\n* `PENDING` ir `REJECTED` įrašai negali turėti XP ar inspiration.\n* Patvirtintas XP užšaldomas: vėliau pakeitus užduoties sudėtingumą, istorija neperrašoma."
+    },
+    {
+      "name": "4. Išvalymas",
+      "item": [
+        {
+          "name": "Ištrinti užduotį",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": "{{baseUrl}}/guilds/{{guildA}}/quests/{{questId}}",
+            "description": "Ištrina užduotį kartu su visais jos įrašais (`204 No Content`).\n\nREADME lentelės metodas **#10**."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('204 No Content', () => pm.response.to.have.status(204));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Ištrinti grupę",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": "{{baseUrl}}/guilds/{{guildA}}",
+            "description": "Ištrina grupę A kartu su visu jos turiniu (`204 No Content`).\n\nREADME lentelės metodas **#5**."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('204 No Content', () => pm.response.to.have.status(204));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Ištrinti antrą grupę",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": "{{baseUrl}}/guilds/{{guildB}}",
+            "description": "Ištrina grupę B, sukurtą tėvinės grandinės testui."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('204 No Content', () => pm.response.to.have.status(204));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Klaida 404 – ištrinta grupė nerasta",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/guilds/{{guildA}}",
+            "description": "Patikrina, kad ištrinta grupė nebepasiekiama (`404 Not Found`)."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('404 Not Found', () => pm.response.to.have.status(404));",
+                  "pm.test('Po istrynimo resurso nebera', () => pm.expect(pm.response.json().status).to.eql(404));"
+                ]
+              }
+            }
+          ]
+        }
+      ],
+      "description": "Ištrina viską, ką sukūrė kolekcija, kad ją būtų galima leisti pakartotinai. Grupės trynimas pašalina ir visas jos užduotis bei įrašus.\n\nPaskutinė užklausa patikrina, kad ištrinta grupė nebepasiekiama (`404`)."
+    }
+  ],
   "variable": [
     {
       "key": "baseUrl",
@@ -32,1063 +1073,14 @@
     {
       "key": "occurredAt",
       "value": ""
-    }
-  ],
-  "item": [
-    {
-      "name": "01 POST /guilds -> 201 (metodas 1)",
-      "event": [
-        {
-          "listen": "prerequest",
-          "script": {
-            "type": "text/javascript",
-            "exec": [
-              "pm.collectionVariables.set('guildName', 'Postman Guild ' + Date.now());",
-              "pm.collectionVariables.set('occurredAt', new Date(Date.now() - 3600000).toISOString());"
-            ]
-          }
-        },
-        {
-          "listen": "test",
-          "script": {
-            "type": "text/javascript",
-            "exec": [
-              "pm.test('201 Created', () => pm.response.to.have.status(201));",
-              "pm.test('Location antraste nurodo nauja resursa', () => {",
-              "  pm.expect(pm.response.headers.get('Location')).to.include('/api/guilds/');",
-              "});",
-              "pm.test('JSON turinio tipas', () => pm.expect(pm.response.headers.get('Content-Type')).to.include('application/json'));",
-              "const body = pm.response.json();",
-              "pm.test('Grazintas sukurtas resursas su id ir createdAt', () => {",
-              "  pm.expect(body.id).to.be.a('number');",
-              "  pm.expect(body.name).to.eql(pm.collectionVariables.get('guildName'));",
-              "  pm.expect(body.createdAt).to.be.a('string');",
-              "});",
-              "pm.collectionVariables.set('guildA', body.id);"
-            ]
-          }
-        }
-      ],
-      "request": {
-        "method": "POST",
-        "header": [
-          {
-            "key": "Content-Type",
-            "value": "application/json"
-          }
-        ],
-        "url": {
-          "raw": "{{baseUrl}}/guilds",
-          "host": [
-            "{{baseUrl}}"
-          ],
-          "path": [
-            "guilds"
-          ]
-        },
-        "body": {
-          "mode": "raw",
-          "raw": "{\n  \"name\": \"{{guildName}}\",\n  \"description\": \"Postman demonstracijai sukurta grupe\"\n}"
-        }
-      }
     },
     {
-      "name": "02 POST /guilds -> 201 (antra grupe grandines testui)",
-      "event": [
-        {
-          "listen": "test",
-          "script": {
-            "type": "text/javascript",
-            "exec": [
-              "pm.test('201 Created', () => pm.response.to.have.status(201));",
-              "pm.collectionVariables.set('guildB', pm.response.json().id);"
-            ]
-          }
-        }
-      ],
-      "request": {
-        "method": "POST",
-        "header": [
-          {
-            "key": "Content-Type",
-            "value": "application/json"
-          }
-        ],
-        "url": {
-          "raw": "{{baseUrl}}/guilds",
-          "host": [
-            "{{baseUrl}}"
-          ],
-          "path": [
-            "guilds"
-          ]
-        },
-        "body": {
-          "mode": "raw",
-          "raw": "{\n  \"name\": \"{{guildName}} (B)\",\n  \"description\": \"Naudojama tik neteisingos grandines testui\"\n}"
-        }
-      }
+      "key": "nextPage",
+      "value": ""
     },
     {
-      "name": "03 GET /guilds -> 200 puslapiuotas sarasas (metodas 2)",
-      "event": [
-        {
-          "listen": "test",
-          "script": {
-            "type": "text/javascript",
-            "exec": [
-              "pm.test('200 OK', () => pm.response.to.have.status(200));",
-              "const body = pm.response.json();",
-              "pm.test('Yra content ir page informacija', () => {",
-              "  pm.expect(body.content).to.be.an('array');",
-              "  pm.expect(body.page.number).to.eql(0);",
-              "  pm.expect(body.page.size).to.eql(2);",
-              "  pm.expect(body.page.totalElements).to.be.at.least(2);",
-              "});",
-              "pm.test('Nuorodos self/first/last pateiktos', () => {",
-              "  pm.expect(body.links.self).to.be.a('string');",
-              "  pm.expect(body.links.first).to.be.a('string');",
-              "  pm.expect(body.links.last).to.be.a('string');",
-              "});",
-              "pm.test('Nuorodose islaikomas filtras', () => {",
-              "  pm.expect(body.links.self).to.include('name=Postman');",
-              "});"
-            ]
-          }
-        }
-      ],
-      "request": {
-        "method": "GET",
-        "url": {
-          "raw": "{{baseUrl}}/guilds?name=Postman&page=0&size=2",
-          "host": [
-            "{{baseUrl}}"
-          ],
-          "path": [
-            "guilds"
-          ],
-          "query": [
-            {
-              "key": "name",
-              "value": "Postman"
-            },
-            {
-              "key": "page",
-              "value": "0"
-            },
-            {
-              "key": "size",
-              "value": "2"
-            }
-          ]
-        }
-      }
-    },
-    {
-      "name": "04 GET /guilds/{id} -> 200 (metodas 3)",
-      "event": [
-        {
-          "listen": "test",
-          "script": {
-            "type": "text/javascript",
-            "exec": [
-              "pm.test('200 OK', () => pm.response.to.have.status(200));",
-              "pm.test('Grazinta ta pati grupe', () => pm.expect(pm.response.json().id).to.eql(Number(pm.collectionVariables.get('guildA'))));"
-            ]
-          }
-        }
-      ],
-      "request": {
-        "method": "GET",
-        "url": {
-          "raw": "{{baseUrl}}/guilds/{{guildA}}",
-          "host": [
-            "{{baseUrl}}"
-          ],
-          "path": [
-            "guilds",
-            "{{guildA}}"
-          ]
-        }
-      }
-    },
-    {
-      "name": "05 PUT /guilds/{id} -> 200 (metodas 4)",
-      "event": [
-        {
-          "listen": "test",
-          "script": {
-            "type": "text/javascript",
-            "exec": [
-              "pm.test('200 OK', () => pm.response.to.have.status(200));",
-              "pm.test('Pakeitimas issaugotas', () => pm.expect(pm.response.json().description).to.eql('Aprasymas po redagavimo'));"
-            ]
-          }
-        }
-      ],
-      "request": {
-        "method": "PUT",
-        "header": [
-          {
-            "key": "Content-Type",
-            "value": "application/json"
-          }
-        ],
-        "url": {
-          "raw": "{{baseUrl}}/guilds/{{guildA}}",
-          "host": [
-            "{{baseUrl}}"
-          ],
-          "path": [
-            "guilds",
-            "{{guildA}}"
-          ]
-        },
-        "body": {
-          "mode": "raw",
-          "raw": "{\n  \"name\": \"{{guildName}}\",\n  \"description\": \"Aprasymas po redagavimo\"\n}"
-        }
-      }
-    },
-    {
-      "name": "06 POST /guilds tuo paciu vardu -> 409",
-      "event": [
-        {
-          "listen": "test",
-          "script": {
-            "type": "text/javascript",
-            "exec": [
-              "pm.test('409 Conflict', () => pm.response.to.have.status(409));",
-              "const e = pm.response.json();",
-              "pm.test('ApiError struktura', () => {",
-              "  pm.expect(e.status).to.eql(409);",
-              "  pm.expect(e.error).to.eql('Conflict');",
-              "  pm.expect(e.path).to.eql('/api/guilds');",
-              "  pm.expect(e.message).to.be.a('string');",
-              "});"
-            ]
-          }
-        }
-      ],
-      "request": {
-        "method": "POST",
-        "header": [
-          {
-            "key": "Content-Type",
-            "value": "application/json"
-          }
-        ],
-        "url": {
-          "raw": "{{baseUrl}}/guilds",
-          "host": [
-            "{{baseUrl}}"
-          ],
-          "path": [
-            "guilds"
-          ]
-        },
-        "body": {
-          "mode": "raw",
-          "raw": "{\n  \"name\": \"{{guildName}}\"\n}"
-        }
-      }
-    },
-    {
-      "name": "07 POST /guilds blogas payload -> 400",
-      "event": [
-        {
-          "listen": "test",
-          "script": {
-            "type": "text/javascript",
-            "exec": [
-              "pm.test('400 Bad Request', () => pm.response.to.have.status(400));",
-              "const e = pm.response.json();",
-              "pm.test('Nurodomas konkretus laukas', () => {",
-              "  pm.expect(e.details).to.be.an('array').that.is.not.empty;",
-              "  pm.expect(e.details[0].field).to.eql('name');",
-              "});"
-            ]
-          }
-        }
-      ],
-      "request": {
-        "method": "POST",
-        "header": [
-          {
-            "key": "Content-Type",
-            "value": "application/json"
-          }
-        ],
-        "url": {
-          "raw": "{{baseUrl}}/guilds",
-          "host": [
-            "{{baseUrl}}"
-          ],
-          "path": [
-            "guilds"
-          ]
-        },
-        "body": {
-          "mode": "raw",
-          "raw": "{\n  \"name\": \"ab\"\n}"
-        }
-      }
-    },
-    {
-      "name": "07a POST /guilds ne JSON turinio tipu -> 415",
-      "event": [
-        {
-          "listen": "test",
-          "script": {
-            "type": "text/javascript",
-            "exec": [
-              "pm.test('415 Unsupported Media Type', () => pm.response.to.have.status(415));",
-              "pm.test('ApiError paaiskina palaikoma tipa', () => pm.expect(pm.response.json().message).to.include('application/json'));"
-            ]
-          }
-        }
-      ],
-      "request": {
-        "method": "POST",
-        "header": [
-          {
-            "key": "Content-Type",
-            "value": "text/plain"
-          }
-        ],
-        "url": {
-          "raw": "{{baseUrl}}/guilds",
-          "host": [
-            "{{baseUrl}}"
-          ],
-          "path": [
-            "guilds"
-          ]
-        },
-        "body": {
-          "mode": "raw",
-          "raw": "sveiki"
-        }
-      }
-    },
-    {
-      "name": "07b POST /guilds su nezinomu lauku -> 400",
-      "event": [
-        {
-          "listen": "test",
-          "script": {
-            "type": "text/javascript",
-            "exec": [
-              "pm.test('400 Bad Request', () => pm.response.to.have.status(400));",
-              "pm.test('Serveris atmeta nedeklaruotus laukus', () => pm.expect(pm.response.json().message).to.include('xpAwarded'));"
-            ]
-          }
-        }
-      ],
-      "request": {
-        "method": "POST",
-        "header": [
-          {
-            "key": "Content-Type",
-            "value": "application/json"
-          }
-        ],
-        "url": {
-          "raw": "{{baseUrl}}/guilds",
-          "host": [
-            "{{baseUrl}}"
-          ],
-          "path": [
-            "guilds"
-          ]
-        },
-        "body": {
-          "mode": "raw",
-          "raw": "{\n  \"name\": \"{{guildName}} (C)\",\n  \"xpAwarded\": 9999\n}"
-        }
-      }
-    },
-    {
-      "name": "08 GET /guilds/999999 -> 404",
-      "event": [
-        {
-          "listen": "test",
-          "script": {
-            "type": "text/javascript",
-            "exec": [
-              "pm.test('404 Not Found', () => pm.response.to.have.status(404));",
-              "pm.test('ApiError su prasmingu pranesimu', () => {",
-              "  const e = pm.response.json();",
-              "  pm.expect(e.status).to.eql(404);",
-              "  pm.expect(e.message).to.include('999999');",
-              "});"
-            ]
-          }
-        }
-      ],
-      "request": {
-        "method": "GET",
-        "url": {
-          "raw": "{{baseUrl}}/guilds/999999",
-          "host": [
-            "{{baseUrl}}"
-          ],
-          "path": [
-            "guilds",
-            "999999"
-          ]
-        }
-      }
-    },
-    {
-      "name": "09 POST /guilds/{gid}/quests -> 201 (metodas 6)",
-      "event": [
-        {
-          "listen": "test",
-          "script": {
-            "type": "text/javascript",
-            "exec": [
-              "pm.test('201 Created', () => pm.response.to.have.status(201));",
-              "const body = pm.response.json();",
-              "pm.test('Serveris pats isvede XP is sudetingumo (HARD = 10 * 5)', () => pm.expect(body.xpPerCompletion).to.eql(50));",
-              "pm.test('Tevine grupe teisinga', () => pm.expect(body.guildId).to.eql(Number(pm.collectionVariables.get('guildA'))));",
-              "pm.collectionVariables.set('questId', body.id);"
-            ]
-          }
-        }
-      ],
-      "request": {
-        "method": "POST",
-        "header": [
-          {
-            "key": "Content-Type",
-            "value": "application/json"
-          }
-        ],
-        "url": {
-          "raw": "{{baseUrl}}/guilds/{{guildA}}/quests",
-          "host": [
-            "{{baseUrl}}"
-          ],
-          "path": [
-            "guilds",
-            "{{guildA}}",
-            "quests"
-          ]
-        },
-        "body": {
-          "mode": "raw",
-          "raw": "{\n  \"title\": \"Run 10 kilometers\",\n  \"description\": \"Postman demonstracijai sukurta uzduotis\",\n  \"stat\": \"CON\",\n  \"type\": \"MILESTONE\",\n  \"difficulty\": \"HARD\"\n}"
-        }
-      }
-    },
-    {
-      "name": "10 POST quest GRIND be targetCount -> 422",
-      "event": [
-        {
-          "listen": "test",
-          "script": {
-            "type": "text/javascript",
-            "exec": [
-              "pm.test('422 Unprocessable Entity', () => pm.response.to.have.status(422));",
-              "pm.test('Pranesimas paaiskina taisykle', () => pm.expect(pm.response.json().message).to.include('targetCount'));"
-            ]
-          }
-        }
-      ],
-      "request": {
-        "method": "POST",
-        "header": [
-          {
-            "key": "Content-Type",
-            "value": "application/json"
-          }
-        ],
-        "url": {
-          "raw": "{{baseUrl}}/guilds/{{guildA}}/quests",
-          "host": [
-            "{{baseUrl}}"
-          ],
-          "path": [
-            "guilds",
-            "{{guildA}}",
-            "quests"
-          ]
-        },
-        "body": {
-          "mode": "raw",
-          "raw": "{\n  \"title\": \"Grind be tikslo\",\n  \"stat\": \"STR\",\n  \"type\": \"GRIND\",\n  \"difficulty\": \"EASY\"\n}"
-        }
-      }
-    },
-    {
-      "name": "11 GET /guilds/{gid}/quests -> 200 filtruotas (metodas 7)",
-      "event": [
-        {
-          "listen": "test",
-          "script": {
-            "type": "text/javascript",
-            "exec": [
-              "pm.test('200 OK', () => pm.response.to.have.status(200));",
-              "const body = pm.response.json();",
-              "pm.test('Filtras pagal stat suveike', () => {",
-              "  pm.expect(body.page.totalElements).to.eql(1);",
-              "  pm.expect(body.content[0].stat).to.eql('CON');",
-              "});",
-              "pm.test('Filtras islieka nuorodose', () => pm.expect(body.links.self).to.include('stat=CON'));"
-            ]
-          }
-        }
-      ],
-      "request": {
-        "method": "GET",
-        "url": {
-          "raw": "{{baseUrl}}/guilds/{{guildA}}/quests?stat=CON",
-          "host": [
-            "{{baseUrl}}"
-          ],
-          "path": [
-            "guilds",
-            "{{guildA}}",
-            "quests"
-          ],
-          "query": [
-            {
-              "key": "stat",
-              "value": "CON"
-            }
-          ]
-        }
-      }
-    },
-    {
-      "name": "12 GET /guilds/{gid}/quests/{qid} -> 200 (metodas 8)",
-      "event": [
-        {
-          "listen": "test",
-          "script": {
-            "type": "text/javascript",
-            "exec": [
-              "pm.test('200 OK', () => pm.response.to.have.status(200));",
-              "pm.test('Ta pati uzduotis', () => pm.expect(pm.response.json().id).to.eql(Number(pm.collectionVariables.get('questId'))));"
-            ]
-          }
-        }
-      ],
-      "request": {
-        "method": "GET",
-        "url": {
-          "raw": "{{baseUrl}}/guilds/{{guildA}}/quests/{{questId}}",
-          "host": [
-            "{{baseUrl}}"
-          ],
-          "path": [
-            "guilds",
-            "{{guildA}}",
-            "quests",
-            "{{questId}}"
-          ]
-        }
-      }
-    },
-    {
-      "name": "13 GET uzduoties per svetima grupe -> 404 (grandines taisykle)",
-      "event": [
-        {
-          "listen": "test",
-          "script": {
-            "type": "text/javascript",
-            "exec": [
-              "pm.test('404 Not Found', () => pm.response.to.have.status(404));",
-              "pm.test('Uzduotis egzistuoja, bet ne sioje grupeje', () => pm.expect(pm.response.json().message).to.include('nerasta grupeje'));"
-            ]
-          }
-        }
-      ],
-      "request": {
-        "method": "GET",
-        "url": {
-          "raw": "{{baseUrl}}/guilds/{{guildB}}/quests/{{questId}}",
-          "host": [
-            "{{baseUrl}}"
-          ],
-          "path": [
-            "guilds",
-            "{{guildB}}",
-            "quests",
-            "{{questId}}"
-          ]
-        }
-      }
-    },
-    {
-      "name": "14 PUT /guilds/{gid}/quests/{qid} -> 200 (metodas 9)",
-      "event": [
-        {
-          "listen": "test",
-          "script": {
-            "type": "text/javascript",
-            "exec": [
-              "pm.test('200 OK', () => pm.response.to.have.status(200));",
-              "pm.test('Sudetingumas pakeistas, XP perskaiciuotas (LEGENDARY = 10 * 8)', () => {",
-              "  pm.expect(pm.response.json().difficulty).to.eql('LEGENDARY');",
-              "  pm.expect(pm.response.json().xpPerCompletion).to.eql(80);",
-              "});"
-            ]
-          }
-        }
-      ],
-      "request": {
-        "method": "PUT",
-        "header": [
-          {
-            "key": "Content-Type",
-            "value": "application/json"
-          }
-        ],
-        "url": {
-          "raw": "{{baseUrl}}/guilds/{{guildA}}/quests/{{questId}}",
-          "host": [
-            "{{baseUrl}}"
-          ],
-          "path": [
-            "guilds",
-            "{{guildA}}",
-            "quests",
-            "{{questId}}"
-          ]
-        },
-        "body": {
-          "mode": "raw",
-          "raw": "{\n  \"title\": \"Run 10 kilometers\",\n  \"description\": \"Sudetingumas pakeltas\",\n  \"stat\": \"CON\",\n  \"type\": \"MILESTONE\",\n  \"difficulty\": \"LEGENDARY\"\n}"
-        }
-      }
-    },
-    {
-      "name": "15 POST .../logs -> 201 PENDING be tasku (metodas 11)",
-      "event": [
-        {
-          "listen": "test",
-          "script": {
-            "type": "text/javascript",
-            "exec": [
-              "pm.test('201 Created', () => pm.response.to.have.status(201));",
-              "const body = pm.response.json();",
-              "pm.test('Naujas irasas visada PENDING ir be tasku', () => {",
-              "  pm.expect(body.status).to.eql('PENDING');",
-              "  pm.expect(body.xpAwarded).to.eql(0);",
-              "  pm.expect(body.inspirationAwarded).to.eql(0);",
-              "  pm.expect(body.reviewedAt).to.be.undefined;",
-              "});",
-              "pm.collectionVariables.set('logId', body.id);"
-            ]
-          }
-        }
-      ],
-      "request": {
-        "method": "POST",
-        "header": [
-          {
-            "key": "Content-Type",
-            "value": "application/json"
-          }
-        ],
-        "url": {
-          "raw": "{{baseUrl}}/guilds/{{guildA}}/quests/{{questId}}/logs",
-          "host": [
-            "{{baseUrl}}"
-          ],
-          "path": [
-            "guilds",
-            "{{guildA}}",
-            "quests",
-            "{{questId}}",
-            "logs"
-          ]
-        },
-        "body": {
-          "mode": "raw",
-          "raw": "{\n  \"note\": \"Nubegau 10 km per 52 minutes\",\n  \"evidenceUrl\": \"https://example.org/evidence/run.png\",\n  \"occurredAt\": \"{{occurredAt}}\"\n}"
-        }
-      }
-    },
-    {
-      "name": "16 POST .../logs su ateities data -> 422",
-      "event": [
-        {
-          "listen": "test",
-          "script": {
-            "type": "text/javascript",
-            "exec": [
-              "pm.test('422 Unprocessable Entity', () => pm.response.to.have.status(422));",
-              "pm.test('Pranesimas apie occurredAt', () => pm.expect(pm.response.json().message).to.include('occurredAt'));"
-            ]
-          }
-        }
-      ],
-      "request": {
-        "method": "POST",
-        "header": [
-          {
-            "key": "Content-Type",
-            "value": "application/json"
-          }
-        ],
-        "url": {
-          "raw": "{{baseUrl}}/guilds/{{guildA}}/quests/{{questId}}/logs",
-          "host": [
-            "{{baseUrl}}"
-          ],
-          "path": [
-            "guilds",
-            "{{guildA}}",
-            "quests",
-            "{{questId}}",
-            "logs"
-          ]
-        },
-        "body": {
-          "mode": "raw",
-          "raw": "{\n  \"occurredAt\": \"2099-01-01T00:00:00Z\"\n}"
-        }
-      }
-    },
-    {
-      "name": "17 GET .../logs -> 200 filtruotas pagal busena (metodas 12)",
-      "event": [
-        {
-          "listen": "test",
-          "script": {
-            "type": "text/javascript",
-            "exec": [
-              "pm.test('200 OK', () => pm.response.to.have.status(200));",
-              "const body = pm.response.json();",
-              "pm.test('Rastas vienas PENDING irasas', () => {",
-              "  pm.expect(body.page.totalElements).to.eql(1);",
-              "  pm.expect(body.content[0].status).to.eql('PENDING');",
-              "});"
-            ]
-          }
-        }
-      ],
-      "request": {
-        "method": "GET",
-        "url": {
-          "raw": "{{baseUrl}}/guilds/{{guildA}}/quests/{{questId}}/logs?status=PENDING",
-          "host": [
-            "{{baseUrl}}"
-          ],
-          "path": [
-            "guilds",
-            "{{guildA}}",
-            "quests",
-            "{{questId}}",
-            "logs"
-          ],
-          "query": [
-            {
-              "key": "status",
-              "value": "PENDING"
-            }
-          ]
-        }
-      }
-    },
-    {
-      "name": "18 GET .../logs/{lid} -> 200 (metodas 13)",
-      "event": [
-        {
-          "listen": "test",
-          "script": {
-            "type": "text/javascript",
-            "exec": [
-              "pm.test('200 OK', () => pm.response.to.have.status(200));",
-              "pm.test('Tas pats irasas', () => pm.expect(pm.response.json().id).to.eql(Number(pm.collectionVariables.get('logId'))));"
-            ]
-          }
-        }
-      ],
-      "request": {
-        "method": "GET",
-        "url": {
-          "raw": "{{baseUrl}}/guilds/{{guildA}}/quests/{{questId}}/logs/{{logId}}",
-          "host": [
-            "{{baseUrl}}"
-          ],
-          "path": [
-            "guilds",
-            "{{guildA}}",
-            "quests",
-            "{{questId}}",
-            "logs",
-            "{{logId}}"
-          ]
-        }
-      }
-    },
-    {
-      "name": "19 PUT .../logs/{lid} patvirtinimas -> 200 (metodas 14)",
-      "event": [
-        {
-          "listen": "test",
-          "script": {
-            "type": "text/javascript",
-            "exec": [
-              "pm.test('200 OK', () => pm.response.to.have.status(200));",
-              "const body = pm.response.json();",
-              "pm.test('XP paimtas is uzduoties sudetingumo, nors klientas jo nepadave', () => {",
-              "  pm.expect(body.status).to.eql('APPROVED');",
-              "  pm.expect(body.xpAwarded).to.eql(80);",
-              "  pm.expect(body.inspirationAwarded).to.eql(1);",
-              "  pm.expect(body.reviewedAt).to.be.a('string');",
-              "});"
-            ]
-          }
-        }
-      ],
-      "request": {
-        "method": "PUT",
-        "header": [
-          {
-            "key": "Content-Type",
-            "value": "application/json"
-          }
-        ],
-        "url": {
-          "raw": "{{baseUrl}}/guilds/{{guildA}}/quests/{{questId}}/logs/{{logId}}",
-          "host": [
-            "{{baseUrl}}"
-          ],
-          "path": [
-            "guilds",
-            "{{guildA}}",
-            "quests",
-            "{{questId}}",
-            "logs",
-            "{{logId}}"
-          ]
-        },
-        "body": {
-          "mode": "raw",
-          "raw": "{\n  \"note\": \"Nubegau 10 km per 52 minutes\",\n  \"evidenceUrl\": \"https://example.org/evidence/run.png\",\n  \"occurredAt\": \"{{occurredAt}}\",\n  \"status\": \"APPROVED\",\n  \"inspirationAwarded\": 1,\n  \"reviewerNote\": \"Uzskaitau, nuotrauka aiski\"\n}"
-        }
-      }
-    },
-    {
-      "name": "20 PUT .../logs/{lid} PENDING su XP -> 422",
-      "event": [
-        {
-          "listen": "test",
-          "script": {
-            "type": "text/javascript",
-            "exec": [
-              "pm.test('422 Unprocessable Entity', () => pm.response.to.have.status(422));",
-              "pm.test('Neperziuretas irasas negali tureti tasku', () => pm.expect(pm.response.json().message).to.include('PENDING'));"
-            ]
-          }
-        }
-      ],
-      "request": {
-        "method": "PUT",
-        "header": [
-          {
-            "key": "Content-Type",
-            "value": "application/json"
-          }
-        ],
-        "url": {
-          "raw": "{{baseUrl}}/guilds/{{guildA}}/quests/{{questId}}/logs/{{logId}}",
-          "host": [
-            "{{baseUrl}}"
-          ],
-          "path": [
-            "guilds",
-            "{{guildA}}",
-            "quests",
-            "{{questId}}",
-            "logs",
-            "{{logId}}"
-          ]
-        },
-        "body": {
-          "mode": "raw",
-          "raw": "{\n  \"occurredAt\": \"{{occurredAt}}\",\n  \"status\": \"PENDING\",\n  \"xpAwarded\": 500\n}"
-        }
-      }
-    },
-    {
-      "name": "21 DELETE .../logs/{lid} -> 204 (metodas 15)",
-      "event": [
-        {
-          "listen": "test",
-          "script": {
-            "type": "text/javascript",
-            "exec": [
-              "pm.test('204 No Content', () => pm.response.to.have.status(204));",
-              "pm.test('Atsakymas be turinio', () => pm.expect(pm.response.text()).to.be.empty);"
-            ]
-          }
-        }
-      ],
-      "request": {
-        "method": "DELETE",
-        "url": {
-          "raw": "{{baseUrl}}/guilds/{{guildA}}/quests/{{questId}}/logs/{{logId}}",
-          "host": [
-            "{{baseUrl}}"
-          ],
-          "path": [
-            "guilds",
-            "{{guildA}}",
-            "quests",
-            "{{questId}}",
-            "logs",
-            "{{logId}}"
-          ]
-        }
-      }
-    },
-    {
-      "name": "22 DELETE .../logs/{lid} pakartotinai -> 404",
-      "event": [
-        {
-          "listen": "test",
-          "script": {
-            "type": "text/javascript",
-            "exec": [
-              "pm.test('404 Not Found', () => pm.response.to.have.status(404));"
-            ]
-          }
-        }
-      ],
-      "request": {
-        "method": "DELETE",
-        "url": {
-          "raw": "{{baseUrl}}/guilds/{{guildA}}/quests/{{questId}}/logs/{{logId}}",
-          "host": [
-            "{{baseUrl}}"
-          ],
-          "path": [
-            "guilds",
-            "{{guildA}}",
-            "quests",
-            "{{questId}}",
-            "logs",
-            "{{logId}}"
-          ]
-        }
-      }
-    },
-    {
-      "name": "23 DELETE /guilds/{gid}/quests/{qid} -> 204 (metodas 10)",
-      "event": [
-        {
-          "listen": "test",
-          "script": {
-            "type": "text/javascript",
-            "exec": [
-              "pm.test('204 No Content', () => pm.response.to.have.status(204));"
-            ]
-          }
-        }
-      ],
-      "request": {
-        "method": "DELETE",
-        "url": {
-          "raw": "{{baseUrl}}/guilds/{{guildA}}/quests/{{questId}}",
-          "host": [
-            "{{baseUrl}}"
-          ],
-          "path": [
-            "guilds",
-            "{{guildA}}",
-            "quests",
-            "{{questId}}"
-          ]
-        }
-      }
-    },
-    {
-      "name": "24 DELETE /guilds/{gid} -> 204 (metodas 5)",
-      "event": [
-        {
-          "listen": "test",
-          "script": {
-            "type": "text/javascript",
-            "exec": [
-              "pm.test('204 No Content', () => pm.response.to.have.status(204));"
-            ]
-          }
-        }
-      ],
-      "request": {
-        "method": "DELETE",
-        "url": {
-          "raw": "{{baseUrl}}/guilds/{{guildA}}",
-          "host": [
-            "{{baseUrl}}"
-          ],
-          "path": [
-            "guilds",
-            "{{guildA}}"
-          ]
-        }
-      }
-    },
-    {
-      "name": "25 DELETE antra grupe -> 204 (isvalymas)",
-      "event": [
-        {
-          "listen": "test",
-          "script": {
-            "type": "text/javascript",
-            "exec": [
-              "pm.test('204 No Content', () => pm.response.to.have.status(204));"
-            ]
-          }
-        }
-      ],
-      "request": {
-        "method": "DELETE",
-        "url": {
-          "raw": "{{baseUrl}}/guilds/{{guildB}}",
-          "host": [
-            "{{baseUrl}}"
-          ],
-          "path": [
-            "guilds",
-            "{{guildB}}"
-          ]
-        }
-      }
-    },
-    {
-      "name": "26 GET istrintos grupes -> 404",
-      "event": [
-        {
-          "listen": "test",
-          "script": {
-            "type": "text/javascript",
-            "exec": [
-              "pm.test('404 Not Found', () => pm.response.to.have.status(404));",
-              "pm.test('Po istrynimo resurso nebera', () => pm.expect(pm.response.json().status).to.eql(404));"
-            ]
-          }
-        }
-      ],
-      "request": {
-        "method": "GET",
-        "url": {
-          "raw": "{{baseUrl}}/guilds/{{guildA}}",
-          "host": [
-            "{{baseUrl}}"
-          ],
-          "path": [
-            "guilds",
-            "{{guildA}}"
-          ]
-        }
-      }
+      "key": "pageIds",
+      "value": ""
     }
   ]
 }

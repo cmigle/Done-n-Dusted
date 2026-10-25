@@ -2,7 +2,7 @@ $kind: http-example
 name: "200 OK"
 request:
   url: "{{baseUrl}}/guilds/{{guildA}}"
-  method: PUT
+  method: PATCH
 response:
   statusCode: 200
   statusText: "OK"
@@ -14,8 +14,8 @@ response:
     content: |-
       {
         "id": 4,
-        "name": "Postman Guild 1792345003168",
+        "name": "Postman Guild 1792923286320",
         "description": "Aprasymas po redagavimo",
-        "createdAt": "2026-10-18T17:36:43.635648Z"
+        "createdAt": "2026-10-25T10:14:46.482096Z"
       }
 order: 1000

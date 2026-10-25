@@ -1,30 +1,31 @@
 $kind: http-request
 url: "{{baseUrl}}/guilds/{{guildA}}/quests/{{questId}}"
-method: PUT
+method: PATCH
 headers:
   Content-Type: application/json
 body:
   type: text
   content: |-
     {
-      "title": "Run 10 kilometers",
-      "description": "Sudetingumas pakeltas",
-      "stat": "CON",
-      "type": "MILESTONE",
       "difficulty": "LEGENDARY"
     }
 scripts:
   - type: afterResponse
     code: |-
       pm.test('200 OK', () => pm.response.to.have.status(200));
+      const body = pm.response.json();
       pm.test('Sudetingumas pakeistas, XP perskaiciuotas (LEGENDARY = 10 * 8)', () => {
-        pm.expect(pm.response.json().difficulty).to.eql('LEGENDARY');
-        pm.expect(pm.response.json().xpPerCompletion).to.eql(80);
+        pm.expect(body.difficulty).to.eql('LEGENDARY');
+        pm.expect(body.xpPerCompletion).to.eql(80);
+      });
+      pm.test('Neatsiusti laukai (title, description) nepakito', () => {
+        pm.expect(body.title).to.eql('Run 10 kilometers');
+        pm.expect(body.description).to.eql('Postman demonstracijai sukurta uzduotis');
       });
     language: text/javascript
 order: 6000
 description: |-
-  Atnaujina užduotį ir pakelia sudėtingumą iki `LEGENDARY`.
+  Dalinai atnaujina užduotį (`PATCH`): siunčiamas tik `difficulty = LEGENDARY`. Pavadinimas ir aprašymas lieka tokie, kokie buvo — nedingsta.
 
   Serveris perskaičiuoja `xpPerCompletion`: 10 × 8 = **80**. Jau patvirtintų įrašų XP nesikeičia.
 

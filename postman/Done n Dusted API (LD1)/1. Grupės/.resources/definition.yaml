@@ -1,6 +1,6 @@
 $kind: collection
 description: |-
-  Grupių (Guild) valdymas: sukūrimas, sąrašas, gavimas, atnaujinimas ir validacijos klaidos.
+  Grupių (Guild) valdymas: sukūrimas, sąrašas, puslapiavimas, gavimas, dalinis atnaujinimas (`PATCH`) ir validacijos klaidos.
 
-  Čia sukuriamos dvi grupės. `guildA` naudojama visoje kolekcijoje, o `guildB` reikalinga tik tėvinės grandinės testui.
+  Čia sukuriamos dvi grupės. `guildA` naudojama visoje kolekcijoje, o `guildB` sukuriama be aprašymo (parodo, kad `description` tampa `""`, o ne dingsta) ir reikalinga tėvinės grandinės testui.
 order: 1000

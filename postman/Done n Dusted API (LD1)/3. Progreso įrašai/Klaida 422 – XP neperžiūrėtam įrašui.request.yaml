@@ -1,13 +1,12 @@
 $kind: http-request
 url: "{{baseUrl}}/guilds/{{guildA}}/quests/{{questId}}/logs/{{logId}}"
-method: PUT
+method: PATCH
 headers:
   Content-Type: application/json
 body:
   type: text
   content: |-
     {
-      "occurredAt": "{{occurredAt}}",
       "status": "PENDING",
       "xpAwarded": 500
     }

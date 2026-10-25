@@ -7,15 +7,17 @@ scripts:
   - type: afterResponse
     code: |-
       pm.test('200 OK', () => pm.response.to.have.status(200));
-      const body = pm.response.json();
-      pm.test('Rastas vienas PENDING irasas', () => {
-        pm.expect(body.page.totalElements).to.eql(1);
-        pm.expect(body.content[0].status).to.eql('PENDING');
+      const logs = pm.response.json().content;
+      pm.test('Rastas vienas PENDING irasas, ID: ' + logs.map(l => l.id).join(', '), () => {
+        pm.expect(logs).to.have.lengthOf(1);
+        pm.expect(logs[0].status).to.eql('PENDING');
+        pm.expect(logs[0].id).to.eql(Number(pm.collectionVariables.get('logId')));
       });
+      pm.test('Irasas priklauso sukurtai uzduociai', () => pm.expect(logs[0].questId).to.eql(Number(pm.collectionVariables.get('questId'))));
     language: text/javascript
 order: 3000
 description: |-
-  Grąžina puslapiuotą užduoties įrašų sąrašą.
+  Grąžina užduoties įrašų sąrašą.
 
   Filtras `status` gali būti `PENDING`, `APPROVED` arba `REJECTED`. Čia ieškoma įrašų, kurie dar laukia peržiūros.
 

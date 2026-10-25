@@ -17,10 +17,13 @@ description: |-
 
   | Aplankas | Kas tikrinama |
   | --- | --- |
-  | 1. Grupės | Grupių CRUD, puslapiavimas, `400`, `404`, `409`, `415` klaidos |
+  | 0. Suvestinė | Kiek DB yra grupių, užduočių ir įrašų (su ID), ar vaikų ID rodo į teisingą tėvą |
+  | 1. Grupės | Grupių CRUD, puslapiavimas per `links.next`, `400`, `404`, `409`, `415` klaidos |
   | 2. Užduotys | Užduočių kūrimas, filtrai, XP skaičiavimas, `422` ir tėvinės grandinės `404` |
   | 3. Progreso įrašai | Įrašų registravimas, DM patvirtinimas, XP taisyklės |
   | 4. Išvalymas | Sukurtų duomenų ištrynimas (`204`) ir patikra, kad jų nebėra |
+
+  Atnaujinimas visur yra `PATCH` (dalinis): keičiami tik atsiųsti laukai, todėl neatsiųstas aprašymas nedingsta. Sukūrus resursą be `description`, jis išsaugomas kaip `""`.
 
   ## Kolekcijos kintamieji
 
@@ -31,6 +34,7 @@ description: |-
   | `guildA`, `guildB` | Sukurtų grupių ID |
   | `questId`, `logId` | Sukurtos užduoties ir įrašo ID |
   | `occurredAt` | Įvykio laikas (prieš valandą), naudojamas įrašams |
+  | `nextPage`, `pageIds` | Puslapiavimo demonstracijai: `links.next` nuoroda ir pirmo puslapio ID |
 
   ## Klaidų formatas
 
@@ -60,3 +64,5 @@ variables:
   questId: ""
   logId: ""
   occurredAt: ""
+  nextPage: ""
+  pageIds: ""

@@ -7,18 +7,24 @@ body:
   type: text
   content: |-
     {
-      "name": "{{guildName}} (B)",
-      "description": "Naudojama tik neteisingos grandines testui"
+      "name": "{{guildName}} (B)"
     }
 scripts:
   - type: afterResponse
     code: |-
       pm.test('201 Created', () => pm.response.to.have.status(201));
-      pm.collectionVariables.set('guildB', pm.response.json().id);
+      const body = pm.response.json();
+      pm.test('Neatsiustas aprasymas issaugotas kaip tuscias, laukas nedingsta', () => {
+        pm.expect(body).to.have.property('description');
+        pm.expect(body.description).to.eql('');
+      });
+      pm.collectionVariables.set('guildB', body.id);
     language: text/javascript
 order: 2000
 description: |-
-  Sukuria antrą grupę ir išsaugo jos ID kintamajame `guildB`.
+  Sukuria antrą grupę **be aprašymo** ir išsaugo jos ID kintamajame `guildB`.
 
-  Ji reikalinga tik tėvinės grandinės testui: vėliau bandoma pasiekti A grupės užduotį per B grupę.
-examples: './.resources/Sukurti antrą grupę.resources/examples'
+  Neatsiųstas `description` išsaugomas kaip tuščias tekstas `""`, todėl atsakyme laukas lieka (nedingsta).
+
+  Grupė reikalinga ir tėvinės grandinės testui: vėliau bandoma pasiekti A grupės užduotį per B grupę.
+examples: './.resources/Sukurti antrą grupę be aprašymo.resources/examples'

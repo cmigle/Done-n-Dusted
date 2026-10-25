@@ -2,7 +2,7 @@ $kind: http-example
 name: "200 OK"
 request:
   url: "{{baseUrl}}/guilds/{{guildA}}/quests/{{questId}}/logs/{{logId}}"
-  method: PUT
+  method: PATCH
 response:
   statusCode: 200
   statusText: "OK"
@@ -21,8 +21,8 @@ response:
         "xpAwarded": 80,
         "inspirationAwarded": 1,
         "reviewerNote": "Uzskaitau, nuotrauka aiski",
-        "occurredAt": "2026-10-18T16:36:43.168Z",
-        "reviewedAt": "2026-10-18T17:36:45.024585900Z",
-        "createdAt": "2026-10-18T17:36:44.756125Z"
+        "occurredAt": "2026-10-25T09:14:46.320Z",
+        "reviewedAt": "2026-10-25T10:14:49.289262100Z",
+        "createdAt": "2026-10-25T10:14:48.764354Z"
       }
 order: 1000

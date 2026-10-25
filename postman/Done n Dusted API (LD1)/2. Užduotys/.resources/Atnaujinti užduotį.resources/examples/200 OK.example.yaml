@@ -2,7 +2,7 @@ $kind: http-example
 name: "200 OK"
 request:
   url: "{{baseUrl}}/guilds/{{guildA}}/quests/{{questId}}"
-  method: PUT
+  method: PATCH
 response:
   statusCode: 200
   statusText: "OK"
@@ -16,12 +16,12 @@ response:
         "id": 10,
         "guildId": 4,
         "title": "Run 10 kilometers",
-        "description": "Sudetingumas pakeltas",
+        "description": "Postman demonstracijai sukurta uzduotis",
         "stat": "CON",
         "type": "MILESTONE",
         "difficulty": "LEGENDARY",
         "active": true,
         "xpPerCompletion": 80,
-        "createdAt": "2026-10-18T17:36:44.337402Z"
+        "createdAt": "2026-10-25T10:14:47.983603Z"
       }
 order: 1000
