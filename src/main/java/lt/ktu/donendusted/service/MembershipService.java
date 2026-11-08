@@ -53,7 +53,7 @@ public class MembershipService {
         // Naudotojas nurodomas body, ne kelyje - jo nebuvimas yra turinio klaida (422), ne 404.
         User user = users.findByUsernameIgnoreCase(request.username())
                 .orElseThrow(() -> new BusinessRuleException("Naudotojas '" + request.username() + "' nerastas"));
-        if (memberships.findByGuildIdAndUserId(guildId, user.getId()).isPresent()) {
+        if (memberships.existsByGuildIdAndUserId(guildId, user.getId())) {
             throw new ConflictException("Naudotojas '" + user.getUsername() + "' jau yra grupes narys");
         }
         if (request.role() == GuildRole.DUNGEON_MASTER) {
