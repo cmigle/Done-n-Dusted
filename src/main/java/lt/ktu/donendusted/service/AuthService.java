@@ -6,11 +6,13 @@ import lt.ktu.donendusted.domain.User;
 import lt.ktu.donendusted.error.ConflictException;
 import lt.ktu.donendusted.error.ForbiddenException;
 import lt.ktu.donendusted.error.UnauthorizedException;
+import lt.ktu.donendusted.repository.GuildMembershipRepository;
 import lt.ktu.donendusted.repository.RefreshTokenRepository;
 import lt.ktu.donendusted.repository.UserRepository;
 import lt.ktu.donendusted.security.CurrentUser;
 import lt.ktu.donendusted.security.TokenService;
 import lt.ktu.donendusted.web.dto.LoginRequest;
+import lt.ktu.donendusted.web.dto.MeResponse;
 import lt.ktu.donendusted.web.dto.RegisterRequest;
 import lt.ktu.donendusted.web.dto.TokenResponse;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -23,16 +25,18 @@ public class AuthService {
 
     private final UserRepository users;
     private final RefreshTokenRepository refreshTokens;
+    private final GuildMembershipRepository memberships;
     private final TokenService tokens;
     private final PasswordEncoder passwordEncoder;
 
     /** Lyginama, kai naudotojo nera - atsakymo laikas neisduoda, ar toks vardas egzistuoja. */
     private final String dummyHash;
 
-    public AuthService(UserRepository users, RefreshTokenRepository refreshTokens, TokenService tokens,
-                       PasswordEncoder passwordEncoder) {
+    public AuthService(UserRepository users, RefreshTokenRepository refreshTokens,
+                       GuildMembershipRepository memberships, TokenService tokens, PasswordEncoder passwordEncoder) {
         this.users = users;
         this.refreshTokens = refreshTokens;
+        this.memberships = memberships;
         this.tokens = tokens;
         this.passwordEncoder = passwordEncoder;
         this.dummyHash = passwordEncoder.encode("dummy-password");
@@ -89,9 +93,10 @@ public class AuthService {
     }
 
     @Transactional(readOnly = true)
-    public User me() {
-        return users.findById(CurrentUser.get().id())
+    public MeResponse me() {
+        User user = users.findById(CurrentUser.get().id())
                 .orElseThrow(() -> new UnauthorizedException("Naudotojas nebeegzistuoja"));
+        return MeResponse.from(user, memberships.findByUserIdOrderByGuildName(user.getId()));
     }
 
     private void requireEnabled(User user) {
