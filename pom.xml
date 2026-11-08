@@ -13,9 +13,9 @@
 
     <groupId>lt.ktu</groupId>
     <artifactId>done-n-dusted</artifactId>
-    <version>0.1.0</version>
+    <version>0.2.0</version>
     <name>Done n Dusted API</name>
-    <description>T120B165 laboratorinis darbas - REST API</description>
+    <description>T120B165 laboratorinis darbas - REST API su JWT autentifikacija</description>
 
     <properties>
         <java.version>21</java.version>
@@ -35,6 +35,11 @@
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-validation</artifactId>
+        </dependency>
+        <!-- Spring Security + JWT (Nimbus): access zetonu pasirasymas ir tikrinimas -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-security-oauth2-resource-server</artifactId>
         </dependency>
         <dependency>
             <groupId>org.springframework.boot</groupId>

@@ -34,5 +34,14 @@ springdoc:
     path: /swagger-ui.html
     operations-sorter: method
     tags-sorter: alpha
+    persist-authorization: true   # Swagger UI "Authorize" zetonas islieka perkrovus puslapi
   api-docs:
     path: /v3/api-docs
+
+app:
+  jwt:
+    issuer: done-n-dusted
+    # Numatytasis raktas tik kurimo aplinkai. prod profilyje privalomas JWT_SECRET aplinkos kintamasis.
+    secret: ${JWT_SECRET:dev-only-jwt-secret-change-me-0123456789}
+    access-token-ttl: 15m   # trumpas: atsijungus access zetonas dar galioja iki exp
+    refresh-token-ttl: 7d
