@@ -74,9 +74,7 @@ public class GuildService {
     public GuildAccess access(Long guildId) {
         Guild guild = guilds.findById(guildId).orElseThrow(() -> ResourceNotFoundException.guild(guildId));
         CurrentUser me = CurrentUser.get();
-        GuildRole role = memberships.findByGuildIdAndUserId(guildId, me.id())
-                .map(GuildMembership::getRole)
-                .orElse(null);
+        GuildRole role = memberships.findRole(guildId, me.id()).orElse(null);
         GuildAccess access = new GuildAccess(guild, me, role);
         access.require(access.isMember() || access.isAdmin(), "Nesate grupes " + guildId + " narys");
         return access;
