@@ -12,6 +12,9 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
+import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.core.AuthenticationException;
+import org.springframework.security.oauth2.core.OAuth2AuthenticationException;
 import org.springframework.web.HttpMediaTypeNotAcceptableException;
 import org.springframework.web.HttpMediaTypeNotSupportedException;
 import org.springframework.web.HttpRequestMethodNotSupportedException;
@@ -46,12 +49,30 @@ public class ApiExceptionHandler {
     /** 401 + WWW-Authenticate: klientui pasakoma, kad reikia Bearer zetono. */
     @ExceptionHandler(UnauthorizedException.class)
     public ResponseEntity<ApiError> handleUnauthorized(UnauthorizedException ex, HttpServletRequest request) {
-        return unauthorized(ex.getMessage(), request);
+        return unauthorized(ex.getMessage(), "Bearer", request);
+    }
+
+    /** Is security filtru (per ApiAuthErrorHandler): zetono nera arba jis neteisingas / pasibaiges. */
+    @ExceptionHandler(AuthenticationException.class)
+    public ResponseEntity<ApiError> handleAuthentication(AuthenticationException ex, HttpServletRequest request) {
+        if (!(ex instanceof OAuth2AuthenticationException)) {
+            return unauthorized("Reikalingas prisijungimas: Authorization: Bearer <accessToken>", "Bearer", request);
+        }
+        String message = String.valueOf(ex.getMessage()).contains("expired")
+                ? "Access zetonas pasibaiges - gaukite nauja per /api/auth/refresh"
+                : "Access zetonas neteisingas";
+        return unauthorized(message, "Bearer error=\"invalid_token\"", request);
     }
 
     @ExceptionHandler(ForbiddenException.class)
     public ResponseEntity<ApiError> handleForbidden(ForbiddenException ex, HttpServletRequest request) {
         return build(HttpStatus.FORBIDDEN, ex.getMessage(), request);
+    }
+
+    /** URL taisykles (pvz. /api/users tik ADMIN) - naudotojas zinomas, bet role netinka. */
+    @ExceptionHandler(AccessDeniedException.class)
+    public ResponseEntity<ApiError> handleAccessDenied(AccessDeniedException ex, HttpServletRequest request) {
+        return build(HttpStatus.FORBIDDEN, "Neturite teises atlikti sio veiksmo", request);
     }
 
     @ExceptionHandler(ConflictException.class)
@@ -156,9 +177,9 @@ public class ApiExceptionHandler {
         return build(HttpStatus.INTERNAL_SERVER_ERROR, "Vidine serverio klaida", request);
     }
 
-    private ResponseEntity<ApiError> unauthorized(String message, HttpServletRequest request) {
+    private ResponseEntity<ApiError> unauthorized(String message, String wwwAuthenticate, HttpServletRequest request) {
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                .header(HttpHeaders.WWW_AUTHENTICATE, "Bearer")
+                .header(HttpHeaders.WWW_AUTHENTICATE, wwwAuthenticate)
                 .body(ApiError.of(HttpStatus.UNAUTHORIZED, message, request.getRequestURI()));
     }
 

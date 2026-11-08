@@ -3,6 +3,7 @@ package lt.ktu.donendusted.config;
 import java.nio.charset.StandardCharsets;
 import javax.crypto.SecretKey;
 import javax.crypto.spec.SecretKeySpec;
+import lt.ktu.donendusted.security.ApiAuthErrorHandler;
 import lt.ktu.donendusted.security.JwtProperties;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
@@ -36,7 +37,7 @@ public class SecurityConfig {
     };
 
     @Bean
-    public SecurityFilterChain apiSecurity(HttpSecurity http) throws Exception {
+    public SecurityFilterChain apiSecurity(HttpSecurity http, ApiAuthErrorHandler errors) throws Exception {
         http
                 // CSRF reikalingas cookie sesijoms. Cia zetonas siunciamas antrasteje, kurios narsykle
                 // pati neprideda, todel svetima svetaine negali atlikti uzklausos naudotojo vardu.
@@ -46,7 +47,12 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.POST, PUBLIC_AUTH).permitAll()
                         .requestMatchers("/swagger-ui.html", "/swagger-ui/**", "/v3/api-docs/**", "/error").permitAll()
                         .anyRequest().authenticated())
-                .oauth2ResourceServer(rs -> rs.jwt(jwt -> jwt.jwtAuthenticationConverter(jwtAuthenticationConverter())));
+                .oauth2ResourceServer(rs -> rs
+                        .jwt(jwt -> jwt.jwtAuthenticationConverter(jwtAuthenticationConverter()))
+                        .authenticationEntryPoint(errors)
+                        .accessDeniedHandler(errors))
+                // 401/403 is filtru - ta pati ApiError struktura kaip ir kitos klaidos
+                .exceptionHandling(e -> e.authenticationEntryPoint(errors).accessDeniedHandler(errors));
         return http.build();
     }
 
