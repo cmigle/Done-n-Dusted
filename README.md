@@ -11,7 +11,9 @@ veikėjo charakteristikas.
 Resursų hierarchija: **Guild (1:N) → Quest (1:N) → LogEntry**. Naudotojai grupėms priklauso per
 **GuildMembership** su role `PLAYER` arba `DUNGEON_MASTER`.
 
-LD1 būsena išsaugota Git žyme `ld1`. Kas pridėta LD2 ir kaip tai apginti — [`docs/LD2.md`](docs/LD2.md).
+Versijos — Git žymos: `v0.1.0` (LD1) ir `v0.2.0` (LD2). Kas pridėta LD2 ir kaip tai apginti —
+[`docs/LD2.md`](docs/LD2.md) ir interaktyvus gynimo puslapis su diagramomis
+[`docs/gynimas/LD2_gynimas.html`](docs/gynimas/LD2_gynimas.html) (atidaryti naršyklėje).
 
 ---
 
@@ -337,6 +339,7 @@ src/main/resources/db/migration/
   V5__guild_membership.sql      narystės, savininkai, autoriai ir seed ryšiai
 docs/
   LD2.md                LD2 pakeitimai ir gynimo klausimai
+  gynimas/              LD2 gynimo puslapis (HTML) ir jo šaltiniai (Archify)
   openapi.json          sugeneruota OpenAPI specifikacija
   visual/               LD1 gynimo gidas, demo komandos, WALKTHROUGH.md ir diagramos
 postman/
