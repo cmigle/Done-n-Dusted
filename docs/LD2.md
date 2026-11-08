@@ -4,6 +4,10 @@ Kas pridėta prie LD1, kaip tai veikia ir ką sakyti gynime. LD1 dalis (REST, pu
 klaidos) aprašyta [`visual/GYNIMO_GIDAS.md`](visual/GYNIMO_GIDAS.md); diagramos `visual/*.html`
 vaizduoja LD1 branduolį (be naudotojų lentelių).
 
+Tas pats turinys su diagramomis (sluoksniai, atsakymo kodų medis, žetonų ciklas, DB schema) ir kodo
+ištraukomis — [`gynimas/LD2_gynimas.html`](gynimas/LD2_gynimas.html). Puslapis atsidaro naršyklėje be
+interneto; šaltinis `gynimas/ld2-gynimas.archify.md`.
+
 ---
 
 ## 1. Kas pridėta

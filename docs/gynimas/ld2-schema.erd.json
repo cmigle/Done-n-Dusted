@@ -1,0 +1,362 @@
+{
+  "schema_version": 1,
+  "diagram_type": "erd",
+  "meta": {
+    "title": "LD2 duomenų bazė",
+    "locale": "en",
+    "output": "ld2-schema.html",
+    "quality_profile": "showcase"
+  },
+  "layout": {
+    "mode": "grid",
+    "gapX": 72,
+    "gapY": 44
+  },
+  "entities": [
+    {
+      "id": "refresh_token",
+      "label": "refresh_token",
+      "tag": "naudotojai",
+      "row": 0,
+      "col": 0,
+      "attributes": [
+        {
+          "name": "id",
+          "type": "bigserial",
+          "key": "pk"
+        },
+        {
+          "name": "user_id",
+          "type": "bigint",
+          "key": "fk",
+          "references": "app_user.id"
+        },
+        {
+          "name": "token_hash",
+          "type": "varchar(64)",
+          "key": "uk"
+        },
+        {
+          "name": "expires_at",
+          "type": "timestamptz"
+        },
+        {
+          "name": "revoked_at",
+          "type": "timestamptz"
+        },
+        {
+          "name": "created_at",
+          "type": "timestamptz"
+        }
+      ]
+    },
+    {
+      "id": "app_user",
+      "label": "app_user",
+      "tag": "naudotojai",
+      "row": 0,
+      "col": 1,
+      "attributes": [
+        {
+          "name": "id",
+          "type": "bigserial",
+          "key": "pk"
+        },
+        {
+          "name": "username",
+          "type": "varchar(30)",
+          "key": "uk"
+        },
+        {
+          "name": "password_hash",
+          "type": "varchar(100)"
+        },
+        {
+          "name": "role",
+          "type": "varchar(10)"
+        },
+        {
+          "name": "enabled",
+          "type": "boolean"
+        },
+        {
+          "name": "created_at",
+          "type": "timestamptz"
+        }
+      ]
+    },
+    {
+      "id": "log_entry",
+      "label": "log_entry",
+      "tag": "turinys",
+      "row": 0,
+      "col": 2,
+      "attributes": [
+        {
+          "name": "id",
+          "type": "bigserial",
+          "key": "pk"
+        },
+        {
+          "name": "quest_id",
+          "type": "bigint",
+          "key": "fk",
+          "references": "quest.id"
+        },
+        {
+          "name": "author_id",
+          "type": "bigint",
+          "key": "fk",
+          "references": "app_user.id"
+        },
+        {
+          "name": "reviewer_id",
+          "type": "bigint",
+          "key": "fk",
+          "references": "app_user.id"
+        },
+        {
+          "name": "note",
+          "type": "varchar(1000)"
+        },
+        {
+          "name": "evidence_url",
+          "type": "varchar(500)"
+        },
+        {
+          "name": "status",
+          "type": "varchar(10)"
+        },
+        {
+          "name": "xp_awarded",
+          "type": "integer"
+        },
+        {
+          "name": "inspiration_awarded",
+          "type": "integer"
+        },
+        {
+          "name": "reviewer_note",
+          "type": "varchar(500)"
+        },
+        {
+          "name": "occurred_at",
+          "type": "timestamptz"
+        },
+        {
+          "name": "reviewed_at",
+          "type": "timestamptz"
+        },
+        {
+          "name": "created_at",
+          "type": "timestamptz"
+        }
+      ]
+    },
+    {
+      "id": "guild_membership",
+      "label": "guild_membership",
+      "tag": "grupės",
+      "row": 1,
+      "col": 0,
+      "attributes": [
+        {
+          "name": "id",
+          "type": "bigserial",
+          "key": "pk"
+        },
+        {
+          "name": "guild_id",
+          "type": "bigint",
+          "key": "fk",
+          "references": "guild.id"
+        },
+        {
+          "name": "user_id",
+          "type": "bigint",
+          "key": "fk",
+          "references": "app_user.id"
+        },
+        {
+          "name": "role",
+          "type": "varchar(20)"
+        },
+        {
+          "name": "joined_at",
+          "type": "timestamptz"
+        }
+      ]
+    },
+    {
+      "id": "guild",
+      "label": "guild",
+      "tag": "grupės",
+      "row": 1,
+      "col": 1,
+      "attributes": [
+        {
+          "name": "id",
+          "type": "bigserial",
+          "key": "pk"
+        },
+        {
+          "name": "name",
+          "type": "varchar(60)",
+          "key": "uk"
+        },
+        {
+          "name": "description",
+          "type": "varchar(500)"
+        },
+        {
+          "name": "owner_id",
+          "type": "bigint",
+          "key": "fk",
+          "references": "app_user.id"
+        },
+        {
+          "name": "created_at",
+          "type": "timestamptz"
+        }
+      ]
+    },
+    {
+      "id": "quest",
+      "label": "quest",
+      "tag": "turinys",
+      "row": 1,
+      "col": 2,
+      "attributes": [
+        {
+          "name": "id",
+          "type": "bigserial",
+          "key": "pk"
+        },
+        {
+          "name": "guild_id",
+          "type": "bigint",
+          "key": "fk",
+          "references": "guild.id"
+        },
+        {
+          "name": "created_by",
+          "type": "bigint",
+          "key": "fk",
+          "references": "app_user.id"
+        },
+        {
+          "name": "title",
+          "type": "varchar(120)"
+        },
+        {
+          "name": "description",
+          "type": "varchar(1000)"
+        },
+        {
+          "name": "stat",
+          "type": "varchar(3)"
+        },
+        {
+          "name": "type",
+          "type": "varchar(20)"
+        },
+        {
+          "name": "difficulty",
+          "type": "varchar(20)"
+        },
+        {
+          "name": "target_count",
+          "type": "integer"
+        },
+        {
+          "name": "active",
+          "type": "boolean"
+        },
+        {
+          "name": "created_at",
+          "type": "timestamptz"
+        }
+      ]
+    }
+  ],
+  "relationships": [
+    {
+      "id": "token_user",
+      "from": "refresh_token",
+      "to": "app_user",
+      "label": "priklauso",
+      "fromCardinality": "many",
+      "toCardinality": "one"
+    },
+    {
+      "id": "log_author",
+      "from": "log_entry",
+      "to": "app_user",
+      "label": "autorius",
+      "fromCardinality": "many",
+      "toCardinality": "one"
+    },
+    {
+      "id": "log_reviewer",
+      "from": "log_entry",
+      "to": "app_user",
+      "label": "peržiūrėjo",
+      "fromCardinality": "many",
+      "fromOptional": true,
+      "toCardinality": "one",
+      "toOptional": true,
+      "identifying": false
+    },
+    {
+      "id": "log_quest",
+      "from": "log_entry",
+      "to": "quest",
+      "label": "priklauso",
+      "fromCardinality": "many",
+      "toCardinality": "one"
+    },
+    {
+      "id": "member_user",
+      "from": "guild_membership",
+      "to": "app_user",
+      "label": "narys",
+      "fromCardinality": "many",
+      "toCardinality": "one"
+    },
+    {
+      "id": "member_guild",
+      "from": "guild_membership",
+      "to": "guild",
+      "label": "grupėje",
+      "fromCardinality": "many",
+      "toCardinality": "one"
+    },
+    {
+      "id": "guild_owner",
+      "from": "guild",
+      "to": "app_user",
+      "label": "savininkas",
+      "fromCardinality": "many",
+      "toCardinality": "one"
+    },
+    {
+      "id": "quest_guild",
+      "from": "quest",
+      "to": "guild",
+      "label": "priklauso",
+      "fromCardinality": "many",
+      "toCardinality": "one"
+    },
+    {
+      "id": "quest_creator",
+      "from": "quest",
+      "to": "app_user",
+      "label": "sukūrė",
+      "fromCardinality": "many",
+      "fromOptional": true,
+      "toCardinality": "one",
+      "toOptional": true,
+      "identifying": false
+    }
+  ]
+}
