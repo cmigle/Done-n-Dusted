@@ -1,0 +1,12 @@
+$kind: collection
+description: |-
+  Užduotys (Quest) priklauso grupei: `/guilds/{guildId}/quests`.
+
+  * Charakteristika `stat`: `STR`, `DEX`, `CON`, `INT`, `WIS`, `CHA`.
+  * Tipas `type`: `MILESTONE`, `HABIT`, `GRIND`, `SIDE_QUEST`. `targetCount` privalomas ir leidžiamas tik `GRIND` tipui.
+  * Sudėtingumas `difficulty` yra bazinio XP (10) daugiklis: `TRIVIAL` ×1, `EASY` ×2, `MEDIUM` ×3, `HARD` ×5, `LEGENDARY` ×8.
+
+  `xpPerCompletion` visada apskaičiuoja serveris.
+
+  Užduotis kuria grupės narys (`createdBy`). Keisti ją gali kūrėjas, grupės DM arba savininkas; `SIDE_QUEST` kuria tik DM (žr. `6. Rolės ir teisės`).
+order: 5000

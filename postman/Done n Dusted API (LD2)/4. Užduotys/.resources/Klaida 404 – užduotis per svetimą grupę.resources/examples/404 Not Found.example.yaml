@@ -1,0 +1,20 @@
+$kind: http-example
+request:
+  url: "{{baseUrl}}/guilds/{{guildB}}/quests/{{questId}}"
+  method: GET
+response:
+  statusCode: 404
+  statusText: Not Found
+  headers:
+    Content-Type: application/json
+  body:
+    type: json
+    content: |-
+      {
+        "timestamp": "2026-11-08T14:31:35.129987Z",
+        "status": 404,
+        "error": "Not Found",
+        "message": "Quest 10 nerasta grupeje 5",
+        "path": "/api/guilds/5/quests/10"
+      }
+order: 1000

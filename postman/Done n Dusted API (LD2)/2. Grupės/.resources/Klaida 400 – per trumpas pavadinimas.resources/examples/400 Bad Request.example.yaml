@@ -1,0 +1,26 @@
+$kind: http-example
+request:
+  url: "{{baseUrl}}/guilds"
+  method: POST
+response:
+  statusCode: 400
+  statusText: Bad Request
+  headers:
+    Content-Type: application/json
+  body:
+    type: json
+    content: |-
+      {
+        "timestamp": "2026-11-08T14:31:33.085553900Z",
+        "status": 400,
+        "error": "Bad Request",
+        "message": "Neteisingas uzklausos turinys",
+        "path": "/api/guilds",
+        "details": [
+          {
+            "field": "name",
+            "message": "size must be between 3 and 60"
+          }
+        ]
+      }
+order: 1000

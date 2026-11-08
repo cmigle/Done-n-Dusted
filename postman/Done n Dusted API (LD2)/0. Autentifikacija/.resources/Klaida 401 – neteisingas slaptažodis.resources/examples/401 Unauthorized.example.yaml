@@ -1,0 +1,21 @@
+$kind: http-example
+request:
+  url: "{{baseUrl}}/auth/login"
+  method: POST
+response:
+  statusCode: 401
+  statusText: Unauthorized
+  headers:
+    WWW-Authenticate: Bearer
+    Content-Type: application/json
+  body:
+    type: json
+    content: |-
+      {
+        "timestamp": "2026-11-08T14:31:28.539994600Z",
+        "status": 401,
+        "error": "Unauthorized",
+        "message": "Neteisingas naudotojo vardas arba slaptazodis",
+        "path": "/api/auth/login"
+      }
+order: 1000

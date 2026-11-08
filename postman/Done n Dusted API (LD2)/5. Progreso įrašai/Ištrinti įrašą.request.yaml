@@ -1,0 +1,15 @@
+$kind: http-request
+description: |-
+  Ištrina progreso įrašą. Atsakymas yra `204 No Content` — atsakymas be turinio.
+
+  README lentelės metodas **#15**.
+url: "{{baseUrl}}/guilds/{{guildA}}/quests/{{questId}}/logs/{{logId}}"
+method: DELETE
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test('204 No Content', () => pm.response.to.have.status(204));
+      pm.test('Atsakymas be turinio', () => pm.expect(pm.response.text()).to.be.empty);
+    language: text/javascript
+examples: ./.resources/Ištrinti įrašą.resources/examples
+order: 8000

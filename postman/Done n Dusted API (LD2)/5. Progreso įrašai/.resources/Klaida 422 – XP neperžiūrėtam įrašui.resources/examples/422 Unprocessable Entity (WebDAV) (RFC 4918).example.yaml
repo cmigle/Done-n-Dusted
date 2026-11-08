@@ -1,0 +1,20 @@
+$kind: http-example
+request:
+  url: "{{baseUrl}}/guilds/{{guildA}}/quests/{{questId}}/logs/{{logId}}"
+  method: PATCH
+response:
+  statusCode: 422
+  statusText: Unprocessable Entity (WebDAV) (RFC 4918)
+  headers:
+    Content-Type: application/json
+  body:
+    type: json
+    content: |-
+      {
+        "timestamp": "2026-11-08T14:31:36.152426200Z",
+        "status": 422,
+        "error": "Unprocessable Entity",
+        "message": "PENDING busenos irasas negali tureti XP ar inspiration",
+        "path": "/api/guilds/4/quests/10/logs/13"
+      }
+order: 1000

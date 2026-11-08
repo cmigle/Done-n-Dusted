@@ -1,0 +1,24 @@
+$kind: http-request
+description: Grupės pavadinimą ir aprašymą keičia tik jos savininkas.
+url: "{{baseUrl}}/guilds/{{guildA}}"
+method: PATCH
+headers:
+  Content-Type: application/json
+body:
+  type: json
+  content: |-
+    {
+      "description": "Zaidejo bandymas pakeisti"
+    }
+auth:
+  type: bearer
+  credentials:
+    token: "{{playerToken}}"
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test('403 Forbidden', () => pm.response.to.have.status(403));
+      pm.test('Grupe keicia tik savininkas', () => pm.expect(pm.response.json().message).to.include('savininkas'));
+    language: text/javascript
+examples: ./.resources/Klaida 403 – grupę keičia tik savininkas.resources/examples
+order: 11000

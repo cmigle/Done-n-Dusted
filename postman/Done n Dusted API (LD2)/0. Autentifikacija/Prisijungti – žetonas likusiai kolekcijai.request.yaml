@@ -1,0 +1,25 @@
+$kind: http-request
+description: Šis `accessToken` naudojamas visose tolesnėse užklausose (kolekcijos *Bearer Token*).
+url: "{{baseUrl}}/auth/login"
+method: POST
+headers:
+  Content-Type: application/json
+body:
+  type: json
+  content: |-
+    {
+      "username": "{{username}}",
+      "password": "{{password}}"
+    }
+auth:
+  type: noauth
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test('200 OK', () => pm.response.to.have.status(200));
+      const body = pm.response.json();
+      pm.collectionVariables.set('accessToken', body.accessToken);
+      pm.collectionVariables.set('refreshToken', body.refreshToken);
+    language: text/javascript
+examples: ./.resources/Prisijungti – žetonas likusiai kolekcijai.resources/examples
+order: 15000

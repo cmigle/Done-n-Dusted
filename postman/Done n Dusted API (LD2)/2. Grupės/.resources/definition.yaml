@@ -1,0 +1,8 @@
+$kind: collection
+description: |-
+  Grupių (Guild) valdymas: sukūrimas, sąrašas, puslapiavimas, gavimas, dalinis atnaujinimas (`PATCH`) ir validacijos klaidos.
+
+  Grupes kuria kolekcijos naudotojas, todėl jis yra abiejų grupių savininkas ir DM. `guildA` naudojama visoje kolekcijoje, o `guildB` sukuriama be aprašymo (parodo, kad `description` tampa `""`, o ne dingsta) ir reikalinga tėvinės grandinės testui.
+
+  Grupių sąrašas rodo tik naudotojo grupes, todėl puslapiavimas demonstruojamas administratoriaus vardu.
+order: 3000

@@ -1,0 +1,21 @@
+$kind: http-example
+request:
+  url: "{{baseUrl}}/guilds"
+  method: GET
+response:
+  statusCode: 401
+  statusText: Unauthorized
+  headers:
+    WWW-Authenticate: Bearer error="invalid_token"
+    Content-Type: application/json
+  body:
+    type: json
+    content: |-
+      {
+        "timestamp": "2026-11-08T14:31:29.139324300Z",
+        "status": 401,
+        "error": "Unauthorized",
+        "message": "Access zetonas neteisingas",
+        "path": "/api/guilds"
+      }
+order: 1000

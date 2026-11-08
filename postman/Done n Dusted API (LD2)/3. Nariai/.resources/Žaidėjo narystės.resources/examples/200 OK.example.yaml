@@ -1,0 +1,37 @@
+$kind: http-example
+request:
+  url: "{{baseUrl}}/auth/me"
+  method: GET
+response:
+  statusCode: 200
+  statusText: OK
+  headers:
+    Content-Type: application/json
+  body:
+    type: json
+    content: |-
+      {
+        "id": 4,
+        "username": "jonas",
+        "role": "USER",
+        "enabled": true,
+        "createdAt": "2026-11-08T14:31:19.450225Z",
+        "memberships": [
+          {
+            "guildId": 2,
+            "guildName": "Iron Vow",
+            "role": "PLAYER"
+          },
+          {
+            "guildId": 4,
+            "guildName": "Postman Guild 1794148292021",
+            "role": "PLAYER"
+          },
+          {
+            "guildId": 1,
+            "guildName": "Thursday Night Crew",
+            "role": "PLAYER"
+          }
+        ]
+      }
+order: 1000

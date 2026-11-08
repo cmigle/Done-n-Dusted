@@ -1,0 +1,12 @@
+$kind: http-request
+description: Užduotis egzistuoja, bet priklauso grupei A, o užklausa siunčiama per grupę B. Vaikinis resursas pasiekiamas tik per teisingą tėvinį, todėl grąžinamas `404 Not Found`.
+url: "{{baseUrl}}/guilds/{{guildB}}/quests/{{questId}}"
+method: GET
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test('404 Not Found', () => pm.response.to.have.status(404));
+      pm.test('Uzduotis egzistuoja, bet ne sioje grupeje', () => pm.expect(pm.response.json().message).to.include('nerasta grupeje'));
+    language: text/javascript
+examples: ./.resources/Klaida 404 – užduotis per svetimą grupę.resources/examples
+order: 5000

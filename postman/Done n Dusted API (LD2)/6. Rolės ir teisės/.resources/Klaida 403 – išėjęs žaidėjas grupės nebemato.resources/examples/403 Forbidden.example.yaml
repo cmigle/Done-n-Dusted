@@ -1,0 +1,20 @@
+$kind: http-example
+request:
+  url: "{{baseUrl}}/guilds/{{guildA}}"
+  method: GET
+response:
+  statusCode: 403
+  statusText: Forbidden
+  headers:
+    Content-Type: application/json
+  body:
+    type: json
+    content: |-
+      {
+        "timestamp": "2026-11-08T14:31:38.315845400Z",
+        "status": 403,
+        "error": "Forbidden",
+        "message": "Nesate grupes 4 narys",
+        "path": "/api/guilds/4"
+      }
+order: 1000

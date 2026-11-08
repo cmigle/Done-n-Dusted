@@ -1,0 +1,24 @@
+$kind: http-request
+description: Peržiūros laukus (`status`, `xpAwarded`, `inspirationAwarded`, `reviewerNote`) keičia tik grupės DM.
+url: "{{baseUrl}}/guilds/{{guildA}}/quests/{{questId}}/logs/{{logPlayer}}"
+method: PATCH
+headers:
+  Content-Type: application/json
+body:
+  type: json
+  content: |-
+    {
+      "status": "APPROVED"
+    }
+auth:
+  type: bearer
+  credentials:
+    token: "{{playerToken}}"
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test('403 Forbidden', () => pm.response.to.have.status(403));
+      pm.test('Tvirtina tik DM', () => pm.expect(pm.response.json().message).to.include('tik grupes DM'));
+    language: text/javascript
+examples: ./.resources/Klaida 403 – žaidėjas negali tvirtinti.resources/examples
+order: 3000

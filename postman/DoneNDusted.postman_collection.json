@@ -1,12 +1,713 @@
 {
   "info": {
-    "name": "Done n Dusted API (LD1)",
-    "description": "# Done n Dusted API (LD1)\n\nDnD principu veikianti produktyvumo sistema: žaidėjas registruoja realaus gyvenimo progresą, grupės Dungeon Master jį patvirtina, ir tik patvirtinti įrašai suteikia XP.\n\nResursų hierarchija: **Guild (1:N) → Quest (1:N) → LogEntry**. Vaikinis objektas pasiekiamas tik per tėvinį, todėl neteisinga grandinė grąžina `404`.\n\n## Kaip paleisti\n\n1. Paleiskite API (`./mvnw spring-boot:run`). Ji veikia adresu `http://localhost:8080/api`.\n2. Postman programoje paleiskite visą kolekciją su **Run collection**. Aplankus ir užklausas leiskite iš eilės, nes vėlesnės užklausos naudoja ankstesnių sukurtus ID.\n\nKolekcija pati susikuria duomenis ir po savęs išsivalo, todėl ją galima leisti kiek norima kartų.\n\n## Aplankai\n\n| Aplankas | Kas tikrinama |\n| --- | --- |\n| 0. Suvestinė | Kiek DB yra grupių, užduočių ir įrašų (su ID), ar vaikų ID rodo į teisingą tėvą |\n| 1. Grupės | Grupių CRUD, puslapiavimas per `links.next`, `400`, `404`, `409`, `415` klaidos |\n| 2. Užduotys | Užduočių kūrimas, filtrai, XP skaičiavimas, `422` ir tėvinės grandinės `404` |\n| 3. Progreso įrašai | Įrašų registravimas, DM patvirtinimas, XP taisyklės |\n| 4. Išvalymas | Sukurtų duomenų ištrynimas (`204`) ir patikra, kad jų nebėra |\n\nAtnaujinimas visur yra `PATCH` (dalinis): keičiami tik atsiųsti laukai, todėl neatsiųstas aprašymas nedingsta. Sukūrus resursą be `description`, jis išsaugomas kaip `\"\"`.\n\n## Kolekcijos kintamieji\n\n| Kintamasis | Reikšmė |\n| --- | --- |\n| `baseUrl` | API adresas, numatytai `http://localhost:8080/api` |\n| `guildName` | Unikalus grupės pavadinimas, generuojamas pirmoje užklausoje |\n| `guildA`, `guildB` | Sukurtų grupių ID |\n| `questId`, `logId` | Sukurtos užduoties ir įrašo ID |\n| `occurredAt` | Įvykio laikas (prieš valandą), naudojamas įrašams |\n| `nextPage`, `pageIds` | Puslapiavimo demonstracijai: `links.next` nuoroda ir pirmo puslapio ID |\n\n## Klaidų formatas\n\nKiekviena klaida grąžinama vienoda `ApiError` struktūra:\n\n```json\n{\n  \"timestamp\": \"2026-09-21T09:15:30.123Z\",\n  \"status\": 422,\n  \"error\": \"Unprocessable Entity\",\n  \"message\": \"GRIND tipo uzduotis privalo tureti targetCount\",\n  \"path\": \"/api/guilds/2/quests\",\n  \"details\": [ { \"field\": \"title\", \"message\": \"must not be blank\" } ]\n}\n```\n\n`details` pateikiamas tik tada, kai klaida susijusi su konkrečiais laukais.\n\n**400 ar 422?** `400` reiškia, kad klaidą matyti vien iš užklausos (blogas JSON, tipas, lauko apribojimas, nežinomas laukas). `422` reiškia, kad užklausa teisinga, bet pažeidžia dalykinės srities taisyklę.\n\nKiekviena užklausa turi išsaugotą pavyzdinį atsakymą (*Examples*), įrašytą iš tikro API paleidimo.",
+    "name": "Done n Dusted API (LD2)",
+    "description": "# Done n Dusted API (LD2)\n\nDnD principu veikianti produktyvumo sistema: žaidėjas registruoja realaus gyvenimo progresą, grupės Dungeon Master jį patvirtina, ir tik patvirtinti įrašai suteikia XP.\n\nResursų hierarchija: **Guild (1:N) → Quest (1:N) → LogEntry**. Vaikinis objektas pasiekiamas tik per tėvinį, todėl neteisinga grandinė grąžina `404`.\n\nLD2 prideda **autentifikaciją ir autorizaciją**: JWT access ir refresh žetonai, grupės rolės `PLAYER` / `DUNGEON_MASTER` ir globali rolė `ADMIN`.\n\n## Kaip paleisti\n\n1. Paleiskite API (`./mvnw spring-boot:run`). Ji veikia adresu `http://localhost:8080/api`.\n2. Postman programoje paleiskite visą kolekciją su **Run collection**. Aplankus ir užklausas leiskite iš eilės, nes vėlesnės užklausos naudoja ankstesnių sukurtus ID ir žetonus.\n\nKolekcija kaskart užregistruoja naują naudotoją, pati susikuria duomenis ir po savęs išsivalo, todėl ją galima leisti kiek norima kartų.\n\n## Autorizacija\n\nKolekcijos lygyje nustatyta *Bearer Token* `{{accessToken}}` — ją paveldi visos užklausos. Kai užklausą siunčia kitas naudotojas, jos *Authorization* skiltyje nurodytas kitas žetonas:\n\n| Žetonas | Naudotojas | Kam naudojamas |\n| --- | --- | --- |\n| `accessToken` | `postman_<laikas>`, užregistruotas kolekcijos | Grupių savininkas ir DM |\n| `playerToken` | `jonas` | Grupės žaidėjas (`PLAYER`) |\n| `adminToken` | `admin` | Administratorius (`ADMIN`) |\n\nDemonstracinių naudotojų (`admin`, `rokas`, `ieva`, `jonas`) slaptažodis — `Demo123!`.\n\n## Aplankai\n\n| Aplankas | Kas tikrinama |\n| --- | --- |\n| 0. Autentifikacija | Registracija, prisijungimas, JWT turinys, `/auth/me`, žetonų rotacija, atsijungimas, `401` |\n| 1. Suvestinė | Kiek DB yra grupių, užduočių ir įrašų (su ID), ar vaikų ID rodo į teisingą tėvą |\n| 2. Grupės | Grupių CRUD, puslapiavimas per `links.next`, `400`, `404`, `409`, `415` klaidos |\n| 3. Nariai | Narių pridėjimas, rolės, vienas DM grupėje (`409`), `403`, `422` |\n| 4. Užduotys | Užduočių kūrimas, filtrai, XP skaičiavimas, `422` ir tėvinės grandinės `404` |\n| 5. Progreso įrašai | Žaidėjas registruoja, DM patvirtina, XP taisyklės, užšaldytas turinys |\n| 6. Rolės ir teisės | Kas ką gali: `403` ne nariui, žaidėjui, DM su savo įrašu, ne administratoriui |\n| 7. Išvalymas | Sukurtų duomenų ištrynimas (`204`, taip pat administratoriaus) ir patikra, kad jų nebėra |\n| 8. Administravimas | Naudotojų sąrašas, užblokavimas ir atblokavimas |\n\nAtnaujinimas visur yra `PATCH` (dalinis): keičiami tik atsiųsti laukai, todėl neatsiųstas aprašymas nedingsta. Sukūrus resursą be `description`, jis išsaugomas kaip `\"\"`.\n\n## Kolekcijos kintamieji\n\n| Kintamasis | Reikšmė |\n| --- | --- |\n| `baseUrl` | API adresas, numatytai `http://localhost:8080/api` |\n| `username`, `password`, `userId` | Kolekcijos užregistruotas naudotojas; slaptažodis bendras ir demonstraciniams naudotojams |\n| `accessToken`, `refreshToken`, `oldRefreshToken` | Kolekcijos naudotojo žetonai ir panaudotas refresh žetonas rotacijos testui |\n| `playerToken`, `playerId` | Žaidėjo `jonas` žetonas ir ID |\n| `adminToken`, `adminId` | Administratoriaus žetonas ir ID |\n| `guildName` | Unikalus grupės pavadinimas, generuojamas grupės kūrimo užklausoje |\n| `guildA`, `guildB` | Sukurtų grupių ID |\n| `questId`, `logId` | Sukurtos užduoties ir įrašo ID |\n| `logPlayer`, `logDm` | Žaidėjo ir DM įrašai teisių patikroms |\n| `occurredAt` | Įvykio laikas (prieš valandą), naudojamas įrašams |\n| `nextPage`, `pageIds` | Puslapiavimo demonstracijai: `links.next` nuoroda ir pirmo puslapio ID |\n\n## Klaidų formatas\n\nKiekviena klaida grąžinama vienoda `ApiError` struktūra:\n\n```json\n{\n  \"timestamp\": \"2026-09-21T09:15:30.123Z\",\n  \"status\": 403,\n  \"error\": \"Forbidden\",\n  \"message\": \"Savo iraso tvirtinti negalima\",\n  \"path\": \"/api/guilds/4/quests/10/logs/14\",\n  \"details\": [ { \"field\": \"title\", \"message\": \"must not be blank\" } ]\n}\n```\n\n`details` pateikiamas tik tada, kai klaida susijusi su konkrečiais laukais.\n\n**401 ar 403?** `401` — serveris nežino, kas jūs: nėra žetono, jis sugadintas ar pasibaigęs, blogi prisijungimo duomenys. `403` — žino, bet teisių neužtenka: ne grupės narys, netinkama rolė grupėje, ne `ADMIN`, užblokuota paskyra.\n\n**400 ar 422?** `400` reiškia, kad klaidą matyti vien iš užklausos (blogas JSON, tipas, lauko apribojimas, nežinomas laukas). `422` reiškia, kad užklausa teisinga, bet pažeidžia dalykinės srities taisyklę.\n\nKiekviena užklausa turi išsaugotą pavyzdinį atsakymą (*Examples*), įrašytą iš tikro API paleidimo.",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{accessToken}}",
+        "type": "string"
+      }
+    ]
   },
   "item": [
     {
-      "name": "0. Suvestinė",
+      "name": "0. Autentifikacija",
+      "description": "Registracija, prisijungimas ir JWT žetonų gyvavimo ciklas.\n\n* Kolekcija kaskart užregistruoja naują naudotoją `postman_<laikas>`. Jis sukurs grupes, todėl bus jų **savininkas ir DM**.\n* `accessToken` (JWT, galioja 15 min) siunčiamas visose tolesnėse užklausose: kolekcijos *Authorization* → *Bearer Token* `{{accessToken}}`.\n* `refreshToken` vienkartinis: panaudotas `/auth/refresh` jis atšaukiamas ir išduodama nauja pora (rotacija). Pakartotinai panaudotas laikomas pavogtu — atšaukiamos visos naudotojo sesijos.\n* Pabaigoje prisijungiama kaip demonstraciniai naudotojai `jonas` (žaidėjas) ir `admin` (administratorius). Jų slaptažodis — `Demo123!`.",
+      "item": [
+        {
+          "name": "Registruotis",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/auth/register",
+            "description": "Sukuria naują naudotoją. Prieš užklausą sugeneruojamas unikalus vardas `postman_<laikas>`, kad kolekciją būtų galima leisti kartotinai.\n\nRegistracija visada suteikia rolę `USER` ir žetonų negrąžina — po jos reikia prisijungti. Slaptažodis DB saugomas tik kaip BCrypt maiša, atsakyme jo nėra.\n\nREADME lentelės metodas **#16**.",
+            "auth": {
+              "type": "noauth"
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"{{username}}\",\n  \"password\": \"{{password}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.collectionVariables.set('username', 'postman_' + Date.now());"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('201 Created', () => pm.response.to.have.status(201));",
+                  "const body = pm.response.json();",
+                  "pm.test('Location nurodo naujo naudotojo adresa', () => pm.expect(pm.response.headers.get('Location')).to.include('/api/users/' + body.id));",
+                  "pm.test('Naujas naudotojas visada USER', () => {",
+                  "  pm.expect(body.username).to.eql(pm.collectionVariables.get('username'));",
+                  "  pm.expect(body.role).to.eql('USER');",
+                  "  pm.expect(body.enabled).to.eql(true);",
+                  "});",
+                  "pm.test('Slaptazodis ir jo maisa negrazinami', () => {",
+                  "  pm.expect(body).to.not.have.property('password');",
+                  "  pm.expect(body).to.not.have.property('passwordHash');",
+                  "});",
+                  "pm.collectionVariables.set('userId', body.id);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Klaida 409 – vardas jau užimtas",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/auth/register",
+            "description": "Tas pats vardas didžiosiomis raidėmis. Vardai unikalūs neatsižvelgiant į raidžių dydį, todėl `409 Conflict`.",
+            "auth": {
+              "type": "noauth"
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"{{usernameUpper}}\",\n  \"password\": \"{{password}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.variables.set('usernameUpper', pm.collectionVariables.get('username').toUpperCase());"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('409 Conflict', () => pm.response.to.have.status(409));",
+                  "pm.test('Vardas uzimtas, nors parasytas kitokiomis raidemis', () => pm.expect(pm.response.json().message).to.include('uzimtas'));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Klaida 400 – per trumpas slaptažodis",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/auth/register",
+            "description": "Slaptažodis turi būti 8–72 simbolių. Lauko apribojimas, todėl `400` su konkrečiu lauku `details`.",
+            "auth": {
+              "type": "noauth"
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"{{username}}_2\",\n  \"password\": \"123\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('400 Bad Request', () => pm.response.to.have.status(400));",
+                  "pm.test('Nurodomas laukas password', () => pm.expect(pm.response.json().details.map(d => d.field)).to.include('password'));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Klaida 401 – neteisingas slaptažodis",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/auth/login",
+            "description": "Ta pati klaida grąžinama ir neteisingam vardui, ir slaptažodžiui — neatskleidžiama, ar toks naudotojas egzistuoja. Antraštė `WWW-Authenticate: Bearer` nurodo, kokio autentifikavimo reikia.",
+            "auth": {
+              "type": "noauth"
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"{{username}}\",\n  \"password\": \"neteisingas\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('401 Unauthorized', () => pm.response.to.have.status(401));",
+                  "pm.test('WWW-Authenticate antraste', () => pm.expect(pm.response.headers.get('WWW-Authenticate')).to.eql('Bearer'));",
+                  "pm.test('ApiError su pranesimu', () => pm.expect(pm.response.json().message).to.include('Neteisingas'));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Prisijungti",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/auth/login",
+            "description": "Grąžina žetonų porą:\n\n* `accessToken` — pasirašytas JWT (HS256), galioja **15 min** (`expiresIn: 900`). Jame: `sub` (naudotojo ID), `username`, `role`, `iss`, `iat`, `exp`.\n* `refreshToken` — atsitiktinė eilutė, ne JWT. DB saugoma tik jos SHA-256 maiša.\n\nTestas iškoduoja JWT ir patikrina jo turinį. Abu žetonai išsaugomi kintamuosiuose.\n\nREADME lentelės metodas **#17**.",
+            "auth": {
+              "type": "noauth"
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"{{username}}\",\n  \"password\": \"{{password}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200 OK', () => pm.response.to.have.status(200));",
+                  "const body = pm.response.json();",
+                  "const b64 = body.accessToken.split('.')[1].replace(/-/g, '+').replace(/_/g, '/');",
+                  "const claims = JSON.parse(atob(b64 + '==='.slice((b64.length + 3) % 4)));",
+                  "pm.test('Access zetonas - JWT is 3 daliu, tipas Bearer, galioja 15 min', () => {",
+                  "  pm.expect(body.accessToken.split('.')).to.have.lengthOf(3);",
+                  "  pm.expect(body.tokenType).to.eql('Bearer');",
+                  "  pm.expect(body.expiresIn).to.eql(900);",
+                  "  pm.expect(claims.exp - claims.iat).to.eql(900);",
+                  "});",
+                  "pm.test('JWT turinys: sub = naudotojo ID, role USER', () => {",
+                  "  pm.expect(claims.sub).to.eql(String(pm.collectionVariables.get('userId')));",
+                  "  pm.expect(claims.username).to.eql(pm.collectionVariables.get('username'));",
+                  "  pm.expect(claims.role).to.eql('USER');",
+                  "  pm.expect(claims.iss).to.eql('done-n-dusted');",
+                  "});",
+                  "pm.test('Refresh zetonas - atsitiktine eilute, ne JWT', () => pm.expect(body.refreshToken).to.be.a('string').and.not.include('.'));",
+                  "pm.collectionVariables.set('accessToken', body.accessToken);",
+                  "pm.collectionVariables.set('refreshToken', body.refreshToken);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Kas aš",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/auth/me",
+            "description": "Pirma užklausa su žetonu (kolekcijos *Bearer Token* `{{accessToken}}`). Grąžina prisijungusį naudotoją ir jo grupes su rolėmis — naujas naudotojas dar niekur nepriklauso.\n\nREADME lentelės metodas **#20**."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200 OK', () => pm.response.to.have.status(200));",
+                  "const body = pm.response.json();",
+                  "pm.test('Atpazintas tas pats naudotojas', () => pm.expect(body.id).to.eql(Number(pm.collectionVariables.get('userId'))));",
+                  "pm.test('Naujas naudotojas dar nepriklauso jokiai grupei', () => pm.expect(body.memberships).to.eql([]));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Klaida 401 – be žetono",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/guilds",
+            "description": "Be `Authorization` antraštės pasiekiama tik registracija, prisijungimas ir žetonų atnaujinimas. Kitur — `401` ta pačia `ApiError` struktūra.",
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('401 Unauthorized', () => pm.response.to.have.status(401));",
+                  "pm.test('WWW-Authenticate: Bearer', () => pm.expect(pm.response.headers.get('WWW-Authenticate')).to.eql('Bearer'));",
+                  "pm.test('ApiError paaiskina, ko truksta', () => {",
+                  "  const e = pm.response.json();",
+                  "  pm.expect(e.status).to.eql(401);",
+                  "  pm.expect(e.message).to.include('Bearer');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Klaida 401 – sugadintas žetonas",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/guilds",
+            "description": "Prie žetono pridėta viena raidė — parašas nebetinka. Serveris kiekvieną žetoną tikrina pats, todėl suklastoto ar pakeisto žetono nepriims.",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}x",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('401 Unauthorized', () => pm.response.to.have.status(401));",
+                  "pm.test('WWW-Authenticate nurodo invalid_token', () => pm.expect(pm.response.headers.get('WWW-Authenticate')).to.include('invalid_token'));",
+                  "pm.test('ApiError pranesimas', () => pm.expect(pm.response.json().message).to.include('neteisingas'));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Atnaujinti žetonus",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/auth/refresh",
+            "description": "Kai access žetonas pasibaigia, klientas nauja pora gauna be slaptažodžio — už refresh žetoną. Senasis refresh žetonas atšaukiamas (rotacija) ir išsaugomas `oldRefreshToken` kitai patikrai.\n\nREADME lentelės metodas **#18**.",
+            "auth": {
+              "type": "noauth"
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"refreshToken\": \"{{refreshToken}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200 OK', () => pm.response.to.have.status(200));",
+                  "const body = pm.response.json();",
+                  "const old = pm.collectionVariables.get('refreshToken');",
+                  "pm.test('Isduota nauja pora - refresh zetonas pakeistas nauju', () => {",
+                  "  pm.expect(body.refreshToken).to.be.a('string').and.not.eql(old);",
+                  "  pm.expect(body.accessToken.split('.')).to.have.lengthOf(3);",
+                  "});",
+                  "pm.collectionVariables.set('oldRefreshToken', old);",
+                  "pm.collectionVariables.set('accessToken', body.accessToken);",
+                  "pm.collectionVariables.set('refreshToken', body.refreshToken);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Klaida 401 – pakartotinai panaudotas refresh žetonas",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/auth/refresh",
+            "description": "Senasis refresh žetonas jau panaudotas. Jei jį kas nors atsiunčia dar kartą, greičiausiai jis pavogtas, todėl serveris atšaukia **visas** naudotojo sesijas.",
+            "auth": {
+              "type": "noauth"
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"refreshToken\": \"{{oldRefreshToken}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('401 Unauthorized', () => pm.response.to.have.status(401));",
+                  "pm.test('Pakartotinis panaudojimas atsaukia visas sesijas', () => pm.expect(pm.response.json().message).to.include('atsauktos visos sesijos'));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Klaida 401 – atšauktas ir naujasis žetonas",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/auth/refresh",
+            "description": "Ankstesnės užklausos pasekmė: net ką tik gautas refresh žetonas nebegalioja. Naudotojas turi prisijungti iš naujo.",
+            "auth": {
+              "type": "noauth"
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"refreshToken\": \"{{refreshToken}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('401 Unauthorized', () => pm.response.to.have.status(401));",
+                  "pm.test('Ir naujausias refresh zetonas atsauktas', () => pm.expect(pm.response.json().message).to.include('atsaukt'));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Prisijungti iš naujo",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/auth/login",
+            "description": "Visos sesijos atšauktos, todėl prisijungiama iš naujo. Gauta pora naudojama atsijungimo demonstracijai.",
+            "auth": {
+              "type": "noauth"
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"{{username}}\",\n  \"password\": \"{{password}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200 OK', () => pm.response.to.have.status(200));",
+                  "const body = pm.response.json();",
+                  "pm.collectionVariables.set('accessToken', body.accessToken);",
+                  "pm.collectionVariables.set('refreshToken', body.refreshToken);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Atsijungti",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/auth/logout",
+            "description": "Atšaukia refresh žetoną. Access žetonas galioja iki savo `exp` (serveris jų nesaugo), todėl jis trumpas — 15 min.\n\nREADME lentelės metodas **#19**.",
+            "auth": {
+              "type": "noauth"
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"refreshToken\": \"{{refreshToken}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('204 No Content', () => pm.response.to.have.status(204));",
+                  "pm.test('Atsakymas be turinio', () => pm.expect(pm.response.text()).to.be.empty);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Klaida 401 – refresh po atsijungimo",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/auth/refresh",
+            "description": "Atsijungus refresh žetonu naujos poros gauti nebegalima.",
+            "auth": {
+              "type": "noauth"
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"refreshToken\": \"{{refreshToken}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('401 Unauthorized', () => pm.response.to.have.status(401));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Prisijungti – žetonas likusiai kolekcijai",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/auth/login",
+            "description": "Šis `accessToken` naudojamas visose tolesnėse užklausose (kolekcijos *Bearer Token*).",
+            "auth": {
+              "type": "noauth"
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"{{username}}\",\n  \"password\": \"{{password}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200 OK', () => pm.response.to.have.status(200));",
+                  "const body = pm.response.json();",
+                  "pm.collectionVariables.set('accessToken', body.accessToken);",
+                  "pm.collectionVariables.set('refreshToken', body.refreshToken);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Prisijungti kaip žaidėjas (jonas)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/auth/login",
+            "description": "Demonstracinis naudotojas `jonas`. Jo žetonas `playerToken` naudojamas užklausose, kurias atlieka grupės žaidėjas (`PLAYER`).",
+            "auth": {
+              "type": "noauth"
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"jonas\",\n  \"password\": \"{{password}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200 OK', () => pm.response.to.have.status(200));",
+                  "const body = pm.response.json();",
+                  "const b64 = body.accessToken.split('.')[1].replace(/-/g, '+').replace(/_/g, '/');",
+                  "const claims = JSON.parse(atob(b64 + '==='.slice((b64.length + 3) % 4)));",
+                  "pm.test('jonas - iprastas naudotojas (USER)', () => pm.expect(claims.role).to.eql('USER'));",
+                  "pm.collectionVariables.set('playerToken', body.accessToken);",
+                  "pm.collectionVariables.set('playerId', Number(claims.sub));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Prisijungti kaip administratorius (admin)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/auth/login",
+            "description": "Demonstracinis administratorius. `adminToken` naudojamas suvestinei, puslapiavimui (mato visas grupes) ir aplanke `8. Administravimas`.",
+            "auth": {
+              "type": "noauth"
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"admin\",\n  \"password\": \"{{password}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200 OK', () => pm.response.to.have.status(200));",
+                  "const body = pm.response.json();",
+                  "const b64 = body.accessToken.split('.')[1].replace(/-/g, '+').replace(/_/g, '/');",
+                  "const claims = JSON.parse(atob(b64 + '==='.slice((b64.length + 3) % 4)));",
+                  "pm.test('JWT role - ADMIN', () => pm.expect(claims.role).to.eql('ADMIN'));",
+                  "pm.collectionVariables.set('adminToken', body.accessToken);",
+                  "pm.collectionVariables.set('adminId', Number(claims.sub));"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "1. Suvestinė",
+      "description": "Duomenų bazės suvestinė: kiek yra grupių, užduočių ir progreso įrašų, su visais jų ID.\n\nDaroma administratoriaus vardu, nes tik jis mato viską. Aplanką galima leisti ir atskirai (*Run folder*) bet kuriuo metu — jis nieko nekeičia, tik skaito.",
       "item": [
         {
           "name": "Suvestinė – grupės, užduotys ir įrašai",
@@ -14,9 +715,35 @@
             "method": "GET",
             "header": [],
             "url": "{{baseUrl}}/guilds?size=100",
-            "description": "Apibendrina visus duomenis: kiek yra grupių, kiek jose užduočių ir kiek užduotyse progreso įrašų.\n\nAtsakymo pradžioje `totalElements` — kiek iš viso yra grupių, pvz. `{ \"totalElements\": 3, \"content\": [...] }`.\n\nTestas eina per visą hierarchiją **Guild → Quest → LogEntry**: kiekvienai grupei paima jos užduotis, kiekvienai užduočiai — jos įrašus. Jei sąrašas netelpa į vieną puslapį, jis seka serverio grąžinamą `links.next` nuorodą.\n\n*Test Results* skiltyje matyti:\n\n* po eilutę kiekvienai grupei su jos užduočių ir įrašų ID;\n* bendra eilutė, pvz. `Is viso - grupiu: 3, uzduociu: 9, irasu: 12` (taip atrodo švariai paleista DB).\n\nKartu patikrinama, kad kiekvienos užduoties `guildId` ir kiekvieno įrašo `questId` rodo į tikrą tėvinį objektą, o ID nesikartoja."
+            "description": "Apibendrina visus duomenis: kiek yra grupių, kiek jose užduočių ir kiek užduotyse progreso įrašų.\n\nAtsakymo pradžioje `totalElements` — kiek iš viso yra grupių, pvz. `{ \"totalElements\": 3, \"content\": [...] }`.\n\nTestas eina per visą hierarchiją **Guild → Quest → LogEntry**: kiekvienai grupei paima jos užduotis, kiekvienai užduočiai — jos įrašus. Jei sąrašas netelpa į vieną puslapį, jis seka serverio grąžinamą `links.next` nuorodą.\n\n*Test Results* skiltyje matyti:\n\n* po eilutę kiekvienai grupei su jos užduočių ir įrašų ID;\n* bendra eilutė, pvz. `Is viso - grupiu: 3, uzduociu: 9, irasu: 12` (taip atrodo švariai paleista DB).\n\nKartu patikrinama, kad kiekvienos užduoties `guildId` ir kiekvieno įrašo `questId` rodo į tikrą tėvinį objektą, o ID nesikartoja.\n\nUžklausa siunčiama **administratoriaus** vardu (`adminToken`): tik jis mato visas grupes ir visus įrašus. Prieš užklausą administratorius prisijungia pats, todėl aplanką galima leisti ir atskirai. Vidinės `pm.sendRequest` užklausos kolekcijos autorizacijos nepaveldi, todėl `Authorization` antraštė joms pridedama ranka.",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{adminToken}}",
+                  "type": "string"
+                }
+              ]
+            }
           },
           "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "// Suvestine daroma ADMIN vardu - tik jis mato visas grupes ir visus irasus.",
+                  "// Prisijungiama cia pat, todel aplanka galima leisti ir atskirai.",
+                  "pm.sendRequest({",
+                  "  url: pm.variables.get('baseUrl') + '/auth/login',",
+                  "  method: 'POST',",
+                  "  header: [{ key: 'Content-Type', value: 'application/json' }],",
+                  "  body: { mode: 'raw', raw: JSON.stringify({ username: 'admin', password: pm.variables.get('password') }) }",
+                  "}, (err, res) => pm.collectionVariables.set('adminToken', res.json().accessToken));"
+                ]
+              }
+            },
             {
               "listen": "test",
               "script": {
@@ -27,7 +754,7 @@
                   "const baseUrl = pm.variables.get('baseUrl');",
                   "const sortedIds = items => items.map(x => x.id).sort((a, b) => a - b).join(', ');",
                   "const get = url => new Promise((resolve, reject) =>",
-                  "  pm.sendRequest(url, (err, res) => (err ? reject(err) : resolve(res.json()))));",
+                  "  pm.sendRequest({ url, header: [{ key: 'Authorization', value: 'Bearer ' + pm.collectionVariables.get('adminToken') }] }, (err, res) => (err ? reject(err) : resolve(res.json()))));",
                   "",
                   "// Surenka visus saraso puslapius: eina serverio duota links.next nuoroda, kol jos nebera.",
                   "async function getAll(firstPage) {",
@@ -77,11 +804,11 @@
             }
           ]
         }
-      ],
-      "description": "Duomenų bazės suvestinė: kiek yra grupių, užduočių ir progreso įrašų, su visais jų ID.\n\nAplanką galima leisti ir atskirai (*Run folder*) bet kuriuo metu — jis nieko nekeičia, tik skaito."
+      ]
     },
     {
-      "name": "1. Grupės",
+      "name": "2. Grupės",
+      "description": "Grupių (Guild) valdymas: sukūrimas, sąrašas, puslapiavimas, gavimas, dalinis atnaujinimas (`PATCH`) ir validacijos klaidos.\n\nGrupes kuria kolekcijos naudotojas, todėl jis yra abiejų grupių savininkas ir DM. `guildA` naudojama visoje kolekcijoje, o `guildB` sukuriama be aprašymo (parodo, kad `description` tampa `\"\"`, o ne dingsta) ir reikalinga tėvinės grandinės testui.\n\nGrupių sąrašas rodo tik naudotojo grupes, todėl puslapiavimas demonstruojamas administratoriaus vardu.",
       "item": [
         {
           "name": "Sukurti grupę",
@@ -94,7 +821,7 @@
               }
             ],
             "url": "{{baseUrl}}/guilds",
-            "description": "Sukuria naują grupę.\n\nPrieš užklausą sugeneruojamas unikalus pavadinimas `Postman Guild <laikas>`, kad kolekciją būtų galima leisti kartotinai. Atsakymas yra `201 Created` su `Location` antrašte, o naujos grupės ID išsaugomas kintamajame `guildA`.\n\nREADME lentelės metodas **#3**.",
+            "description": "Sukuria naują grupę. Ją sukūręs naudotojas tampa grupės **savininku** (`ownerId`) ir jos **DM**.\n\nPrieš užklausą sugeneruojamas unikalus pavadinimas `Postman Guild <laikas>`, kad kolekciją būtų galima leisti kartotinai. Atsakymas yra `201 Created` su `Location` antrašte, o naujos grupės ID išsaugomas kintamajame `guildA`.\n\nREADME lentelės metodas **#3**.",
             "body": {
               "mode": "raw",
               "raw": "{\n  \"name\": \"{{guildName}}\",\n  \"description\": \"Postman demonstracijai sukurta grupe\"\n}",
@@ -132,6 +859,7 @@
                   "  pm.expect(body.name).to.eql(pm.collectionVariables.get('guildName'));",
                   "  pm.expect(body.createdAt).to.be.a('string');",
                   "});",
+                  "pm.test('Kurejas tampa grupes savininku', () => pm.expect(body.ownerId).to.eql(Number(pm.collectionVariables.get('userId'))));",
                   "pm.collectionVariables.set('guildA', body.id);"
                 ]
               }
@@ -184,7 +912,7 @@
             "method": "GET",
             "header": [],
             "url": "{{baseUrl}}/guilds",
-            "description": "Grąžina visų grupių sąrašą su numatytaisiais parametrais (iki 20 grupių puslapyje, rikiuojama pagal pavadinimą).\n\n* `name` filtruoja pagal pavadinimo dalį.\n* `page`, `size` ir `sort` (pvz. `sort=name,asc`) valdo puslapiavimą. Didžiausias `size` yra 100.\n\nPuslapiavimas atskirai parodomas dviejose kitose užklausose.\n\nREADME lentelės metodas **#1**."
+            "description": "Grąžina grupes, kurių narys yra prisijungęs naudotojas — naujas naudotojas mato tik dvi savo sukurtas. Administratorius mato visas (žr. `1. Suvestinė`). Numatytieji parametrai (iki 20 grupių puslapyje, rikiuojama pagal pavadinimą).\n\n* `name` filtruoja pagal pavadinimo dalį.\n* `page`, `size` ir `sort` (pvz. `sort=name,asc`) valdo puslapiavimą. Didžiausias `size` yra 100.\n\nPuslapiavimas atskirai parodomas dviejose kitose užklausose.\n\nREADME lentelės metodas **#1**."
           },
           "event": [
             {
@@ -195,9 +923,10 @@
                   "pm.test('200 OK', () => pm.response.to.have.status(200));",
                   "const guilds = pm.response.json().content;",
                   "const ids = guilds.map(g => g.id);",
-                  "pm.test('Grazintos visos grupes, ID: ' + [...ids].sort((a, b) => a - b).join(', '), () => {",
-                  "  pm.expect(ids).to.include(Number(pm.collectionVariables.get('guildA')));",
-                  "  pm.expect(ids).to.include(Number(pm.collectionVariables.get('guildB')));",
+                  "pm.test('Naudotojas mato tik savo grupes, ID: ' + [...ids].sort((a, b) => a - b).join(', '), () => {",
+                  "  const mine = [Number(pm.collectionVariables.get('guildA')), Number(pm.collectionVariables.get('guildB'))];",
+                  "  pm.expect([...ids].sort((a, b) => a - b)).to.eql(mine.sort((a, b) => a - b));",
+                  "  pm.expect(pm.response.json().totalElements).to.eql(2);",
                   "});",
                   "pm.test('Kiekviena grupe turi id, pavadinima ir aprasyma', () => {",
                   "  guilds.forEach(g => {",
@@ -217,7 +946,17 @@
             "method": "GET",
             "header": [],
             "url": "{{baseUrl}}/guilds?page=0&size=2&sort=id,asc",
-            "description": "Puslapiavimo demonstracija: prašoma tik **2 grupių** puslapyje (`size=2`), rikiuojant pagal ID.\n\nAtsakyme `page` nurodo puslapio numerį, dydį ir kiek iš viso yra grupių bei puslapių, o `links` pateikia `self`, `first`, `next` ir `last` nuorodas. `prev` nėra, nes tai pirmas puslapis.\n\n`links.next` išsaugomas kintamajame `nextPage`."
+            "description": "Puslapiavimo demonstracija: prašoma tik **2 grupių** puslapyje (`size=2`), rikiuojant pagal ID.\n\nAtsakyme `page` nurodo puslapio numerį, dydį ir kiek iš viso yra grupių bei puslapių, o `links` pateikia `self`, `first`, `next` ir `last` nuorodas. `prev` nėra, nes tai pirmas puslapis.\n\n`links.next` išsaugomas kintamajame `nextPage`.\n\nSiunčiama kaip `admin` (`adminToken`): jis mato visas grupes (3 iš seed + 2 sukurtos), todėl puslapių yra keli.",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{adminToken}}",
+                  "type": "string"
+                }
+              ]
+            }
           },
           "event": [
             {
@@ -256,7 +995,17 @@
             "method": "GET",
             "header": [],
             "url": "{{nextPage}}",
-            "description": "Atidaro kitą puslapį pagal ankstesnio atsakymo nuorodą `links.next` (kintamasis `nextPage`) — klientas pats URL nekonstruoja.\n\nPatikrinama, kad tai 2-as puslapis, jo grupės nesikartoja su 1-uoju, o `links.prev` jau yra."
+            "description": "Atidaro kitą puslapį pagal ankstesnio atsakymo nuorodą `links.next` (kintamasis `nextPage`) — klientas pats URL nekonstruoja.\n\nPatikrinama, kad tai 2-as puslapis, jo grupės nesikartoja su 1-uoju, o `links.prev` jau yra.\n\nSiunčiama kaip `admin` (`adminToken`): jis mato visas grupes (3 iš seed + 2 sukurtos), todėl puslapių yra keli.",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{adminToken}}",
+                  "type": "string"
+                }
+              ]
+            }
           },
           "event": [
             {
@@ -510,11 +1259,330 @@
             }
           ]
         }
-      ],
-      "description": "Grupių (Guild) valdymas: sukūrimas, sąrašas, puslapiavimas, gavimas, dalinis atnaujinimas (`PATCH`) ir validacijos klaidos.\n\nČia sukuriamos dvi grupės. `guildA` naudojama visoje kolekcijoje, o `guildB` sukuriama be aprašymo (parodo, kad `description` tampa `\"\"`, o ne dingsta) ir reikalinga tėvinės grandinės testui."
+      ]
     },
     {
-      "name": "2. Užduotys",
+      "name": "3. Nariai",
+      "description": "Grupės nariai: `/guilds/{guildId}/members/{userId}`. Narys identifikuojamas naudotojo ID.\n\n* Naudotojas grupėje yra `PLAYER` arba `DUNGEON_MASTER`; skirtingose grupėse rolės gali skirtis.\n* Grupėje — **vienas DM**. Bandymas paskirti antrą grąžina `409`.\n* Narius prideda ir roles keičia tik grupės savininkas arba administratorius.\n\nČia į `guildA` pridedamas žaidėjas `jonas` — jis registruos progresą, o kolekcijos naudotojas (DM) jį tvirtins.",
+      "item": [
+        {
+          "name": "Gauti narių sąrašą",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/guilds/{{guildA}}/members",
+            "description": "Grupės kūrėjas automatiškai tampa jos nariu su role `DUNGEON_MASTER`.\n\nREADME lentelės metodas **#21**."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200 OK', () => pm.response.to.have.status(200));",
+                  "const members = pm.response.json().content;",
+                  "pm.test('Vienintelis narys - kurejas, jo role DUNGEON_MASTER', () => {",
+                  "  pm.expect(members).to.have.lengthOf(1);",
+                  "  pm.expect(members[0].userId).to.eql(Number(pm.collectionVariables.get('userId')));",
+                  "  pm.expect(members[0].role).to.eql('DUNGEON_MASTER');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Pridėti narį – žaidėjas",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/guilds/{{guildA}}/members",
+            "description": "Savininkas prideda naudotoją `jonas` kaip žaidėją. Naudotojas nurodomas vardu.\n\nREADME lentelės metodas **#23**.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"jonas\",\n  \"role\": \"PLAYER\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('201 Created', () => pm.response.to.have.status(201));",
+                  "const body = pm.response.json();",
+                  "pm.test('Location nurodo nauja nari', () => pm.expect(pm.response.headers.get('Location')).to.include('/members/' + pm.collectionVariables.get('playerId')));",
+                  "pm.test('jonas - grupes PLAYER', () => {",
+                  "  pm.expect(body.userId).to.eql(Number(pm.collectionVariables.get('playerId')));",
+                  "  pm.expect(body.username).to.eql('jonas');",
+                  "  pm.expect(body.role).to.eql('PLAYER');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Gauti narį pagal ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/guilds/{{guildA}}/members/{{playerId}}",
+            "description": "Vienas narys pagal naudotojo ID.\n\nREADME lentelės metodas **#22**."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200 OK', () => pm.response.to.have.status(200));",
+                  "pm.test('Tas pats narys su role', () => {",
+                  "  const body = pm.response.json();",
+                  "  pm.expect(body.username).to.eql('jonas');",
+                  "  pm.expect(body.role).to.eql('PLAYER');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Klaida 409 – jau narys",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/guilds/{{guildA}}/members",
+            "description": "Tas pats naudotojas grupėje gali būti tik kartą.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"jonas\",\n  \"role\": \"PLAYER\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('409 Conflict', () => pm.response.to.have.status(409));",
+                  "pm.test('Pranesimas paaiskina konflikta', () => pm.expect(pm.response.json().message).to.include('jau yra grupes narys'));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Klaida 409 – grupėje jau yra DM",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/guilds/{{guildA}}/members",
+            "description": "Grupė jau turi DM (jos kūrėją), todėl antro paskirti negalima.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"ieva\",\n  \"role\": \"DUNGEON_MASTER\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('409 Conflict', () => pm.response.to.have.status(409));",
+                  "pm.test('Vienas DM grupeje', () => pm.expect(pm.response.json().message).to.include('jau turi DM'));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Klaida 422 – naudotojas nerastas",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/guilds/{{guildA}}/members",
+            "description": "Naudotojas nurodomas užklausos turinyje, ne kelyje, todėl jo nebuvimas yra turinio klaida (`422`), o ne `404`.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"nera_tokio_naudotojo\",\n  \"role\": \"PLAYER\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('422 Unprocessable Entity', () => pm.response.to.have.status(422));",
+                  "pm.test('Pranesimas apie nezinoma naudotoja', () => pm.expect(pm.response.json().message).to.include('nerastas'));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Klaida 403 – žaidėjas negali pridėti nario",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/guilds/{{guildA}}/members",
+            "description": "Žaidėjas `jonas` yra grupės narys, bet ne savininkas — narių pridėti negali.",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{playerToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"ieva\",\n  \"role\": \"PLAYER\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('403 Forbidden', () => pm.response.to.have.status(403));",
+                  "pm.test('Paaiskinama, kas turi teise', () => pm.expect(pm.response.json().message).to.include('savininkas'));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Klaida 409 – antras DM keičiant rolę",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/guilds/{{guildA}}/members/{{playerId}}",
+            "description": "Rolės keitimas (`PATCH`) tikrina tą pačią taisyklę: kol grupėje yra DM, kito paskirti negalima.\n\nREADME lentelės metodas **#24**.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"role\": \"DUNGEON_MASTER\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('409 Conflict', () => pm.response.to.have.status(409));",
+                  "pm.test('Antras DM neleidziamas', () => pm.expect(pm.response.json().message).to.include('jau turi DM'));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Žaidėjo narystės",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/auth/me",
+            "description": "`/auth/me` žaidėjo vardu: jonas mato visas savo grupes ir rolę kiekvienoje, tarp jų ir naują `guildA`.",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{playerToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200 OK', () => pm.response.to.have.status(200));",
+                  "const memberships = pm.response.json().memberships;",
+                  "pm.test('Naujoje grupeje jonas - PLAYER', () => {",
+                  "  const m = memberships.find(x => x.guildId === Number(pm.collectionVariables.get('guildA')));",
+                  "  pm.expect(m).to.not.be.undefined;",
+                  "  pm.expect(m.role).to.eql('PLAYER');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "4. Užduotys",
+      "description": "Užduotys (Quest) priklauso grupei: `/guilds/{guildId}/quests`.\n\n* Charakteristika `stat`: `STR`, `DEX`, `CON`, `INT`, `WIS`, `CHA`.\n* Tipas `type`: `MILESTONE`, `HABIT`, `GRIND`, `SIDE_QUEST`. `targetCount` privalomas ir leidžiamas tik `GRIND` tipui.\n* Sudėtingumas `difficulty` yra bazinio XP (10) daugiklis: `TRIVIAL` ×1, `EASY` ×2, `MEDIUM` ×3, `HARD` ×5, `LEGENDARY` ×8.\n\n`xpPerCompletion` visada apskaičiuoja serveris.\n\nUžduotis kuria grupės narys (`createdBy`). Keisti ją gali kūrėjas, grupės DM arba savininkas; `SIDE_QUEST` kuria tik DM (žr. `6. Rolės ir teisės`).",
       "item": [
         {
           "name": "Sukurti užduotį",
@@ -548,6 +1616,7 @@
                   "const body = pm.response.json();",
                   "pm.test('Serveris pats isvede XP is sudetingumo (HARD = 10 * 5)', () => pm.expect(body.xpPerCompletion).to.eql(50));",
                   "pm.test('Tevine grupe teisinga', () => pm.expect(body.guildId).to.eql(Number(pm.collectionVariables.get('guildA'))));",
+                  "pm.test('Uzduoties kurejas - prisijunges naudotojas', () => pm.expect(body.createdBy).to.eql(Number(pm.collectionVariables.get('userId'))));",
                   "pm.collectionVariables.set('questId', body.id);"
                 ]
               }
@@ -701,11 +1770,11 @@
             }
           ]
         }
-      ],
-      "description": "Užduotys (Quest) priklauso grupei: `/guilds/{guildId}/quests`.\n\n* Charakteristika `stat`: `STR`, `DEX`, `CON`, `INT`, `WIS`, `CHA`.\n* Tipas `type`: `MILESTONE`, `HABIT`, `GRIND`, `SIDE_QUEST`. `targetCount` privalomas ir leidžiamas tik `GRIND` tipui.\n* Sudėtingumas `difficulty` yra bazinio XP (10) daugiklis: `TRIVIAL` ×1, `EASY` ×2, `MEDIUM` ×3, `HARD` ×5, `LEGENDARY` ×8.\n\n`xpPerCompletion` visada apskaičiuoja serveris."
+      ]
     },
     {
-      "name": "3. Progreso įrašai",
+      "name": "5. Progreso įrašai",
+      "description": "Progreso įrašai (LogEntry) priklauso užduočiai: `/guilds/{guildId}/quests/{questId}/logs`.\n\n* Naujas įrašas visada sukuriamas `PENDING` būsenos ir su 0 XP. Kuriant XP iš kliento nepriimamas.\n* Dungeon Master įrašą patvirtina (`APPROVED`) arba atmeta (`REJECTED`) per `PATCH`. Nepateikus `xpAwarded`, serveris XP paima iš užduoties sudėtingumo.\n* `PENDING` ir `REJECTED` įrašai negali turėti XP ar inspiration.\n* Patvirtintas XP užšaldomas: vėliau pakeitus užduoties sudėtingumą, istorija neperrašoma.\n* Įrašą registruoja žaidėjas `jonas`, tvirtina grupės DM. Savo įrašo tvirtinti negalima net DM.",
       "item": [
         {
           "name": "Užregistruoti progresą",
@@ -718,7 +1787,7 @@
               }
             ],
             "url": "{{baseUrl}}/guilds/{{guildA}}/quests/{{questId}}/logs",
-            "description": "Užregistruoja progresą užduočiai ir išsaugo įrašo ID kintamajame `logId`.\n\nNaujas įrašas visada yra `PENDING` būsenos, su `xpAwarded = 0` ir `inspirationAwarded = 0`. Laukas `occurredAt` negali būti ateityje.\n\nREADME lentelės metodas **#13**.",
+            "description": "Žaidėjas `jonas` (`playerToken`) užregistruoja progresą užduočiai ir išsaugo įrašo ID kintamajame `logId`.\n\nNaujas įrašas visada yra `PENDING` būsenos, su `xpAwarded = 0` ir `inspirationAwarded = 0`. Laukas `occurredAt` negali būti ateityje.\n\nREADME lentelės metodas **#13**.",
             "body": {
               "mode": "raw",
               "raw": "{\n  \"note\": \"Nubegau 10 km per 52 minutes\",\n  \"evidenceUrl\": \"https://example.org/evidence/run.png\",\n  \"occurredAt\": \"{{occurredAt}}\"\n}",
@@ -727,6 +1796,16 @@
                   "language": "json"
                 }
               }
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{playerToken}}",
+                  "type": "string"
+                }
+              ]
             }
           },
           "event": [
@@ -744,6 +1823,7 @@
                   "  pm.expect(body.reviewedAt).to.be.undefined;",
                   "});",
                   "pm.test('Irasas priklauso sukurtai uzduociai', () => pm.expect(body.questId).to.eql(Number(pm.collectionVariables.get('questId'))));",
+                  "pm.test('Autorius - zaidejas jonas', () => pm.expect(body.authorId).to.eql(Number(pm.collectionVariables.get('playerId'))));",
                   "pm.collectionVariables.set('logId', body.id);"
                 ]
               }
@@ -770,6 +1850,16 @@
                   "language": "json"
                 }
               }
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{playerToken}}",
+                  "type": "string"
+                }
+              ]
             }
           },
           "event": [
@@ -791,7 +1881,7 @@
             "method": "GET",
             "header": [],
             "url": "{{baseUrl}}/guilds/{{guildA}}/quests/{{questId}}/logs?status=PENDING",
-            "description": "Grąžina užduoties įrašų sąrašą.\n\nFiltras `status` gali būti `PENDING`, `APPROVED` arba `REJECTED`. Čia ieškoma įrašų, kurie dar laukia peržiūros.\n\nREADME lentelės metodas **#11**."
+            "description": "Grąžina užduoties įrašų sąrašą.\n\nFiltras `status` gali būti `PENDING`, `APPROVED` arba `REJECTED`. Čia ieškoma įrašų, kurie dar laukia peržiūros.\n\nREADME lentelės metodas **#11**.\n\nSiunčia grupės DM — jis mato visų žaidėjų įrašus. Žaidėjas matytų tik savo (žr. `6. Rolės ir teisės`)."
           },
           "event": [
             {
@@ -844,7 +1934,7 @@
               }
             ],
             "url": "{{baseUrl}}/guilds/{{guildA}}/quests/{{questId}}/logs/{{logId}}",
-            "description": "Dungeon Master patvirtina įrašą (`PATCH`): siunčiami tik peržiūros laukai `status = APPROVED`, `inspirationAwarded = 1` ir `reviewerNote`. Įrašo turinys (`note`, `evidenceUrl`, `occurredAt`) lieka nepakeistas.\n\n`xpAwarded` nesiunčiamas, todėl serveris jį paima iš užduoties sudėtingumo (`LEGENDARY` = **80**). Užpildomas `reviewedAt`.\n\nREADME lentelės metodas **#14**.",
+            "description": "Grupės Dungeon Master (kolekcijos naudotojas) patvirtina žaidėjo įrašą (`PATCH`): siunčiami tik peržiūros laukai `status = APPROVED`, `inspirationAwarded = 1` ir `reviewerNote`. Įrašo turinys (`note`, `evidenceUrl`, `occurredAt`) lieka nepakeistas.\n\n`xpAwarded` nesiunčiamas, todėl serveris jį paima iš užduoties sudėtingumo (`LEGENDARY` = **80**). Užpildomi `reviewedAt` ir `reviewerId`. Peržiūros laukus keisti gali tik grupės DM.\n\nREADME lentelės metodas **#14**.",
             "body": {
               "mode": "raw",
               "raw": "{\n  \"status\": \"APPROVED\",\n  \"inspirationAwarded\": 1,\n  \"reviewerNote\": \"Uzskaitau, nuotrauka aiski\"\n}",
@@ -872,6 +1962,10 @@
                   "pm.test('Neatsiusti laukai (note, evidenceUrl) nepakito', () => {",
                   "  pm.expect(body.note).to.eql('Nubegau 10 km per 52 minutes');",
                   "  pm.expect(body.evidenceUrl).to.eql('https://example.org/evidence/run.png');",
+                  "});",
+                  "pm.test('Patvirtino DM, o ne iraso autorius', () => {",
+                  "  pm.expect(body.reviewerId).to.eql(Number(pm.collectionVariables.get('userId')));",
+                  "  pm.expect(body.authorId).to.eql(Number(pm.collectionVariables.get('playerId')));",
                   "});"
                 ]
               }
@@ -908,6 +2002,51 @@
                 "exec": [
                   "pm.test('422 Unprocessable Entity', () => pm.response.to.have.status(422));",
                   "pm.test('Neperziuretas irasas negali tureti tasku', () => pm.expect(pm.response.json().message).to.include('PENDING'));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Klaida 422 – patvirtinto įrašo turinio keisti negalima",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/guilds/{{guildA}}/quests/{{questId}}/logs/{{logId}}",
+            "description": "Autorius turinį (`note`, `evidenceUrl`, `occurredAt`) keisti gali tik kol įrašas `PENDING`. Patvirtinus įrodymų pakeisti nebegalima — DM pirma turi grąžinti įrašą į `PENDING`.",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{playerToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"note\": \"Pataisyta jau po patvirtinimo\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('422 Unprocessable Entity', () => pm.response.to.have.status(422));",
+                  "pm.test('Perziureto iraso turinys uzsaldytas', () => pm.expect(pm.response.json().message).to.include('Perziureto'));"
                 ]
               }
             }
@@ -954,11 +2093,498 @@
             }
           ]
         }
-      ],
-      "description": "Progreso įrašai (LogEntry) priklauso užduočiai: `/guilds/{guildId}/quests/{questId}/logs`.\n\n* Naujas įrašas visada sukuriamas `PENDING` būsenos ir su 0 XP. Kuriant XP iš kliento nepriimamas.\n* Dungeon Master įrašą patvirtina (`APPROVED`) arba atmeta (`REJECTED`) per `PUT`. Nepateikus `xpAwarded`, serveris XP paima iš užduoties sudėtingumo.\n* `PENDING` ir `REJECTED` įrašai negali turėti XP ar inspiration.\n* Patvirtintas XP užšaldomas: vėliau pakeitus užduoties sudėtingumą, istorija neperrašoma."
+      ]
     },
     {
-      "name": "4. Išvalymas",
+      "name": "6. Rolės ir teisės",
+      "description": "Autorizacijos taisyklės iš LD0 — kiekviena parodyta `403 Forbidden` atsakymu su paaiškinimu.\n\n| Kas | Ką gali |\n| --- | --- |\n| Svečias | Tik registruotis ir prisijungti (`401` visur kitur) |\n| `PLAYER` | Mato grupę ir jos užduotis, kuria užduotis, registruoja ir mato **tik savo** įrašus |\n| `DUNGEON_MASTER` | Mato visus grupės įrašus, tvirtina / atmeta (ne savo), kuria `SIDE_QUEST` |\n| Savininkas | Keičia ir trina grupę, valdo narius |\n| `ADMIN` | Mato visas grupes, trina bet kurį turinį, valdo naudotojus |\n\nNe grupės narys apie grupę negauna nieko — tik `403`.",
+      "item": [
+        {
+          "name": "Klaida 403 – ne grupės narys",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/guilds/2",
+            "description": "Grupė 2 (*Iron Vow*) egzistuoja, bet kolekcijos naudotojas nėra jos narys."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('403 Forbidden', () => pm.response.to.have.status(403));",
+                  "pm.test('Paaiskinama, kad naudotojas ne narys', () => pm.expect(pm.response.json().message).to.include('narys'));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Žaidėjas registruoja įrašą",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/guilds/{{guildA}}/quests/{{questId}}/logs",
+            "description": "Naujas `PENDING` įrašas, kurį žaidėjas bandys patvirtinti pats. ID išsaugomas `logPlayer`.",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{playerToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"note\": \"Antras zaidejo irasas\",\n  \"occurredAt\": \"{{occurredAt}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('201 Created', () => pm.response.to.have.status(201));",
+                  "pm.collectionVariables.set('logPlayer', pm.response.json().id);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Klaida 403 – žaidėjas negali tvirtinti",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/guilds/{{guildA}}/quests/{{questId}}/logs/{{logPlayer}}",
+            "description": "Peržiūros laukus (`status`, `xpAwarded`, `inspirationAwarded`, `reviewerNote`) keičia tik grupės DM.",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{playerToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"APPROVED\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('403 Forbidden', () => pm.response.to.have.status(403));",
+                  "pm.test('Tvirtina tik DM', () => pm.expect(pm.response.json().message).to.include('tik grupes DM'));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Klaida 403 – DM nekeičia žaidėjo įrašo turinio",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/guilds/{{guildA}}/quests/{{questId}}/logs/{{logPlayer}}",
+            "description": "DM tvirtina, bet žaidėjo pastabos ir įrodymų perrašyti negali — turinį keičia tik autorius.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"note\": \"DM perrase pastaba\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('403 Forbidden', () => pm.response.to.have.status(403));",
+                  "pm.test('Turini keicia tik autorius', () => pm.expect(pm.response.json().message).to.include('autorius'));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "DM registruoja savo įrašą",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/guilds/{{guildA}}/quests/{{questId}}/logs",
+            "description": "DM taip pat gali registruoti progresą. ID išsaugomas `logDm`.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"note\": \"DM irasas apie save\",\n  \"occurredAt\": \"{{occurredAt}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('201 Created', () => pm.response.to.have.status(201));",
+                  "pm.collectionVariables.set('logDm', pm.response.json().id);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Klaida 403 – savo įrašo tvirtinti negalima",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/guilds/{{guildA}}/quests/{{questId}}/logs/{{logDm}}",
+            "description": "LD0 taisyklė: įrašo negali tvirtinti jo autorius, **net jei jis yra DM**.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"APPROVED\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('403 Forbidden', () => pm.response.to.have.status(403));",
+                  "pm.test('Savo iraso tvirtinti negalima', () => pm.expect(pm.response.json().message).to.include('Savo iraso'));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Klaida 403 – žaidėjas nemato svetimo įrašo",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/guilds/{{guildA}}/quests/{{questId}}/logs/{{logDm}}",
+            "description": "Žaidėjas mato tik savo įrašus; svetimus — tik grupės DM.",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{playerToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('403 Forbidden', () => pm.response.to.have.status(403));",
+                  "pm.test('Svetimus irasus mato tik DM', () => pm.expect(pm.response.json().message).to.include('tik grupes DM'));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Žaidėjas mato tik savo įrašus",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/guilds/{{guildA}}/quests/{{questId}}/logs",
+            "description": "Tas pats sąrašo kelias kaip DM, bet žaidėjui serveris grąžina tik jo paties įrašus.",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{playerToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200 OK', () => pm.response.to.have.status(200));",
+                  "const logs = pm.response.json().content;",
+                  "const ids = logs.map(x => x.id);",
+                  "pm.test('Visi irasai - jono, ID: ' + ids.join(', '), () => {",
+                  "  logs.forEach(x => pm.expect(x.authorId).to.eql(Number(pm.collectionVariables.get('playerId'))));",
+                  "  pm.expect(ids).to.include(Number(pm.collectionVariables.get('logPlayer')));",
+                  "  pm.expect(ids).to.not.include(Number(pm.collectionVariables.get('logDm')));",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "DM mato visus įrašus",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/guilds/{{guildA}}/quests/{{questId}}/logs",
+            "description": "DM mato ir žaidėjo, ir savo įrašus."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200 OK', () => pm.response.to.have.status(200));",
+                  "const ids = pm.response.json().content.map(x => x.id);",
+                  "pm.test('Matomi abu irasai, ID: ' + ids.join(', '), () => {",
+                  "  pm.expect(ids).to.include(Number(pm.collectionVariables.get('logPlayer')));",
+                  "  pm.expect(ids).to.include(Number(pm.collectionVariables.get('logDm')));",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Klaida 403 – SIDE_QUEST kuria tik DM",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/guilds/{{guildA}}/quests",
+            "description": "`SIDE_QUEST` — DM skiriama užduotis už netikėtą veiklą, todėl žaidėjas tokios sukurti negali.",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{playerToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Netiketas geras darbas\",\n  \"stat\": \"CHA\",\n  \"type\": \"SIDE_QUEST\",\n  \"difficulty\": \"EASY\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('403 Forbidden', () => pm.response.to.have.status(403));",
+                  "pm.test('SIDE_QUEST - tik DM', () => pm.expect(pm.response.json().message).to.include('SIDE_QUEST'));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Klaida 403 – grupę keičia tik savininkas",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/guilds/{{guildA}}",
+            "description": "Grupės pavadinimą ir aprašymą keičia tik jos savininkas.",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{playerToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"description\": \"Zaidejo bandymas pakeisti\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('403 Forbidden', () => pm.response.to.have.status(403));",
+                  "pm.test('Grupe keicia tik savininkas', () => pm.expect(pm.response.json().message).to.include('savininkas'));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Klaida 403 – naudotojų valdymas tik administratoriui",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/users",
+            "description": "`/api/users/**` leidžiama tik rolei `ADMIN` (tikrinama Spring Security lygiu, dar prieš kontrolerį)."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('403 Forbidden', () => pm.response.to.have.status(403));",
+                  "pm.test('Ne ADMIN - 403', () => pm.expect(pm.response.json().message).to.include('Neturite teises'));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Žaidėjas išeina iš grupės",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": "{{baseUrl}}/guilds/{{guildA}}/members/{{playerId}}",
+            "description": "Narys gali pašalinti pats save (išeiti). Kitus narius šalina tik savininkas arba administratorius.\n\nREADME lentelės metodas **#25**.",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{playerToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('204 No Content', () => pm.response.to.have.status(204));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Klaida 403 – išėjęs žaidėjas grupės nebemato",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/guilds/{{guildA}}",
+            "description": "Išėjęs iš grupės, jonas nebemato nei jos, nei jos užduočių ir įrašų.",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{playerToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('403 Forbidden', () => pm.response.to.have.status(403));",
+                  "pm.test('Nebe narys - 403', () => pm.expect(pm.response.json().message).to.include('narys'));"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "7. Išvalymas",
+      "description": "Ištrina viską, ką sukūrė kolekcija, kad ją būtų galima leisti pakartotinai. Grupės trynimas pašalina ir visus jos narius, užduotis bei įrašus. Grupę trina jos savininkas arba administratorius.\n\nPaskutinė užklausa patikrina, kad ištrinta grupė nebepasiekiama (`404`).",
       "item": [
         {
           "name": "Ištrinti užduotį",
@@ -1001,12 +2627,22 @@
           ]
         },
         {
-          "name": "Ištrinti antrą grupę",
+          "name": "Ištrinti antrą grupę – administratorius",
           "request": {
             "method": "DELETE",
             "header": [],
             "url": "{{baseUrl}}/guilds/{{guildB}}",
-            "description": "Ištrina grupę B, sukurtą tėvinės grandinės testui."
+            "description": "Grupę B ištrina **administratorius**, nors nėra jos narys: `ADMIN` gali šalinti netinkamą turinį bet kurioje grupėje.",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{adminToken}}",
+                  "type": "string"
+                }
+              ]
+            }
           },
           "event": [
             {
@@ -1041,14 +2677,259 @@
             }
           ]
         }
-      ],
-      "description": "Ištrina viską, ką sukūrė kolekcija, kad ją būtų galima leisti pakartotinai. Grupės trynimas pašalina ir visas jos užduotis bei įrašus.\n\nPaskutinė užklausa patikrina, kad ištrinta grupė nebepasiekiama (`404`)."
+      ]
+    },
+    {
+      "name": "8. Administravimas",
+      "description": "Naudotojų valdymas — tik rolei `ADMIN` (aplanko *Authorization*: `{{adminToken}}`).\n\nAdministratorius mato naudotojus, keičia jų rolę ir gali **užblokuoti** paskyrą: tada atšaukiamos visos naudotojo sesijos ir prisijungti nebeleidžiama (`403`).",
+      "auth": {
+        "type": "bearer",
+        "bearer": [
+          {
+            "key": "token",
+            "value": "{{adminToken}}",
+            "type": "string"
+          }
+        ]
+      },
+      "item": [
+        {
+          "name": "Naudotojų sąrašas",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/users?username={{username}}",
+            "description": "Puslapiuotas sąrašas su filtru pagal vardo dalį. Slaptažodžių maišos negrąžinamos.\n\nREADME lentelės metodas **#26**."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200 OK', () => pm.response.to.have.status(200));",
+                  "const body = pm.response.json();",
+                  "pm.test('Rastas kolekcijos naudotojas', () => {",
+                  "  pm.expect(body.totalElements).to.eql(1);",
+                  "  pm.expect(body.content[0].id).to.eql(Number(pm.collectionVariables.get('userId')));",
+                  "  pm.expect(body.content[0]).to.not.have.property('passwordHash');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Gauti naudotoją pagal ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/users/{{userId}}",
+            "description": "README lentelės metodas **#27**."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200 OK', () => pm.response.to.have.status(200));",
+                  "pm.test('Tas pats naudotojas', () => pm.expect(pm.response.json().username).to.eql(pm.collectionVariables.get('username')));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Klaida 422 – savęs užblokuoti negalima",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/users/{{adminId}}",
+            "description": "Apsauga nuo situacijos, kai neliktų nė vieno administratoriaus: savo ADMIN teisių nuimti ar savęs užblokuoti negalima.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"enabled\": false\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('422 Unprocessable Entity', () => pm.response.to.have.status(422));",
+                  "pm.test('Saves uzblokuoti negalima', () => pm.expect(pm.response.json().message).to.include('Savo'));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Užblokuoti naudotoją",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/users/{{userId}}",
+            "description": "Užblokuojama kolekcijos naudotojo paskyra: atšaukiami visi jo refresh žetonai.\n\nREADME lentelės metodas **#28**.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"enabled\": false\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200 OK', () => pm.response.to.have.status(200));",
+                  "pm.test('Paskyra uzblokuota', () => pm.expect(pm.response.json().enabled).to.eql(false));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Klaida 403 – užblokuotas negali prisijungti",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/auth/login",
+            "description": "Slaptažodis teisingas, bet paskyra užblokuota — `403`, ne `401`.",
+            "auth": {
+              "type": "noauth"
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"{{username}}\",\n  \"password\": \"{{password}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('403 Forbidden', () => pm.response.to.have.status(403));",
+                  "pm.test('Pranesimas apie uzblokuota paskyra', () => pm.expect(pm.response.json().message).to.include('uzblokuota'));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Atblokuoti naudotoją",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/users/{{userId}}",
+            "description": "Paskyra vėl aktyvi — naudotojas gali prisijungti.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"enabled\": true\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200 OK', () => pm.response.to.have.status(200));",
+                  "pm.test('Paskyra aktyvi', () => pm.expect(pm.response.json().enabled).to.eql(true));"
+                ]
+              }
+            }
+          ]
+        }
+      ]
     }
   ],
   "variable": [
     {
       "key": "baseUrl",
       "value": "http://localhost:8080/api"
+    },
+    {
+      "key": "username",
+      "value": ""
+    },
+    {
+      "key": "password",
+      "value": "Demo123!"
+    },
+    {
+      "key": "userId",
+      "value": ""
+    },
+    {
+      "key": "accessToken",
+      "value": ""
+    },
+    {
+      "key": "refreshToken",
+      "value": ""
+    },
+    {
+      "key": "oldRefreshToken",
+      "value": ""
+    },
+    {
+      "key": "playerToken",
+      "value": ""
+    },
+    {
+      "key": "playerId",
+      "value": ""
+    },
+    {
+      "key": "adminToken",
+      "value": ""
+    },
+    {
+      "key": "adminId",
+      "value": ""
     },
     {
       "key": "guildName",
@@ -1068,6 +2949,14 @@
     },
     {
       "key": "logId",
+      "value": ""
+    },
+    {
+      "key": "logPlayer",
+      "value": ""
+    },
+    {
+      "key": "logDm",
       "value": ""
     },
     {

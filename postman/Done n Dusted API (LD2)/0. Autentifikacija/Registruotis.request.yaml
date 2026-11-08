@@ -1,0 +1,42 @@
+$kind: http-request
+description: |-
+  Sukuria naują naudotoją. Prieš užklausą sugeneruojamas unikalus vardas `postman_<laikas>`, kad kolekciją būtų galima leisti kartotinai.
+
+  Registracija visada suteikia rolę `USER` ir žetonų negrąžina — po jos reikia prisijungti. Slaptažodis DB saugomas tik kaip BCrypt maiša, atsakyme jo nėra.
+
+  README lentelės metodas **#16**.
+url: "{{baseUrl}}/auth/register"
+method: POST
+headers:
+  Content-Type: application/json
+body:
+  type: json
+  content: |-
+    {
+      "username": "{{username}}",
+      "password": "{{password}}"
+    }
+auth:
+  type: noauth
+scripts:
+  - type: beforeRequest
+    code: pm.collectionVariables.set('username', 'postman_' + Date.now());
+    language: text/javascript
+  - type: afterResponse
+    code: |-
+      pm.test('201 Created', () => pm.response.to.have.status(201));
+      const body = pm.response.json();
+      pm.test('Location nurodo naujo naudotojo adresa', () => pm.expect(pm.response.headers.get('Location')).to.include('/api/users/' + body.id));
+      pm.test('Naujas naudotojas visada USER', () => {
+        pm.expect(body.username).to.eql(pm.collectionVariables.get('username'));
+        pm.expect(body.role).to.eql('USER');
+        pm.expect(body.enabled).to.eql(true);
+      });
+      pm.test('Slaptazodis ir jo maisa negrazinami', () => {
+        pm.expect(body).to.not.have.property('password');
+        pm.expect(body).to.not.have.property('passwordHash');
+      });
+      pm.collectionVariables.set('userId', body.id);
+    language: text/javascript
+examples: ./.resources/Registruotis.resources/examples
+order: 1000

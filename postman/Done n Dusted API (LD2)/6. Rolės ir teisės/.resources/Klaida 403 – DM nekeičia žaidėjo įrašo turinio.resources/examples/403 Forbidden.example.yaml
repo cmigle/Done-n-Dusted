@@ -1,0 +1,20 @@
+$kind: http-example
+request:
+  url: "{{baseUrl}}/guilds/{{guildA}}/quests/{{questId}}/logs/{{logPlayer}}"
+  method: PATCH
+response:
+  statusCode: 403
+  statusText: Forbidden
+  headers:
+    Content-Type: application/json
+  body:
+    type: json
+    content: |-
+      {
+        "timestamp": "2026-11-08T14:31:37.088797200Z",
+        "status": 403,
+        "error": "Forbidden",
+        "message": "Iraso turini keisti gali tik jo autorius",
+        "path": "/api/guilds/4/quests/10/logs/14"
+      }
+order: 1000

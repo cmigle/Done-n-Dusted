@@ -1,0 +1,12 @@
+$kind: http-request
+description: README lentelės metodas **#27**.
+url: "{{baseUrl}}/users/{{userId}}"
+method: GET
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test('200 OK', () => pm.response.to.have.status(200));
+      pm.test('Tas pats naudotojas', () => pm.expect(pm.response.json().username).to.eql(pm.collectionVariables.get('username')));
+    language: text/javascript
+examples: ./.resources/Gauti naudotoją pagal ID.resources/examples
+order: 2000

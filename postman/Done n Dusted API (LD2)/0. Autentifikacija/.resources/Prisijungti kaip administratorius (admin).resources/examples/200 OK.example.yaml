@@ -1,0 +1,19 @@
+$kind: http-example
+request:
+  url: "{{baseUrl}}/auth/login"
+  method: POST
+response:
+  statusCode: 200
+  statusText: OK
+  headers:
+    Content-Type: application/json
+  body:
+    type: json
+    content: |-
+      {
+        "accessToken": "eyJraWQiOiIzaVhYNm9yenhyenJrV0xqN2RTVW9mMnFWSGFxbzVBQnFBbDd0Z3U2MTU4IiwiYWxnIjoiSFMyNTYifQ.eyJpc3MiOiJkb25lLW4tZHVzdGVkIiwic3ViIjoiMSIsInJvbGUiOiJBRE1JTiIsImV4cCI6MTc5NDE0OTE5MCwiaWF0IjoxNzk0MTQ4MjkwLCJ1c2VybmFtZSI6ImFkbWluIn0.0IHc9i6sxJh7BGw78MJ6wGGB_BKfSgewOqciwoJZsJ4",
+        "tokenType": "Bearer",
+        "expiresIn": 900,
+        "refreshToken": "gCcwXMttxmsjxnpeWazZPL5xqEhFfTu8y4yt2woPHEg"
+      }
+order: 1000

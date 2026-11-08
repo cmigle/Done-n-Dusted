@@ -1,0 +1,20 @@
+$kind: http-request
+description: Paskyra vėl aktyvi — naudotojas gali prisijungti.
+url: "{{baseUrl}}/users/{{userId}}"
+method: PATCH
+headers:
+  Content-Type: application/json
+body:
+  type: json
+  content: |-
+    {
+      "enabled": true
+    }
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test('200 OK', () => pm.response.to.have.status(200));
+      pm.test('Paskyra aktyvi', () => pm.expect(pm.response.json().enabled).to.eql(true));
+    language: text/javascript
+examples: ./.resources/Atblokuoti naudotoją.resources/examples
+order: 6000

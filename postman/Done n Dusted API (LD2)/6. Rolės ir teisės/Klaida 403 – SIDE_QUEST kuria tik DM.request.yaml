@@ -1,0 +1,27 @@
+$kind: http-request
+description: "`SIDE_QUEST` — DM skiriama užduotis už netikėtą veiklą, todėl žaidėjas tokios sukurti negali."
+url: "{{baseUrl}}/guilds/{{guildA}}/quests"
+method: POST
+headers:
+  Content-Type: application/json
+body:
+  type: json
+  content: |-
+    {
+      "title": "Netiketas geras darbas",
+      "stat": "CHA",
+      "type": "SIDE_QUEST",
+      "difficulty": "EASY"
+    }
+auth:
+  type: bearer
+  credentials:
+    token: "{{playerToken}}"
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test('403 Forbidden', () => pm.response.to.have.status(403));
+      pm.test('SIDE_QUEST - tik DM', () => pm.expect(pm.response.json().message).to.include('SIDE_QUEST'));
+    language: text/javascript
+examples: ./.resources/Klaida 403 – SIDE_QUEST kuria tik DM.resources/examples
+order: 10000
