@@ -1,13 +1,18 @@
-DONE N DUSTED - komandos gynimui (LD1)
+DONE N DUSTED - komandos gynimui (LD2)
 =======================================
 
+Komandos rasytos Git Bash (bash). Kiekviena uzklausa siunciama su JWT zetonu: -H "$A".
+
 Seed duomenys, kuriuos naudoju:
-  Guild 1 = Thursday Night Crew
-  Guild 2 = Iron Vow
-     Quest 4 = Run 50 kilometers (GRIND, HARD -> 50 XP), turi logus 4,5 (APPROVED), 6 (REJECTED), 7 (PENDING)
+  Guild 1 = Thursday Night Crew   (savininkas ir DM - rokas; zaidejai jonas, ieva)
+  Guild 2 = Iron Vow              (savininkas ir DM - rokas; zaidejai jonas, ieva)
+     Quest 4 = Run 50 kilometers (GRIND, HARD -> 50 XP), turi logus 4,5 (APPROVED), 6 (REJECTED), 7 (PENDING, autorius jonas)
      Quest 6 = Deadlift bodyweight x2 (LEGENDARY -> 80 XP)
      Quest 7 = Winter swim challenge (NEAKTYVI)
-  Guild 3 = The Quiet Library
+  Guild 3 = The Quiet Library     (savininke ir DM - ieva; zaidejas rokas; jonas NE narys)
+
+Naudotojai (visu slaptazodis Demo123!):
+  1 admin (ADMIN), 2 rokas, 3 ieva, 4 jonas
 
 -----------------------------------------------------------------
 0. PALEIDIMAS
@@ -17,54 +22,70 @@ Seed duomenys, kuriuos naudoju:
 
 if occupied Get-Process postgres | Stop-Process -Force
 
-  http://localhost:8080/swagger-ui.html     <- Swagger UI, visi 15 metodu su aprasymais
+  http://localhost:8080/swagger-ui.html     <- Swagger UI, visi 28 metodai; zetonas - mygtukas "Authorize"
   http://localhost:8080/v3/api-docs         <- OpenAPI JSON (tas pats kas docs/openapi.json)
-  http://localhost:8080/api/guilds          <- tiesiog API
+  http://localhost:8080/api/guilds          <- API (be zetono - 401)
 
 PostgreSQL
   host localhost, port 55432, db postgres, user postgres, slaptazodzio nera
 
-visa Postman kolekcija - 31 uzklausa, 75 patikros, ~5 s (pirmas aplankas "0. Suvestine"
+visa Postman kolekcija - 78 uzklausos, 176 patikros, ~10 s (aplankas "1. Suvestine"
 parodo, kiek DB yra grupiu, uzduociu ir irasu su visais ID):
   npx newman run postman/DoneNDusted.postman_collection.json
 
-.cmd versija Postman 
+.cmd versija Postman
   npx.cmd newman run postman/DoneNDusted.postman_collection.json
+
+-----------------------------------------------------------------
+0.5 PRISIJUNGIMAS (zetonai kitoms komandoms)
+-----------------------------------------------------------------
+
+# rokas - grupes 2 savininkas ir DM. Jo zetonas $A naudojamas 1-4 skyriuose.
+TOKEN=$(curl -s -X POST http://localhost:8080/api/auth/login -H "Content-Type: application/json" -d '{"username":"rokas","password":"Demo123!"}' | grep -o '"accessToken":"[^"]*' | cut -d'"' -f4); A="Authorization: Bearer $TOKEN"; echo "$A"
+
+# jonas - zaidejas grupese 1 ir 2 ($J)
+J="Authorization: Bearer $(curl -s -X POST http://localhost:8080/api/auth/login -H "Content-Type: application/json" -d '{"username":"jonas","password":"Demo123!"}' | grep -o '"accessToken":"[^"]*' | cut -d'"' -f4)"
+
+# admin - administratorius ($ADM)
+ADM="Authorization: Bearer $(curl -s -X POST http://localhost:8080/api/auth/login -H "Content-Type: application/json" -d '{"username":"admin","password":"Demo123!"}' | grep -o '"accessToken":"[^"]*' | cut -d'"' -f4)"
+
+# Access zetonas galioja 15 min. Pasibaigus - 401 "Access zetonas pasibaiges", tada tiesiog
+# paleisk sias tris eilutes is naujo.
 
 -----------------------------------------------------------------
 1. GUILD
 -----------------------------------------------------------------
 
 # 1.1 Sarasas (200). Atsakyme content + page + links (self/first/next/last)
-curl -s http://localhost:8080/api/guilds
+curl -H "$A" -s http://localhost:8080/api/guilds
 
 # 1.2 Puslapiavimas ir rikiavimas - atsiranda next nuoroda, o filtrai nuorodose islieka
-curl -s "http://localhost:8080/api/guilds?page=0&size=2&sort=name,desc"
+curl -H "$A" -s "http://localhost:8080/api/guilds?page=0&size=2&sort=name,desc"
 
 # 1.3 Filtras pagal pavadinima (nesvarbu didziosios/mazosios raides)
-curl -s "http://localhost:8080/api/guilds?name=iron"
+curl -H "$A" -s "http://localhost:8080/api/guilds?name=iron"
 
 # 1.4 Viena grupe (200)
-curl -s http://localhost:8080/api/guilds/2
+curl -H "$A" -s http://localhost:8080/api/guilds/2
 
 # 1.5 Sukurti grupe (201 + Location antraste). -i parodo antrastes
-R=$(curl -si -X POST http://localhost:8080/api/guilds -H "Content-Type: application/json" -d '{"name":"Gynimo grupe","description":"Sukurta per gynima"}'); echo "$R"
+R=$(curl -H "$A" -si -X POST http://localhost:8080/api/guilds -H "Content-Type: application/json" -d '{"name":"Gynimo grupe","description":"Sukurta per gynima"}'); echo "$R"
 
 # (POST ir id paemimas is Location antrastes i kintamaji GID, kad toliau nereiktu ranka rasyti)
 GID=$(echo "$R" | tr -d '\r' | grep -i '^location' | grep -o '[0-9]*$'); echo "Nauja grupe: $GID"
 
 # 1.6 Dalinis atnaujinimas PATCH (200) - siunciu tik description, name lieka koks buvo
-curl -s -X PATCH http://localhost:8080/api/guilds/$GID -H "Content-Type: application/json" -d '{"description":"Pakeistas aprasymas"}'
+curl -H "$A" -s -X PATCH http://localhost:8080/api/guilds/$GID -H "Content-Type: application/json" -d '{"description":"Pakeistas aprasymas"}'
 
 # 1.6b PATCH tik name - description NEDINGSTA (su PUT butu perrasytas null ir dinges is atsakymo)
-curl -s -X PATCH http://localhost:8080/api/guilds/$GID -H "Content-Type: application/json" -d '{"name":"Gynimo grupe v2"}'
+curl -H "$A" -s -X PATCH http://localhost:8080/api/guilds/$GID -H "Content-Type: application/json" -d '{"name":"Gynimo grupe v2"}'
 
 # 1.7 Istrinti (204, atsakymas be turinio). Paskui GET -> 404
-curl -i -X DELETE http://localhost:8080/api/guilds/$GID
-curl -s http://localhost:8080/api/guilds/$GID
+curl -H "$A" -i -X DELETE http://localhost:8080/api/guilds/$GID
+curl -H "$A" -s http://localhost:8080/api/guilds/$GID
 
 # 1.8 Grupe BE aprasymo (201) -> atsakyme "description":"" (laukas nedingsta)
-curl -s -X POST http://localhost:8080/api/guilds -H "Content-Type: application/json" -d '{"name":"Be aprasymo"}'
+curl -H "$A" -s -X POST http://localhost:8080/api/guilds -H "Content-Type: application/json" -d '{"name":"Be aprasymo"}'
 
 
 -----------------------------------------------------------------
@@ -72,26 +93,26 @@ curl -s -X POST http://localhost:8080/api/guilds -H "Content-Type: application/j
 -----------------------------------------------------------------
 
 # 2.1 Grupes 2 uzduotys (200)
-curl -s http://localhost:8080/api/guilds/2/quests
+curl -H "$A" -s http://localhost:8080/api/guilds/2/quests
 
 # 2.2 Filtrai: stat, type, difficulty, active
-curl -s "http://localhost:8080/api/guilds/2/quests?stat=CON&active=true"
-curl -s "http://localhost:8080/api/guilds/2/quests?type=GRIND"
+curl -H "$A" -s "http://localhost:8080/api/guilds/2/quests?stat=CON&active=true"
+curl -H "$A" -s "http://localhost:8080/api/guilds/2/quests?type=GRIND"
 
 # 2.3 Viena uzduotis (200)
-curl -s http://localhost:8080/api/guilds/2/quests/4
+curl -H "$A" -s http://localhost:8080/api/guilds/2/quests/4
 
 # 2.4 Sukurti GRIND uzduoti (201 + Location)
-R=$(curl -si -X POST http://localhost:8080/api/guilds/2/quests -H "Content-Type: application/json" -d '{"title":"Gynimo push-ups","stat":"STR","type":"GRIND","difficulty":"MEDIUM","targetCount":100}'); echo "$R"
+R=$(curl -H "$A" -si -X POST http://localhost:8080/api/guilds/2/quests -H "Content-Type: application/json" -d '{"title":"Gynimo push-ups","stat":"STR","type":"GRIND","difficulty":"MEDIUM","targetCount":100}'); echo "$R"
 
 QID=$(echo "$R" | tr -d '\r' | grep -i '^location' | grep -o '[0-9]*$'); echo "Nauja uzduotis: $QID"
 
 # 2.5 PATCH (200) - keiciu tik tipa i HABIT ir sudetinguma; title lieka, o targetCount
 #     serveris isvalo pats, nes jis leidziamas tik GRIND tipui
-curl -s -X PATCH http://localhost:8080/api/guilds/2/quests/$QID -H "Content-Type: application/json" -d '{"type":"HABIT","difficulty":"EASY"}'
+curl -H "$A" -s -X PATCH http://localhost:8080/api/guilds/2/quests/$QID -H "Content-Type: application/json" -d '{"type":"HABIT","difficulty":"EASY"}'
 
 # 2.6 Istrinti (204)
-curl -i -X DELETE http://localhost:8080/api/guilds/2/quests/$QID
+curl -H "$A" -i -X DELETE http://localhost:8080/api/guilds/2/quests/$QID
 
 
 -----------------------------------------------------------------
@@ -99,25 +120,26 @@ curl -i -X DELETE http://localhost:8080/api/guilds/2/quests/$QID
 -----------------------------------------------------------------
 
 # 3.1 Uzduoties 4 irasai (200), naujausi pirmi
-curl -s http://localhost:8080/api/guilds/2/quests/4/logs
+curl -H "$A" -s http://localhost:8080/api/guilds/2/quests/4/logs
 
 # 3.2 Filtras pagal busena
-curl -s "http://localhost:8080/api/guilds/2/quests/4/logs?status=APPROVED"
+curl -H "$A" -s "http://localhost:8080/api/guilds/2/quests/4/logs?status=APPROVED"
 
 # 3.3 Vienas irasas (200)
-curl -s http://localhost:8080/api/guilds/2/quests/4/logs/4
+curl -H "$A" -s http://localhost:8080/api/guilds/2/quests/4/logs/4
 
-# 3.4 Sukurti irasa prie LEGENDARY uzduoties 6 (201). Atsakyme status=PENDING, xpAwarded=0
-R=$(curl -si -X POST http://localhost:8080/api/guilds/2/quests/6/logs -H "Content-Type: application/json" -d '{"note":"Pakeliau 140 kg!","evidenceUrl":"https://example.org/deadlift.mp4","occurredAt":"2026-09-20T10:00:00Z"}'); echo "$R"
+# 3.4 ZAIDEJAS jonas ($J) sukuria irasa prie LEGENDARY uzduoties 6 (201). status=PENDING, xpAwarded=0.
+#     Kuria ne rokas, nes savo iraso DM tvirtinti negali (zr. 5.9)
+R=$(curl -H "$J" -si -X POST http://localhost:8080/api/guilds/2/quests/6/logs -H "Content-Type: application/json" -d '{"note":"Pakeliau 140 kg!","evidenceUrl":"https://example.org/deadlift.mp4","occurredAt":"2026-09-20T10:00:00Z"}'); echo "$R"
 
 LID=$(echo "$R" | tr -d '\r' | grep -i '^location' | grep -o '[0-9]*$'); echo "Naujas irasas: $LID"
 
-# 3.5 DM patvirtina BE xpAwarded -> serveris pats paskaiciuoja 80 XP (LEGENDARY 8 x 10).
+# 3.5 DM rokas ($A) patvirtina BE xpAwarded -> serveris pats paskaiciuoja 80 XP (LEGENDARY 8 x 10).
 #     PATCH: siunciu tik perziuros laukus, note/evidenceUrl/occurredAt lieka nepakeisti
-curl -s -X PATCH http://localhost:8080/api/guilds/2/quests/6/logs/$LID -H "Content-Type: application/json" -d '{"status":"APPROVED","reviewerNote":"Video matosi, uzskaitau"}'
+curl -H "$A" -s -X PATCH http://localhost:8080/api/guilds/2/quests/6/logs/$LID -H "Content-Type: application/json" -d '{"status":"APPROVED","reviewerNote":"Video matosi, uzskaitau"}'
 
 # 3.6 Istrinti (204)
-curl -i -X DELETE http://localhost:8080/api/guilds/2/quests/6/logs/$LID
+curl -H "$A" -i -X DELETE http://localhost:8080/api/guilds/2/quests/6/logs/$LID
 
 
 -----------------------------------------------------------------
@@ -125,65 +147,119 @@ curl -i -X DELETE http://localhost:8080/api/guilds/2/quests/6/logs/$LID
 -----------------------------------------------------------------
 
 # 404 - neegzistuojantis resursas
-curl -s http://localhost:8080/api/guilds/999
+curl -H "$A" -s http://localhost:8080/api/guilds/999
 
 # 404 - NETEISINGA GRANDINE: quest 4 egzistuoja, bet jis grupeje 2, ne 1
-curl -s http://localhost:8080/api/guilds/1/quests/4
+curl -H "$A" -s http://localhost:8080/api/guilds/1/quests/4
 
 # 404 - log 4 egzistuoja, bet ne prie uzduoties 5
-curl -s http://localhost:8080/api/guilds/2/quests/5/logs/4
+curl -H "$A" -s http://localhost:8080/api/guilds/2/quests/5/logs/4
 
 # 400 - validacija: tuscias vardas, details nurodo kuri lauka
-curl -s -X POST http://localhost:8080/api/guilds -H "Content-Type: application/json" -d '{"name":""}'
+curl -H "$A" -s -X POST http://localhost:8080/api/guilds -H "Content-Type: application/json" -d '{"name":""}'
 
 # 400 - sugadintas JSON
-curl -s -X POST http://localhost:8080/api/guilds -H "Content-Type: application/json" -d '{"name": '
+curl -H "$A" -s -X POST http://localhost:8080/api/guilds -H "Content-Type: application/json" -d '{"name": '
 
 # 400 - nezinoma enum reiksme
-curl -s -X POST http://localhost:8080/api/guilds/2/quests -H "Content-Type: application/json" -d '{"title":"Blogas","stat":"LUCK","type":"HABIT","difficulty":"EASY"}'
+curl -H "$A" -s -X POST http://localhost:8080/api/guilds/2/quests -H "Content-Type: application/json" -d '{"title":"Blogas","stat":"LUCK","type":"HABIT","difficulty":"EASY"}'
 
 # 400 - id ne skaicius
-curl -s http://localhost:8080/api/guilds/abc
+curl -H "$A" -s http://localhost:8080/api/guilds/abc
 
 # 400 - rikiavimas pagal neegzistuojanti lauka
-curl -s "http://localhost:8080/api/guilds?sort=bogus"
+curl -H "$A" -s "http://localhost:8080/api/guilds?sort=bogus"
 
 # 400 - bandau kuriant irasa pats prisiskirti XP (tokio lauko create DTO nera)
-curl -s -X POST http://localhost:8080/api/guilds/2/quests/4/logs -H "Content-Type: application/json" -d '{"note":"Noriu tasku","occurredAt":"2026-09-20T10:00:00Z","xpAwarded":9999}'
+curl -H "$A" -s -X POST http://localhost:8080/api/guilds/2/quests/4/logs -H "Content-Type: application/json" -d '{"note":"Noriu tasku","occurredAt":"2026-09-20T10:00:00Z","xpAwarded":9999}'
 
 # 409 - toks grupes pavadinimas jau yra
-curl -s -X POST http://localhost:8080/api/guilds -H "Content-Type: application/json" -d '{"name":"Iron Vow"}'
+curl -H "$A" -s -X POST http://localhost:8080/api/guilds -H "Content-Type: application/json" -d '{"name":"Iron Vow"}'
 
 # 415 - uzklausos turinys (body) ne JSON
-curl -s -X POST http://localhost:8080/api/guilds -H "Content-Type: text/plain" -d 'labas'
+curl -H "$A" -s -X POST http://localhost:8080/api/guilds -H "Content-Type: text/plain" -d 'labas'
 
 # 406 - prasau XML, o API grazina tik JSON
-curl -s -i http://localhost:8080/api/guilds -H "Accept: application/xml" | head -1
+curl -H "$A" -s -i http://localhost:8080/api/guilds -H "Accept: application/xml" | head -1
 
 # 405 - metodas netinka siam keliui (atnaujinimas yra PATCH, PUT nepalaikomas)
-curl -s -X PUT http://localhost:8080/api/guilds/2
+curl -H "$A" -s -X PUT http://localhost:8080/api/guilds/2
 
 # 422 - GRIND be targetCount (JSON geras, bet pazeista taisykle)
-curl -s -X POST http://localhost:8080/api/guilds/2/quests -H "Content-Type: application/json" -d '{"title":"Grind be tikslo","stat":"STR","type":"GRIND","difficulty":"EASY"}'
+curl -H "$A" -s -X POST http://localhost:8080/api/guilds/2/quests -H "Content-Type: application/json" -d '{"title":"Grind be tikslo","stat":"STR","type":"GRIND","difficulty":"EASY"}'
 
 # 422 - targetCount ne GRIND tipui
-curl -s -X POST http://localhost:8080/api/guilds/2/quests -H "Content-Type: application/json" -d '{"title":"Habit su tikslu","stat":"STR","type":"HABIT","difficulty":"EASY","targetCount":5}'
+curl -H "$A" -s -X POST http://localhost:8080/api/guilds/2/quests -H "Content-Type: application/json" -d '{"title":"Habit su tikslu","stat":"STR","type":"HABIT","difficulty":"EASY","targetCount":5}'
 
 # 422 - irasas prie neaktyvios uzduoties 7
-curl -s -X POST http://localhost:8080/api/guilds/2/quests/7/logs -H "Content-Type: application/json" -d '{"note":"Plaukiau","occurredAt":"2026-09-20T10:00:00Z"}'
+curl -H "$A" -s -X POST http://localhost:8080/api/guilds/2/quests/7/logs -H "Content-Type: application/json" -d '{"note":"Plaukiau","occurredAt":"2026-09-20T10:00:00Z"}'
 
 # 422 - occurredAt ateityje
-curl -s -X POST http://localhost:8080/api/guilds/2/quests/4/logs -H "Content-Type: application/json" -d '{"note":"Rytoj begsiu","occurredAt":"2099-01-01T10:00:00Z"}'
+curl -H "$A" -s -X POST http://localhost:8080/api/guilds/2/quests/4/logs -H "Content-Type: application/json" -d '{"note":"Rytoj begsiu","occurredAt":"2099-01-01T10:00:00Z"}'
 
 # 422 - REJECTED irasui bandau duoti XP
-curl -s -X PATCH http://localhost:8080/api/guilds/2/quests/4/logs/7 -H "Content-Type: application/json" -d '{"status":"REJECTED","xpAwarded":50}'
+curl -H "$A" -s -X PATCH http://localhost:8080/api/guilds/2/quests/4/logs/7 -H "Content-Type: application/json" -d '{"status":"REJECTED","xpAwarded":50}'
 
 # 422 - XP be status (perziuros laukai keiciami tik kartu su DM sprendimu)
-curl -s -X PATCH http://localhost:8080/api/guilds/2/quests/4/logs/7 -H "Content-Type: application/json" -d '{"xpAwarded":50}'
+curl -H "$A" -s -X PATCH http://localhost:8080/api/guilds/2/quests/4/logs/7 -H "Content-Type: application/json" -d '{"xpAwarded":50}'
 
 
 -----------------------------------------------------------------
-5. DUOMENU BAZE
+5. AUTENTIFIKACIJA IR ROLES (LD2)
+-----------------------------------------------------------------
+
+# 5.1 401 - be zetono (WWW-Authenticate: Bearer)
+curl -s -i http://localhost:8080/api/guilds | grep -i -E "^HTTP|^www|status"
+
+# 5.2 401 - sugadintas zetonas (parasas nebetinka)
+curl -s -H "Authorization: Bearer ${TOKEN}x" http://localhost:8080/api/guilds
+
+# 5.3 401 - blogas slaptazodis (ta pati klaida ir blogam vardui)
+curl -s -X POST http://localhost:8080/api/auth/login -H "Content-Type: application/json" -d '{"username":"jonas","password":"blogas"}'
+
+# 5.4 Registracija (201 + Location), visada role USER. Antra karta tas pats vardas -> 409
+curl -s -i -X POST http://localhost:8080/api/auth/register -H "Content-Type: application/json" -d '{"username":"gynimas","password":"Demo123!"}'
+
+# 5.5 Kas as + mano grupes ir roles jose
+curl -H "$A" -s http://localhost:8080/api/auth/me
+
+# 5.6 Refresh rotacija: senas refresh zetonas pakeiciamas nauju, pakartotinis panaudojimas -> 401
+#     ir atsaukiamos VISOS sesijos (laikoma, kad zetonas pavogtas)
+RT=$(curl -s -X POST http://localhost:8080/api/auth/login -H "Content-Type: application/json" -d '{"username":"ieva","password":"Demo123!"}' | grep -o '"refreshToken":"[^"]*' | cut -d'"' -f4)
+curl -s -X POST http://localhost:8080/api/auth/refresh -H "Content-Type: application/json" -d "{\"refreshToken\":\"$RT\"}"
+curl -s -X POST http://localhost:8080/api/auth/refresh -H "Content-Type: application/json" -d "{\"refreshToken\":\"$RT\"}"
+
+# 5.7 403 - jonas ne grupes 3 narys
+curl -H "$J" -s http://localhost:8080/api/guilds/3
+
+# 5.8 403 - zaidejas negali tvirtinti (tik grupes DM)
+curl -H "$J" -s -X PATCH http://localhost:8080/api/guilds/2/quests/4/logs/7 -H "Content-Type: application/json" -d '{"status":"APPROVED"}'
+
+# 5.9 403 - DM savo iraso tvirtinti negali: rokas sukuria irasa ir bando ji patvirtinti
+R=$(curl -H "$A" -si -X POST http://localhost:8080/api/guilds/2/quests/5/logs -H "Content-Type: application/json" -d '{"note":"Mano paties irasas","occurredAt":"2026-09-20T10:00:00Z"}'); OWN=$(echo "$R" | tr -d '\r' | grep -i '^location' | grep -o '[0-9]*$'); echo "DM irasas: $OWN"
+curl -H "$A" -s -X PATCH http://localhost:8080/api/guilds/2/quests/5/logs/$OWN -H "Content-Type: application/json" -d '{"status":"APPROVED"}'
+
+# 5.10 Zaidejas mato tik savo irasus (DM - visus): palygink authorId
+curl -H "$J" -s http://localhost:8080/api/guilds/2/quests/4/logs
+curl -H "$A" -s http://localhost:8080/api/guilds/2/quests/4/logs
+
+# 5.11 403 - SIDE_QUEST kuria tik DM
+curl -H "$J" -s -X POST http://localhost:8080/api/guilds/2/quests -H "Content-Type: application/json" -d '{"title":"Kava visiems","stat":"CHA","type":"SIDE_QUEST","difficulty":"EASY"}'
+
+# 5.12 Grupes nariai ir 409 - antras DM
+curl -H "$A" -s http://localhost:8080/api/guilds/2/members
+curl -H "$A" -s -X PATCH http://localhost:8080/api/guilds/2/members/4 -H "Content-Type: application/json" -d '{"role":"DUNGEON_MASTER"}'
+
+# 5.13 Naudotojai - tik ADMIN (jonas -> 403, admin -> 200)
+curl -H "$J" -s http://localhost:8080/api/users
+curl -H "$ADM" -s http://localhost:8080/api/users
+
+# 5.14 Admin mato visas grupes (rokas mato tik tas, kuriose yra narys)
+curl -H "$ADM" -s "http://localhost:8080/api/guilds?size=100" | grep -o '"name":"[^"]*'
+
+
+-----------------------------------------------------------------
+6. DUOMENU BAZE
 -----------------------------------------------------------------
 
 DBeaver: New Connection -> PostgreSQL
@@ -198,6 +274,9 @@ psql (jei idiegtas):
 SELECT * FROM guild;
 SELECT * FROM quest;
 SELECT * FROM log_entry;
+SELECT id, username, role, enabled, left(password_hash, 7) AS bcrypt FROM app_user;   -- maisa, ne slaptazodis
+SELECT * FROM guild_membership;
+SELECT user_id, left(token_hash, 12) AS hash, expires_at, revoked_at FROM refresh_token;
 
 -- grupe -> uzduociu ir irasu skaicius
 SELECT g.id, g.name, COUNT(DISTINCT q.id) AS quests, COUNT(l.id) AS logs
