@@ -2,19 +2,24 @@
   "openapi": "3.1.0",
   "info": {
     "title": "Done n Dusted API",
-    "description": "DnD principu veikianti produktyvumo sistema.\n\nResursu hierarchija: **Guild (1:N) -> Quest (1:N) -> LogEntry**.\nVaikinis objektas pasiekiamas tik per tevini kelia; neteisinga\ngrandine grazina 404. Visos klaidos grazinamos vienoda `ApiError`\nstruktura, visi sarasai - puslapiuoti `PagedResponse` su\nself/first/prev/next/last nuorodomis.\n",
+    "description": "DnD principu veikianti produktyvumo sistema.\n\nResursu hierarchija: **Guild (1:N) -> Quest (1:N) -> LogEntry**.\nVaikinis objektas pasiekiamas tik per tevini kelia; neteisinga\ngrandine grazina 404. Visos klaidos grazinamos vienoda `ApiError`\nstruktura, visi sarasai - puslapiuoti `PagedResponse` su\nself/first/prev/next/last nuorodomis.\n\n**Autentifikacija (JWT).** `POST /api/auth/login` grazina access zetona\n(galioja 15 min) ir refresh zetona (7 d.). Access zetonas siunciamas\nantrasteje `Authorization: Bearer <accessToken>`; pasibaigus - nauja pora\ngaunama per `POST /api/auth/refresh`. Swagger UI: mygtukas **Authorize**.\n\n**Roles.** Svecias - tik registracija ir prisijungimas. Grupeje naudotojas\nyra `PLAYER` arba `DUNGEON_MASTER` (vienas grupeje). `ADMIN` - globali role:\nmato visas grupes, salina turini ir valdo naudotojus.\n401 - nera zetono arba jis netinka, 403 - neuztenka teisiu.\n",
     "contact": {
       "name": "Migle Cirtautaite"
     },
     "license": {
       "name": "KTU T120B165"
     },
-    "version": "0.1.0"
+    "version": "0.2.0"
   },
   "servers": [
     {
       "url": "/",
       "description": "Dabartinis serveris"
+    }
+  ],
+  "security": [
+    {
+      "bearerAuth": []
     }
   ],
   "tags": [
@@ -29,541 +34,21 @@
     {
       "name": "Log entries",
       "description": "Progreso irasai - pasiekiami tik per grupe ir uzduoti"
+    },
+    {
+      "name": "Auth",
+      "description": "Registracija, prisijungimas ir JWT zetonai"
+    },
+    {
+      "name": "Members",
+      "description": "Grupes nariai ir ju roles (PLAYER / DUNGEON_MASTER)"
+    },
+    {
+      "name": "Users",
+      "description": "Naudotoju valdymas (tik ADMIN)"
     }
   ],
   "paths": {
-    "/api/guilds/{guildId}": {
-      "get": {
-        "tags": [
-          "Guilds"
-        ],
-        "summary": "Viena grupe",
-        "operationId": "get",
-        "parameters": [
-          {
-            "name": "guildId",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "integer",
-              "format": "int64"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Grupe rasta",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/GuildResponse"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "Grupe neegzistuoja",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ApiError"
-                }
-              }
-            }
-          }
-        }
-      },
-      "patch": {
-        "tags": [
-          "Guilds"
-        ],
-        "summary": "Atnaujinti grupe",
-        "operationId": "update",
-        "parameters": [
-          {
-            "name": "guildId",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "integer",
-              "format": "int64"
-            }
-          }
-        ],
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/GuildUpdateRequest"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "200": {
-            "description": "Grupe atnaujinta",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/GuildResponse"
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "Neteisingas payload",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ApiError"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "Grupe neegzistuoja",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ApiError"
-                }
-              }
-            }
-          },
-          "409": {
-            "description": "Toks pavadinimas jau uzimtas",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ApiError"
-                }
-              }
-            }
-          }
-        },
-        "description": "Dalinis atnaujinimas: keiciami tik atsiusti laukai, neatsiusti lieka nepakeisti."
-      },
-      "delete": {
-        "tags": [
-          "Guilds"
-        ],
-        "summary": "Istrinti grupe",
-        "description": "Kartu istrinamos visos grupes uzduotys ir ju progreso irasai.",
-        "operationId": "delete",
-        "parameters": [
-          {
-            "name": "guildId",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "integer",
-              "format": "int64"
-            }
-          }
-        ],
-        "responses": {
-          "204": {
-            "description": "Istrinta; atsakymas be turinio"
-          },
-          "404": {
-            "description": "Grupe neegzistuoja",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ApiError"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/guilds/{guildId}/quests/{questId}": {
-      "get": {
-        "tags": [
-          "Quests"
-        ],
-        "summary": "Viena uzduotis",
-        "description": "Grazina 404, jei uzduotis nepriklauso nurodytai grupei.",
-        "operationId": "get_1",
-        "parameters": [
-          {
-            "name": "guildId",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "integer",
-              "format": "int64"
-            }
-          },
-          {
-            "name": "questId",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "integer",
-              "format": "int64"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Uzduotis rasta",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/QuestResponse"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "Neteisinga grandine arba uzduoties nera",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ApiError"
-                }
-              }
-            }
-          }
-        }
-      },
-      "patch": {
-        "tags": [
-          "Quests"
-        ],
-        "summary": "Atnaujinti uzduoti",
-        "description": "Dalinis atnaujinimas: keiciami tik atsiusti laukai. Sudetingumo keitimas veikia tik busimus\nirasus - jau patvirtintu irasu XP nekeiciamas.\n",
-        "operationId": "update_1",
-        "parameters": [
-          {
-            "name": "guildId",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "integer",
-              "format": "int64"
-            }
-          },
-          {
-            "name": "questId",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "integer",
-              "format": "int64"
-            }
-          }
-        ],
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/QuestUpdateRequest"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "200": {
-            "description": "Uzduotis atnaujinta",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/QuestResponse"
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "Neteisingas payload",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ApiError"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "Neteisinga grandine arba uzduoties nera",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ApiError"
-                }
-              }
-            }
-          },
-          "409": {
-            "description": "Toks pavadinimas grupeje jau yra",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ApiError"
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "Pazeista dalykine taisykle",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ApiError"
-                }
-              }
-            }
-          }
-        }
-      },
-      "delete": {
-        "tags": [
-          "Quests"
-        ],
-        "summary": "Istrinti uzduoti",
-        "description": "Kartu istrinami visi jos progreso irasai.",
-        "operationId": "delete_1",
-        "parameters": [
-          {
-            "name": "guildId",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "integer",
-              "format": "int64"
-            }
-          },
-          {
-            "name": "questId",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "integer",
-              "format": "int64"
-            }
-          }
-        ],
-        "responses": {
-          "204": {
-            "description": "Istrinta; atsakymas be turinio"
-          },
-          "404": {
-            "description": "Neteisinga grandine arba uzduoties nera",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ApiError"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/guilds/{guildId}/quests/{questId}/logs/{logId}": {
-      "get": {
-        "tags": [
-          "Log entries"
-        ],
-        "summary": "Vienas irasas",
-        "operationId": "get_2",
-        "parameters": [
-          {
-            "name": "guildId",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "integer",
-              "format": "int64"
-            }
-          },
-          {
-            "name": "questId",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "integer",
-              "format": "int64"
-            }
-          },
-          {
-            "name": "logId",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "integer",
-              "format": "int64"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Irasas rastas",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/LogEntryResponse"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "Neteisinga grandine arba iraso nera",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ApiError"
-                }
-              }
-            }
-          }
-        }
-      },
-      "patch": {
-        "tags": [
-          "Log entries"
-        ],
-        "summary": "Atnaujinti irasa ir jo perziuros rezultata",
-        "description": "Dalinis atnaujinimas: keiciami tik atsiusti laukai. xpAwarded, inspirationAwarded ir\nreviewerNote priimami tik kartu su status. Tvirtinant (APPROVED) praleistas xpAwarded\nreiskia, kad XP imamas is uzduoties sudetingumo. PENDING ir REJECTED irasai privalo\nlikti be XP ir inspiration.\n",
-        "operationId": "update_2",
-        "parameters": [
-          {
-            "name": "guildId",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "integer",
-              "format": "int64"
-            }
-          },
-          {
-            "name": "questId",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "integer",
-              "format": "int64"
-            }
-          },
-          {
-            "name": "logId",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "integer",
-              "format": "int64"
-            }
-          }
-        ],
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/LogEntryUpdateRequest"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "200": {
-            "description": "Irasas atnaujintas",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/LogEntryResponse"
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "Neteisingas payload",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ApiError"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "Neteisinga grandine arba iraso nera",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ApiError"
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "Pazeista dalykine taisykle",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ApiError"
-                }
-              }
-            }
-          }
-        }
-      },
-      "delete": {
-        "tags": [
-          "Log entries"
-        ],
-        "summary": "Istrinti irasa",
-        "operationId": "delete_2",
-        "parameters": [
-          {
-            "name": "guildId",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "integer",
-              "format": "int64"
-            }
-          },
-          {
-            "name": "questId",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "integer",
-              "format": "int64"
-            }
-          },
-          {
-            "name": "logId",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "integer",
-              "format": "int64"
-            }
-          }
-        ],
-        "responses": {
-          "204": {
-            "description": "Istrinta; atsakymas be turinio"
-          },
-          "404": {
-            "description": "Neteisinga grandine arba iraso nera",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ApiError"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
     "/api/guilds": {
       "get": {
         "tags": [
@@ -601,6 +86,16 @@
                 }
               }
             }
+          },
+          "401": {
+            "description": "Nera access zetono arba jis neteisingas / pasibaiges",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
           }
         }
       },
@@ -633,6 +128,16 @@
           },
           "400": {
             "description": "Neteisingas payload",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Nera access zetono arba jis neteisingas / pasibaiges",
             "content": {
               "application/json": {
                 "schema": {
@@ -749,6 +254,26 @@
               }
             }
           },
+          "401": {
+            "description": "Nera access zetono arba jis neteisingas / pasibaiges",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Neuztenka teisiu: ne grupes narys, netinkama role grupeje arba ne ADMIN",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
           "404": {
             "description": "Grupe neegzistuoja",
             "content": {
@@ -801,6 +326,26 @@
           },
           "400": {
             "description": "Neteisingas payload",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Nera access zetono arba jis neteisingas / pasibaiges",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Neuztenka teisiu: ne grupes narys, netinkama role grupeje arba ne ADMIN",
             "content": {
               "application/json": {
                 "schema": {
@@ -903,6 +448,26 @@
               }
             }
           },
+          "401": {
+            "description": "Nera access zetono arba jis neteisingas / pasibaiges",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Neuztenka teisiu: ne grupes narys, netinkama role grupeje arba ne ADMIN",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
           "404": {
             "description": "Neteisinga grupes/uzduoties grandine",
             "content": {
@@ -973,6 +538,26 @@
               }
             }
           },
+          "401": {
+            "description": "Nera access zetono arba jis neteisingas / pasibaiges",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Neuztenka teisiu: ne grupes narys, netinkama role grupeje arba ne ADMIN",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
           "404": {
             "description": "Neteisinga grandine",
             "content": {
@@ -985,6 +570,1547 @@
           },
           "422": {
             "description": "Neaktyvi uzduotis arba data ateityje",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/guilds/{guildId}/members": {
+      "get": {
+        "tags": [
+          "Members"
+        ],
+        "summary": "Grupes nariu sarasas",
+        "description": "Mato visi grupes nariai ir ADMIN.",
+        "operationId": "list_3",
+        "parameters": [
+          {
+            "name": "guildId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          },
+          {
+            "name": "role",
+            "in": "query",
+            "description": "Filtras pagal role",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "PLAYER",
+                "DUNGEON_MASTER"
+              ]
+            }
+          },
+          {
+            "name": "pageable",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/Pageable"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Sarasas grazintas",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PagedResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Nera access zetono arba jis neteisingas / pasibaiges",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Neuztenka teisiu: ne grupes narys, netinkama role grupeje arba ne ADMIN",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Members"
+        ],
+        "summary": "Prideti nari",
+        "description": "Tik grupes savininkas arba ADMIN.",
+        "operationId": "add",
+        "parameters": [
+          {
+            "name": "guildId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MemberRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Narys pridetas",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MemberResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Neteisingas payload",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Nera access zetono arba jis neteisingas / pasibaiges",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Neuztenka teisiu: ne grupes narys, netinkama role grupeje arba ne ADMIN",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Jau narys arba grupe jau turi DM",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Tokio naudotojo nera",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/auth/register": {
+      "post": {
+        "tags": [
+          "Auth"
+        ],
+        "summary": "Registruotis",
+        "description": "Sukuria naudotoja su role USER. Zetonu negrazina - po to reikia prisijungti.",
+        "operationId": "register",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RegisterRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Naudotojas sukurtas",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Neteisingas vardas ar slaptazodis",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Vardas jau uzimtas",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          }
+        },
+        "security": []
+      }
+    },
+    "/api/auth/refresh": {
+      "post": {
+        "tags": [
+          "Auth"
+        ],
+        "summary": "Atnaujinti zetonus",
+        "description": "Uz galiojanti refresh zetona isduoda nauja pora, o senasis atsaukiamas (rotacija).\nPakartotinai panaudotas zetonas laikomas pavogtu - atsaukiamos visos naudotojo sesijos.\n",
+        "operationId": "refresh",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RefreshRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Isduota nauja zetonu pora",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TokenResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Zetonas neteisingas, pasibaiges arba jau panaudotas",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Paskyra uzblokuota",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          }
+        },
+        "security": []
+      }
+    },
+    "/api/auth/logout": {
+      "post": {
+        "tags": [
+          "Auth"
+        ],
+        "summary": "Atsijungti",
+        "description": "Atsaukia refresh zetona. Access zetonas galioja iki savo exp - todel jis trumpas.",
+        "operationId": "logout",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RefreshRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": "Atsijungta"
+          }
+        },
+        "security": []
+      }
+    },
+    "/api/auth/login": {
+      "post": {
+        "tags": [
+          "Auth"
+        ],
+        "summary": "Prisijungti",
+        "description": "Grazina trumpalaiki access zetona (JWT) ir refresh zetona.",
+        "operationId": "login",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LoginRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Prisijungta",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TokenResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Truksta lauku",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Neteisingas vardas arba slaptazodis",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Paskyra uzblokuota",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          }
+        },
+        "security": []
+      }
+    },
+    "/api/users/{userId}": {
+      "get": {
+        "tags": [
+          "Users"
+        ],
+        "summary": "Vienas naudotojas",
+        "operationId": "get",
+        "parameters": [
+          {
+            "name": "userId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Naudotojas rastas",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Nera access zetono arba jis neteisingas / pasibaiges",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Neuztenka teisiu: ne grupes narys, netinkama role grupeje arba ne ADMIN",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Naudotojo nera",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "patch": {
+        "tags": [
+          "Users"
+        ],
+        "summary": "Keisti role arba uzblokuoti",
+        "description": "Uzblokavus atsaukiamos visos naudotojo sesijos. Savo ADMIN teisiu nuimti negalima.",
+        "operationId": "update",
+        "parameters": [
+          {
+            "name": "userId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UserUpdateRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Naudotojas atnaujintas",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Nera access zetono arba jis neteisingas / pasibaiges",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Neuztenka teisiu: ne grupes narys, netinkama role grupeje arba ne ADMIN",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Naudotojo nera",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Bandoma nuimti savo ADMIN teises ar uzblokuoti save",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/guilds/{guildId}": {
+      "get": {
+        "tags": [
+          "Guilds"
+        ],
+        "summary": "Viena grupe",
+        "operationId": "get_1",
+        "parameters": [
+          {
+            "name": "guildId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Grupe rasta",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GuildResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Nera access zetono arba jis neteisingas / pasibaiges",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Neuztenka teisiu: ne grupes narys, netinkama role grupeje arba ne ADMIN",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Grupe neegzistuoja",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Guilds"
+        ],
+        "summary": "Istrinti grupe",
+        "description": "Kartu istrinamos visos grupes uzduotys ir ju progreso irasai.",
+        "operationId": "delete",
+        "parameters": [
+          {
+            "name": "guildId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Istrinta; atsakymas be turinio"
+          },
+          "401": {
+            "description": "Nera access zetono arba jis neteisingas / pasibaiges",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Neuztenka teisiu: ne grupes narys, netinkama role grupeje arba ne ADMIN",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Grupe neegzistuoja",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "patch": {
+        "tags": [
+          "Guilds"
+        ],
+        "summary": "Atnaujinti grupe",
+        "description": "Dalinis atnaujinimas: keiciami tik atsiusti laukai, neatsiusti lieka nepakeisti.",
+        "operationId": "update_1",
+        "parameters": [
+          {
+            "name": "guildId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GuildUpdateRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Grupe atnaujinta",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GuildResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Neteisingas payload",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Nera access zetono arba jis neteisingas / pasibaiges",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Neuztenka teisiu: ne grupes narys, netinkama role grupeje arba ne ADMIN",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Grupe neegzistuoja",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Toks pavadinimas jau uzimtas",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/guilds/{guildId}/quests/{questId}": {
+      "get": {
+        "tags": [
+          "Quests"
+        ],
+        "summary": "Viena uzduotis",
+        "description": "Grazina 404, jei uzduotis nepriklauso nurodytai grupei.",
+        "operationId": "get_2",
+        "parameters": [
+          {
+            "name": "guildId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          },
+          {
+            "name": "questId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Uzduotis rasta",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/QuestResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Nera access zetono arba jis neteisingas / pasibaiges",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Neuztenka teisiu: ne grupes narys, netinkama role grupeje arba ne ADMIN",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Neteisinga grandine arba uzduoties nera",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Quests"
+        ],
+        "summary": "Istrinti uzduoti",
+        "description": "Kartu istrinami visi jos progreso irasai.",
+        "operationId": "delete_1",
+        "parameters": [
+          {
+            "name": "guildId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          },
+          {
+            "name": "questId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Istrinta; atsakymas be turinio"
+          },
+          "401": {
+            "description": "Nera access zetono arba jis neteisingas / pasibaiges",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Neuztenka teisiu: ne grupes narys, netinkama role grupeje arba ne ADMIN",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Neteisinga grandine arba uzduoties nera",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "patch": {
+        "tags": [
+          "Quests"
+        ],
+        "summary": "Atnaujinti uzduoti",
+        "description": "Dalinis atnaujinimas: keiciami tik atsiusti laukai. Sudetingumo keitimas veikia tik busimus\nirasus - jau patvirtintu irasu XP nekeiciamas.\n",
+        "operationId": "update_2",
+        "parameters": [
+          {
+            "name": "guildId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          },
+          {
+            "name": "questId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/QuestUpdateRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Uzduotis atnaujinta",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/QuestResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Neteisingas payload",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Nera access zetono arba jis neteisingas / pasibaiges",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Neuztenka teisiu: ne grupes narys, netinkama role grupeje arba ne ADMIN",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Neteisinga grandine arba uzduoties nera",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Toks pavadinimas grupeje jau yra",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Pazeista dalykine taisykle",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/guilds/{guildId}/quests/{questId}/logs/{logId}": {
+      "get": {
+        "tags": [
+          "Log entries"
+        ],
+        "summary": "Vienas irasas",
+        "operationId": "get_3",
+        "parameters": [
+          {
+            "name": "guildId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          },
+          {
+            "name": "questId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          },
+          {
+            "name": "logId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Irasas rastas",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LogEntryResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Nera access zetono arba jis neteisingas / pasibaiges",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Neuztenka teisiu: ne grupes narys, netinkama role grupeje arba ne ADMIN",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Neteisinga grandine arba iraso nera",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Log entries"
+        ],
+        "summary": "Istrinti irasa",
+        "operationId": "delete_2",
+        "parameters": [
+          {
+            "name": "guildId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          },
+          {
+            "name": "questId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          },
+          {
+            "name": "logId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Istrinta; atsakymas be turinio"
+          },
+          "401": {
+            "description": "Nera access zetono arba jis neteisingas / pasibaiges",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Neuztenka teisiu: ne grupes narys, netinkama role grupeje arba ne ADMIN",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Neteisinga grandine arba iraso nera",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "patch": {
+        "tags": [
+          "Log entries"
+        ],
+        "summary": "Atnaujinti irasa ir jo perziuros rezultata",
+        "description": "Dalinis atnaujinimas: keiciami tik atsiusti laukai. xpAwarded, inspirationAwarded ir\nreviewerNote priimami tik kartu su status. Tvirtinant (APPROVED) praleistas xpAwarded\nreiskia, kad XP imamas is uzduoties sudetingumo. PENDING ir REJECTED irasai privalo\nlikti be XP ir inspiration.\n",
+        "operationId": "update_3",
+        "parameters": [
+          {
+            "name": "guildId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          },
+          {
+            "name": "questId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          },
+          {
+            "name": "logId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LogEntryUpdateRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Irasas atnaujintas",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LogEntryResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Neteisingas payload",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Nera access zetono arba jis neteisingas / pasibaiges",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Neuztenka teisiu: ne grupes narys, netinkama role grupeje arba ne ADMIN",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Neteisinga grandine arba iraso nera",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Pazeista dalykine taisykle",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/guilds/{guildId}/members/{userId}": {
+      "get": {
+        "tags": [
+          "Members"
+        ],
+        "summary": "Vienas narys",
+        "operationId": "get_4",
+        "parameters": [
+          {
+            "name": "guildId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          },
+          {
+            "name": "userId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Narys rastas",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MemberResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Nera access zetono arba jis neteisingas / pasibaiges",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Neuztenka teisiu: ne grupes narys, netinkama role grupeje arba ne ADMIN",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Grupes nera arba naudotojas nera jos narys",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Members"
+        ],
+        "summary": "Pasalinti nari arba iseiti is grupes",
+        "description": "Savininkas ar ADMIN salina bet kuri nari, narys - pats save. Savininko pasalinti negalima.",
+        "operationId": "remove",
+        "parameters": [
+          {
+            "name": "guildId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          },
+          {
+            "name": "userId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Pasalinta"
+          },
+          "401": {
+            "description": "Nera access zetono arba jis neteisingas / pasibaiges",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Neuztenka teisiu: ne grupes narys, netinkama role grupeje arba ne ADMIN",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Naudotojas nera grupes narys",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Bandoma pasalinti savininka",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "patch": {
+        "tags": [
+          "Members"
+        ],
+        "summary": "Pakeisti nario role",
+        "description": "Tik grupes savininkas arba ADMIN.",
+        "operationId": "changeRole",
+        "parameters": [
+          {
+            "name": "guildId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          },
+          {
+            "name": "userId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MemberRoleRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Role pakeista",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MemberResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Nera access zetono arba jis neteisingas / pasibaiges",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Neuztenka teisiu: ne grupes narys, netinkama role grupeje arba ne ADMIN",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Naudotojas nera grupes narys",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Grupe jau turi DM",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/users": {
+      "get": {
+        "tags": [
+          "Users"
+        ],
+        "summary": "Naudotoju sarasas",
+        "operationId": "list_4",
+        "parameters": [
+          {
+            "name": "username",
+            "in": "query",
+            "description": "Filtras pagal vardo dali",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "pageable",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/Pageable"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Sarasas grazintas",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PagedResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Nera access zetono arba jis neteisingas / pasibaiges",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Neuztenka teisiu: ne grupes narys, netinkama role grupeje arba ne ADMIN",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/auth/me": {
+      "get": {
+        "tags": [
+          "Auth"
+        ],
+        "summary": "Prisijunges naudotojas",
+        "description": "Kartu grazinamos grupes ir naudotojo role kiekvienoje is ju.",
+        "operationId": "me",
+        "responses": {
+          "200": {
+            "description": "Naudotojo duomenys",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MeResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Nera access zetono arba jis neteisingas / pasibaiges",
             "content": {
               "application/json": {
                 "schema": {
@@ -1087,6 +2213,12 @@
             "type": "string",
             "example": "Ketvirtadieniais renkasi kampanija."
           },
+          "ownerId": {
+            "type": "integer",
+            "format": "int64",
+            "description": "Grupes savininko (kurejo) naudotojo id",
+            "example": 2
+          },
           "createdAt": {
             "type": "string",
             "format": "date-time",
@@ -1106,10 +2238,10 @@
           },
           "description": {
             "type": "string",
+            "description": "Nenurodzius issaugomas tuscias \"\"",
             "example": "Kaupiamoji uzduotis - kiekvienas patvirtintas irasas priartina prie tikslo.",
             "maxLength": 1000,
-            "minLength": 0,
-            "description": "Nenurodzius issaugomas tuscias \"\""
+            "minLength": 0
           },
           "stat": {
             "type": "string",
@@ -1236,119 +2368,11 @@
             "description": "Serverio isvestas XP uz viena patvirtinta irasa (BASE_XP * daugiklis)",
             "example": 50
           },
-          "createdAt": {
-            "type": "string",
-            "format": "date-time"
-          }
-        }
-      },
-      "LogEntryUpdateRequest": {
-        "type": "object",
-        "description": "Dalinis iraso turinio ir perziuros rezultato atnaujinimas",
-        "properties": {
-          "note": {
-            "type": "string",
-            "example": "Begau 8 km palei upe.",
-            "maxLength": 1000,
-            "minLength": 0
-          },
-          "evidenceUrl": {
-            "type": "string",
-            "example": "https://example.org/evidence/run-8km.png",
-            "maxLength": 500,
-            "minLength": 0
-          },
-          "occurredAt": {
-            "type": "string",
-            "format": "date-time",
-            "example": "2026-09-19T15:20:00Z",
-            "description": "Negali buti ateityje"
-          },
-          "status": {
-            "type": "string",
-            "description": "Nauja iraso busena (DM sprendimas)",
-            "enum": [
-              "PENDING",
-              "APPROVED",
-              "REJECTED"
-            ],
-            "example": "APPROVED"
-          },
-          "xpAwarded": {
-            "type": "integer",
-            "format": "int32",
-            "description": "DM perrasytas XP ivertis; tik kartu su status. Praleidus, tvirtinant naudojama uzduoties verte.",
-            "example": 50,
-            "minimum": 0
-          },
-          "inspirationAwarded": {
-            "type": "integer",
-            "format": "int32",
-            "description": "Skiriamas heroic inspiration; tik kartu su status, praleidus laikoma 0",
-            "example": 1,
-            "minimum": 0
-          },
-          "reviewerNote": {
-            "type": "string",
-            "example": "Uzskaitau, nors nuotrauka neryski.",
-            "maxLength": 500,
-            "minLength": 0,
-            "description": "DM komentaras; tik kartu su status"
-          }
-        }
-      },
-      "LogEntryResponse": {
-        "type": "object",
-        "description": "Progreso irasas",
-        "properties": {
-          "id": {
+          "createdBy": {
             "type": "integer",
             "format": "int64",
-            "example": 7
-          },
-          "questId": {
-            "type": "integer",
-            "format": "int64",
-            "description": "Tevine uzduotis",
+            "description": "Kas sukure uzduoti (naudotojo id)",
             "example": 4
-          },
-          "note": {
-            "type": "string"
-          },
-          "evidenceUrl": {
-            "type": "string"
-          },
-          "status": {
-            "type": "string",
-            "enum": [
-              "PENDING",
-              "APPROVED",
-              "REJECTED"
-            ],
-            "example": "APPROVED"
-          },
-          "xpAwarded": {
-            "type": "integer",
-            "format": "int32",
-            "description": "Patvirtinimo metu uzsaldytas XP; PENDING ir REJECTED visada 0",
-            "example": 50
-          },
-          "inspirationAwarded": {
-            "type": "integer",
-            "format": "int32",
-            "example": 1
-          },
-          "reviewerNote": {
-            "type": "string"
-          },
-          "occurredAt": {
-            "type": "string",
-            "format": "date-time"
-          },
-          "reviewedAt": {
-            "type": "string",
-            "format": "date-time",
-            "description": "Nera, kol irasas neperziuretas"
           },
           "createdAt": {
             "type": "string",
@@ -1384,94 +2408,260 @@
           "occurredAt"
         ]
       },
-      "Pageable": {
+      "LogEntryResponse": {
         "type": "object",
+        "description": "Progreso irasas",
         "properties": {
-          "page": {
-            "type": "integer",
-            "format": "int32",
-            "minimum": 0
-          },
-          "size": {
-            "type": "integer",
-            "format": "int32",
-            "minimum": 1
-          },
-          "sort": {
-            "type": "array",
-            "items": {
-              "type": "string"
-            }
-          }
-        }
-      },
-      "PageInfo": {
-        "type": "object",
-        "properties": {
-          "number": {
-            "type": "integer",
-            "format": "int32",
-            "example": 0
-          },
-          "size": {
-            "type": "integer",
-            "format": "int32",
-            "example": 20
-          },
-          "totalElements": {
+          "id": {
             "type": "integer",
             "format": "int64",
-            "example": 42
+            "example": 7
           },
-          "totalPages": {
-            "type": "integer",
-            "format": "int32",
-            "example": 3
-          }
-        }
-      },
-      "PageLinks": {
-        "type": "object",
-        "description": "prev ir next nera pateikiami, kai tokio puslapio nera",
-        "properties": {
-          "self": {
-            "type": "string"
-          },
-          "first": {
-            "type": "string"
-          },
-          "prev": {
-            "type": "string"
-          },
-          "next": {
-            "type": "string"
-          },
-          "last": {
-            "type": "string"
-          }
-        }
-      },
-      "PagedResponse": {
-        "type": "object",
-        "description": "Puslapiuotas sarasas su navigacijos nuorodomis",
-        "properties": {
-          "totalElements": {
+          "questId": {
             "type": "integer",
             "format": "int64",
-            "description": "Kiek is viso elementu atitinka uzklausa (visuose puslapiuose)",
-            "example": 42
+            "description": "Tevine uzduotis",
+            "example": 4
           },
-          "content": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/GuildResponse"
-            }
+          "authorId": {
+            "type": "integer",
+            "format": "int64",
+            "description": "Iraso autorius (naudotojo id)",
+            "example": 4
           },
-          "page": {
-            "$ref": "#/components/schemas/PageInfo"
+          "note": {
+            "type": "string"
           },
-          "links": {
-            "$ref": "#/components/schemas/PageLinks"
+          "evidenceUrl": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "PENDING",
+              "APPROVED",
+              "REJECTED"
+            ],
+            "example": "APPROVED"
+          },
+          "xpAwarded": {
+            "type": "integer",
+            "format": "int32",
+            "description": "Patvirtinimo metu uzsaldytas XP; PENDING ir REJECTED visada 0",
+            "example": 50
+          },
+          "inspirationAwarded": {
+            "type": "integer",
+            "format": "int32",
+            "example": 1
+          },
+          "reviewerNote": {
+            "type": "string"
+          },
+          "reviewerId": {
+            "type": "integer",
+            "format": "int64",
+            "description": "Perziurejes DM (naudotojo id); nera, kol irasas neperziuretas",
+            "example": 2
+          },
+          "occurredAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "reviewedAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Nera, kol irasas neperziuretas"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "MemberRequest": {
+        "type": "object",
+        "description": "Naujas grupes narys",
+        "properties": {
+          "username": {
+            "type": "string",
+            "description": "Esamo naudotojo vardas",
+            "example": "jonas",
+            "minLength": 1
+          },
+          "role": {
+            "type": "string",
+            "enum": [
+              "PLAYER",
+              "DUNGEON_MASTER"
+            ],
+            "example": "PLAYER"
+          }
+        },
+        "required": [
+          "role",
+          "username"
+        ]
+      },
+      "MemberResponse": {
+        "type": "object",
+        "description": "Grupes narys",
+        "properties": {
+          "userId": {
+            "type": "integer",
+            "format": "int64",
+            "example": 4
+          },
+          "username": {
+            "type": "string",
+            "example": "jonas"
+          },
+          "role": {
+            "type": "string",
+            "enum": [
+              "PLAYER",
+              "DUNGEON_MASTER"
+            ],
+            "example": "PLAYER"
+          },
+          "joinedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "RegisterRequest": {
+        "type": "object",
+        "description": "Naujo naudotojo registracija",
+        "properties": {
+          "username": {
+            "type": "string",
+            "description": "Unikalus vardas (raidziu dydis nesvarbus)",
+            "example": "naujokas",
+            "minLength": 1,
+            "pattern": "[A-Za-z0-9_.-]{3,30}"
+          },
+          "password": {
+            "type": "string",
+            "description": "8-72 simboliai",
+            "example": "Demo123!",
+            "maxLength": 72,
+            "minLength": 8
+          }
+        },
+        "required": [
+          "password",
+          "username"
+        ]
+      },
+      "UserResponse": {
+        "type": "object",
+        "description": "Naudotojas",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int64",
+            "example": 4
+          },
+          "username": {
+            "type": "string",
+            "example": "jonas"
+          },
+          "role": {
+            "type": "string",
+            "enum": [
+              "USER",
+              "ADMIN"
+            ],
+            "example": "USER"
+          },
+          "enabled": {
+            "type": "boolean",
+            "example": true
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "RefreshRequest": {
+        "type": "object",
+        "description": "Refresh zetonas, gautas prisijungiant arba ankstesnio atnaujinimo metu",
+        "properties": {
+          "refreshToken": {
+            "type": "string",
+            "example": "q3Vd0n9mJk0E8dX1w6Zl8rTzW2a5bH7cYf4uN1sP0eI",
+            "minLength": 1
+          }
+        },
+        "required": [
+          "refreshToken"
+        ]
+      },
+      "TokenResponse": {
+        "type": "object",
+        "description": "Zetonu pora",
+        "properties": {
+          "accessToken": {
+            "type": "string",
+            "description": "JWT; siunciamas antrasteje Authorization: Bearer <accessToken>",
+            "example": "eyJhbGciOiJIUzI1NiJ9.eyJpc3MiOi..."
+          },
+          "tokenType": {
+            "type": "string",
+            "example": "Bearer"
+          },
+          "expiresIn": {
+            "type": "integer",
+            "format": "int64",
+            "description": "Po kiek sekundziu access zetonas nustos galioti",
+            "example": 900
+          },
+          "refreshToken": {
+            "type": "string",
+            "description": "Vienkartinis zetonas naujai porai gauti per /api/auth/refresh",
+            "example": "q3Vd0n9mJk0E8dX1w6Zl8rTzW2a5bH7cYf4uN1sP0eI"
+          }
+        }
+      },
+      "LoginRequest": {
+        "type": "object",
+        "description": "Prisijungimo duomenys",
+        "properties": {
+          "username": {
+            "type": "string",
+            "example": "jonas",
+            "minLength": 1
+          },
+          "password": {
+            "type": "string",
+            "example": "Demo123!",
+            "minLength": 1
+          }
+        },
+        "required": [
+          "password",
+          "username"
+        ]
+      },
+      "UserUpdateRequest": {
+        "type": "object",
+        "description": "Administratoriaus atliekamas naudotojo roles ar busenos keitimas",
+        "properties": {
+          "role": {
+            "type": "string",
+            "description": "Nauja globali role",
+            "enum": [
+              "USER",
+              "ADMIN"
+            ],
+            "example": "ADMIN"
+          },
+          "enabled": {
+            "type": "boolean",
+            "description": "false - uzblokuoti paskyra (atsaukiamos visos sesijos)",
+            "example": false
           }
         }
       },
@@ -1560,6 +2750,236 @@
             "example": false
           }
         }
+      },
+      "LogEntryUpdateRequest": {
+        "type": "object",
+        "description": "Dalinis iraso turinio ir perziuros rezultato atnaujinimas",
+        "properties": {
+          "note": {
+            "type": "string",
+            "example": "Begau 8 km palei upe.",
+            "maxLength": 1000,
+            "minLength": 0
+          },
+          "evidenceUrl": {
+            "type": "string",
+            "example": "https://example.org/evidence/run-8km.png",
+            "maxLength": 500,
+            "minLength": 0
+          },
+          "occurredAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Negali buti ateityje",
+            "example": "2026-09-19T15:20:00Z"
+          },
+          "status": {
+            "type": "string",
+            "description": "Nauja iraso busena (DM sprendimas)",
+            "enum": [
+              "PENDING",
+              "APPROVED",
+              "REJECTED"
+            ],
+            "example": "APPROVED"
+          },
+          "xpAwarded": {
+            "type": "integer",
+            "format": "int32",
+            "description": "DM perrasytas XP ivertis; tik kartu su status. Praleidus, tvirtinant naudojama uzduoties verte.",
+            "example": 50,
+            "minimum": 0
+          },
+          "inspirationAwarded": {
+            "type": "integer",
+            "format": "int32",
+            "description": "Skiriamas heroic inspiration; tik kartu su status, praleidus laikoma 0",
+            "example": 1,
+            "minimum": 0
+          },
+          "reviewerNote": {
+            "type": "string",
+            "description": "DM komentaras; tik kartu su status",
+            "example": "Uzskaitau, nors nuotrauka neryski.",
+            "maxLength": 500,
+            "minLength": 0
+          }
+        }
+      },
+      "MemberRoleRequest": {
+        "type": "object",
+        "description": "Nario roles keitimas",
+        "properties": {
+          "role": {
+            "type": "string",
+            "enum": [
+              "PLAYER",
+              "DUNGEON_MASTER"
+            ],
+            "example": "DUNGEON_MASTER"
+          }
+        },
+        "required": [
+          "role"
+        ]
+      },
+      "Pageable": {
+        "type": "object",
+        "properties": {
+          "page": {
+            "type": "integer",
+            "format": "int32",
+            "minimum": 0
+          },
+          "size": {
+            "type": "integer",
+            "format": "int32",
+            "minimum": 1
+          },
+          "sort": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "PageInfo": {
+        "type": "object",
+        "properties": {
+          "number": {
+            "type": "integer",
+            "format": "int32",
+            "example": 0
+          },
+          "size": {
+            "type": "integer",
+            "format": "int32",
+            "example": 20
+          },
+          "totalElements": {
+            "type": "integer",
+            "format": "int64",
+            "example": 42
+          },
+          "totalPages": {
+            "type": "integer",
+            "format": "int32",
+            "example": 3
+          }
+        }
+      },
+      "PageLinks": {
+        "type": "object",
+        "description": "prev ir next nera pateikiami, kai tokio puslapio nera",
+        "properties": {
+          "self": {
+            "type": "string"
+          },
+          "first": {
+            "type": "string"
+          },
+          "prev": {
+            "type": "string"
+          },
+          "next": {
+            "type": "string"
+          },
+          "last": {
+            "type": "string"
+          }
+        }
+      },
+      "PagedResponse": {
+        "type": "object",
+        "description": "Puslapiuotas sarasas su navigacijos nuorodomis",
+        "properties": {
+          "totalElements": {
+            "type": "integer",
+            "format": "int64",
+            "description": "Kiek is viso elementu atitinka uzklausa (visuose puslapiuose)",
+            "example": 42
+          },
+          "content": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/UserResponse"
+            }
+          },
+          "page": {
+            "$ref": "#/components/schemas/PageInfo"
+          },
+          "links": {
+            "$ref": "#/components/schemas/PageLinks"
+          }
+        }
+      },
+      "MeMembership": {
+        "type": "object",
+        "properties": {
+          "guildId": {
+            "type": "integer",
+            "format": "int64",
+            "example": 2
+          },
+          "guildName": {
+            "type": "string",
+            "example": "Iron Vow"
+          },
+          "role": {
+            "type": "string",
+            "enum": [
+              "PLAYER",
+              "DUNGEON_MASTER"
+            ],
+            "example": "DUNGEON_MASTER"
+          }
+        }
+      },
+      "MeResponse": {
+        "type": "object",
+        "description": "Prisijunges naudotojas su narystemis",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int64",
+            "example": 2
+          },
+          "username": {
+            "type": "string",
+            "example": "rokas"
+          },
+          "role": {
+            "type": "string",
+            "enum": [
+              "USER",
+              "ADMIN"
+            ],
+            "example": "USER"
+          },
+          "enabled": {
+            "type": "boolean",
+            "example": true
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "memberships": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/MeMembership"
+            }
+          }
+        }
+      }
+    },
+    "securitySchemes": {
+      "bearerAuth": {
+        "type": "http",
+        "description": "Access zetonas is POST /api/auth/login",
+        "scheme": "bearer",
+        "bearerFormat": "JWT"
       }
     }
   }
