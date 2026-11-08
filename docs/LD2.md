@@ -159,11 +159,14 @@ ir kurti turinio svetimose grupėse negali — tai grupės DM ir narių darbas.
 
 ## 7. Demonstracijos eiga (~5 min)
 
-1. Paleisti iš naujo LD2 aplanke (`./mvnw spring-boot:run`) — švari DB.
+Išsamus planas su laukiamais atsakymais — [`DEMO_PLANAS.md`](DEMO_PLANAS.md).
+
+1. Paleisti iš naujo LD2 aplanke (`./mvnw spring-boot:run` arba `demo/1-paleisti-api.cmd`) — švari DB.
 2. Swagger: **Authorize** neįvedus — `401`; `POST /api/auth/login` (`rokas` / `Demo123!`) →
    nukopijuoti `accessToken` → **Authorize** → `GET /api/guilds` veikia.
-3. Postman „Prisijungti“ → *Test Results*: testas iškoduoja JWT ir rodo jo turinį (`sub`, `role`,
-   `exp - iat = 900`). Žetono į svetimas svetaines (pvz. jwt.io) neklijuoti.
+3. JWT turinys: Git Bash (`demo/3-curl-komandos.cmd`) komanda `jwt` (`sub`, `role`,
+   `exp - iat = 900`); Postman „Prisijungti“ testai tuos pačius laukus patikrina.
+   Žetono į svetimas svetaines (pvz. jwt.io) neklijuoti.
 4. Postman *Run collection*: `0. Autentifikacija` (rotacija, pakartotinis panaudojimas),
    `6. Rolės ir teisės` (visi `403` su paaiškinimais), `8. Administravimas`.
 5. DB: `SELECT username, left(password_hash, 7) FROM app_user;` — matosi `$2a$10$`, ne slaptažodis.

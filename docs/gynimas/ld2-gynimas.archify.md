@@ -375,12 +375,12 @@ Kiekvienai silpnai vietai turėk paruoštą sprendimą: trumpesnis galiojimas ar
 
 ## Ką pasitikrinti prieš gynimą? {#checklist}
 
-- [ ] Paleisk iš naujo LD2 aplanke (`./mvnw spring-boot:run`), kad DB būtų švari ir seed ID teisingi.
-- [ ] Paleisk Postman kolekciją: turi būti 176 patikros be klaidų ir suvestinė `grupiu: 3, uzduociu: 9, irasu: 12`.
+- [ ] Paleisk iš naujo `demo/1-paleisti-api.cmd` (arba `./mvnw spring-boot:run`), kad DB būtų švari ir seed ID teisingi. Visa eiga su laukiamais atsakymais – `docs/DEMO_PLANAS.md`.
+- [ ] Paleisk Postman kolekciją (`demo/2-postman-testai.cmd`): turi būti 176 patikros be klaidų ir suvestinė `grupiu: 3, uzduociu: 9, irasu: 12`.
 - [ ] Swagger: parodyk `401` be žetono, prisijunk kaip `rokas`, įklijuok žetoną per **Authorize**.
-- [ ] Postman „Prisijungti“ → *Test Results*: parodyk JWT turinį ir `exp - iat = 900`.
+- [ ] JWT turinys: `demo/3-curl-komandos.cmd` → komanda `jwt` parodo `sub`, `role`, `iat`, `exp` (`exp - iat = 900`); Postman „Prisijungti“ testai tai patikrina.
 - [ ] Parodyk rotaciją: „Atnaujinti žetonus“, tada „Klaida 401 – pakartotinai panaudotas refresh žetonas“.
 - [ ] Aplanke `6. Rolės ir teisės` parodyk „Klaida 403 – savo įrašo tvirtinti negalima“.
-- [ ] DB: `SELECT username, left(password_hash, 7) FROM app_user;` – matosi `$2a$10$`, ne slaptažodis.
+- [ ] DB (`demo/4-duomenu-baze.cmd`): `password_hash` prasideda `$2a$10$` – maiša, ne slaptažodis; refresh žetonų – tik SHA-256 maiša.
 - [ ] Mokėk paaiškinti skirtumą tarp `401` ir `403` bei tarp autentifikacijos ir autorizacijos.
 - [ ] GitHub: parodyk šakas ir žymas `v0.1.0`, `v0.2.0`.
