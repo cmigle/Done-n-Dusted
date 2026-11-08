@@ -31,6 +31,16 @@ public class LogEntry {
     @JoinColumn(name = "quest_id", nullable = false)
     private Quest quest;
 
+    /** Kas uzregistravo progresa. Savo iraso autorius tvirtinti negali. */
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(name = "author_id", nullable = false)
+    private User author;
+
+    /** DM, kuris patvirtino arba atmete; PENDING irasui - null. */
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "reviewer_id")
+    private User reviewer;
+
     @Column(length = 1000)
     private String note;
 
@@ -68,16 +78,18 @@ public class LogEntry {
         // JPA
     }
 
-    public LogEntry(Quest quest, String note, String evidenceUrl, Instant occurredAt) {
+    public LogEntry(Quest quest, User author, String note, String evidenceUrl, Instant occurredAt) {
         this.quest = quest;
+        this.author = author;
         this.note = note;
         this.evidenceUrl = evidenceUrl;
         this.occurredAt = occurredAt;
     }
 
-    /** Patvirtina irasa: uzsaldo XP ir ikvepima, uzfiksuoja perziuros laika. */
-    public void approve(int xpAwarded, int inspirationAwarded, String reviewerNote, Instant reviewedAt) {
+    /** Patvirtina irasa: uzsaldo XP ir ikvepima, uzfiksuoja perziuros laika ir perziurejusi DM. */
+    public void approve(User reviewer, int xpAwarded, int inspirationAwarded, String reviewerNote, Instant reviewedAt) {
         this.status = LogStatus.APPROVED;
+        this.reviewer = reviewer;
         this.xpAwarded = xpAwarded;
         this.inspirationAwarded = inspirationAwarded;
         this.reviewerNote = reviewerNote;
@@ -85,8 +97,9 @@ public class LogEntry {
     }
 
     /** Atmeta irasa: jokiu tasku neskiriama. */
-    public void reject(String reviewerNote, Instant reviewedAt) {
+    public void reject(User reviewer, String reviewerNote, Instant reviewedAt) {
         this.status = LogStatus.REJECTED;
+        this.reviewer = reviewer;
         this.xpAwarded = 0;
         this.inspirationAwarded = 0;
         this.reviewerNote = reviewerNote;
@@ -96,6 +109,7 @@ public class LogEntry {
     /** Grazina irasa i neperziureta busena - visi apdovanojimai nuimami. */
     public void resetToPending(String reviewerNote) {
         this.status = LogStatus.PENDING;
+        this.reviewer = null;
         this.xpAwarded = 0;
         this.inspirationAwarded = 0;
         this.reviewerNote = reviewerNote;
@@ -108,6 +122,14 @@ public class LogEntry {
 
     public Quest getQuest() {
         return quest;
+    }
+
+    public User getAuthor() {
+        return author;
+    }
+
+    public User getReviewer() {
+        return reviewer;
     }
 
     public String getNote() {

@@ -1,9 +1,15 @@
 package lt.ktu.donendusted.service;
 
 import lt.ktu.donendusted.domain.Guild;
+import lt.ktu.donendusted.domain.GuildMembership;
+import lt.ktu.donendusted.domain.GuildRole;
+import lt.ktu.donendusted.domain.User;
 import lt.ktu.donendusted.error.ConflictException;
 import lt.ktu.donendusted.error.ResourceNotFoundException;
+import lt.ktu.donendusted.repository.GuildMembershipRepository;
 import lt.ktu.donendusted.repository.GuildRepository;
+import lt.ktu.donendusted.repository.UserRepository;
+import lt.ktu.donendusted.security.CurrentUser;
 import lt.ktu.donendusted.web.dto.GuildRequest;
 import lt.ktu.donendusted.web.dto.GuildUpdateRequest;
 import org.springframework.data.domain.Page;
@@ -23,9 +29,13 @@ import org.springframework.util.StringUtils;
 public class GuildService {
 
     private final GuildRepository guilds;
+    private final GuildMembershipRepository memberships;
+    private final UserRepository users;
 
-    public GuildService(GuildRepository guilds) {
+    public GuildService(GuildRepository guilds, GuildMembershipRepository memberships, UserRepository users) {
         this.guilds = guilds;
+        this.memberships = memberships;
+        this.users = users;
     }
 
     @Transactional(readOnly = true)
@@ -47,7 +57,11 @@ public class GuildService {
         if (guilds.existsByNameIgnoreCase(request.name())) {
             throw new ConflictException("Grupe pavadinimu '" + request.name() + "' jau egzistuoja");
         }
-        return guilds.save(new Guild(request.name(), request.description()));
+        // Kurejas tampa savininku ir grupes DM.
+        User owner = users.getReferenceById(CurrentUser.get().id());
+        Guild guild = guilds.save(new Guild(request.name(), request.description(), owner));
+        memberships.save(new GuildMembership(guild, owner, GuildRole.DUNGEON_MASTER));
+        return guild;
     }
 
     /** PATCH: null laukas reiskia "neatsiustas" - tokia reiksme paliekama kokia buvo. */

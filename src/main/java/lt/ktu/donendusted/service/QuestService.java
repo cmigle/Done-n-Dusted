@@ -12,6 +12,8 @@ import lt.ktu.donendusted.error.BusinessRuleException;
 import lt.ktu.donendusted.error.ConflictException;
 import lt.ktu.donendusted.error.ResourceNotFoundException;
 import lt.ktu.donendusted.repository.QuestRepository;
+import lt.ktu.donendusted.repository.UserRepository;
+import lt.ktu.donendusted.security.CurrentUser;
 import lt.ktu.donendusted.web.dto.QuestRequest;
 import lt.ktu.donendusted.web.dto.QuestUpdateRequest;
 import org.springframework.data.domain.Page;
@@ -26,10 +28,12 @@ public class QuestService {
 
     private final QuestRepository quests;
     private final GuildService guilds;
+    private final UserRepository users;
 
-    public QuestService(QuestRepository quests, GuildService guilds) {
+    public QuestService(QuestRepository quests, GuildService guilds, UserRepository users) {
         this.quests = quests;
         this.guilds = guilds;
+        this.users = users;
     }
 
     @Transactional(readOnly = true)
@@ -77,7 +81,8 @@ public class QuestService {
             throw new ConflictException("Grupeje jau yra uzduotis pavadinimu '" + request.title() + "'");
         }
         return quests.save(new Quest(guild, request.title(), request.description(), request.stat(),
-                request.type(), request.difficulty(), request.targetCount(), request.activeOrDefault()));
+                request.type(), request.difficulty(), request.targetCount(), request.activeOrDefault(),
+                users.getReferenceById(CurrentUser.get().id())));
     }
 
     /**

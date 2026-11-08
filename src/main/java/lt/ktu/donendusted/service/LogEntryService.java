@@ -7,9 +7,12 @@ import java.util.List;
 import lt.ktu.donendusted.domain.LogEntry;
 import lt.ktu.donendusted.domain.LogStatus;
 import lt.ktu.donendusted.domain.Quest;
+import lt.ktu.donendusted.domain.User;
 import lt.ktu.donendusted.error.BusinessRuleException;
 import lt.ktu.donendusted.error.ResourceNotFoundException;
 import lt.ktu.donendusted.repository.LogEntryRepository;
+import lt.ktu.donendusted.repository.UserRepository;
+import lt.ktu.donendusted.security.CurrentUser;
 import lt.ktu.donendusted.web.dto.LogEntryCreateRequest;
 import lt.ktu.donendusted.web.dto.LogEntryUpdateRequest;
 import org.springframework.data.domain.Page;
@@ -24,10 +27,12 @@ public class LogEntryService {
 
     private final LogEntryRepository logs;
     private final QuestService quests;
+    private final UserRepository users;
 
-    public LogEntryService(LogEntryRepository logs, QuestService quests) {
+    public LogEntryService(LogEntryRepository logs, QuestService quests, UserRepository users) {
         this.logs = logs;
         this.quests = quests;
+        this.users = users;
     }
 
     @Transactional(readOnly = true)
@@ -62,7 +67,8 @@ public class LogEntryService {
             throw new BusinessRuleException("Uzduotis neaktyvi - nauju irasu prie jos registruoti negalima");
         }
         // XP ir busena cia nenustatomi: konstruktorius palieka PENDING ir 0 tasku.
-        return logs.save(new LogEntry(quest, request.note(), request.evidenceUrl(), request.occurredAt()));
+        User author = users.getReferenceById(CurrentUser.get().id());
+        return logs.save(new LogEntry(quest, author, request.note(), request.evidenceUrl(), request.occurredAt()));
     }
 
     /**
@@ -95,17 +101,18 @@ public class LogEntryService {
             return entry;
         }
 
+        User reviewer = users.getReferenceById(CurrentUser.get().id());
         // Java 21 "arrow" switch per enum: kompiliatorius nereikalauja break, o kiekviena saka atskira.
         switch (request.status()) {
             case APPROVED -> {
                 // Praleidus xpAwarded, serveris isveda verte is uzduoties sudetingumo.
                 int xp = request.xpAwarded() != null ? request.xpAwarded() : quest.getDifficulty().xpValue();
                 int inspiration = request.inspirationAwarded() != null ? request.inspirationAwarded() : 0;
-                entry.approve(xp, inspiration, request.reviewerNote(), Instant.now());
+                entry.approve(reviewer, xp, inspiration, request.reviewerNote(), Instant.now());
             }
             case REJECTED -> {
                 requireNoAwards(request, "REJECTED");
-                entry.reject(request.reviewerNote(), Instant.now());
+                entry.reject(reviewer, request.reviewerNote(), Instant.now());
             }
             case PENDING -> {
                 requireNoAwards(request, "PENDING");
