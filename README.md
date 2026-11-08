@@ -14,6 +14,7 @@ Resursų hierarchija: **Guild (1:N) → Quest (1:N) → LogEntry**. Naudotojai g
 Versijos — Git žymos: `v0.1.0` (LD1) ir `v0.2.0` (LD2). Kas pridėta LD2 ir kaip tai apginti —
 [`docs/LD2.md`](docs/LD2.md) ir interaktyvus gynimo puslapis su diagramomis
 [`docs/gynimas/LD2_gynimas.html`](docs/gynimas/LD2_gynimas.html) (atidaryti naršyklėje).
+Ką ir kokia tvarka rodyti gynime — [`docs/DEMO_PLANAS.md`](docs/DEMO_PLANAS.md).
 
 ---
 
@@ -24,6 +25,9 @@ Reikia tik **Java 21**. Nei Maven, nei Docker, nei įdiegtos PostgreSQL neprirei
 ```bash
 ./mvnw spring-boot:run
 ```
+
+Windows: tą patį daro `demo/1-paleisti-api.cmd` (atlaisvina prievadus ir pats atidaro Swagger);
+kiti `demo/` skriptai paleidžia Postman testus, curl aplinką su žetonais ir psql.
 
 Pirmas paleidimas atsisiunčia Maven ir PostgreSQL 18 binarinius failus (kelias minutes),
 vėlesni — sekundes. Kai pasirodo `Started DoneNDustedApplication`:
@@ -337,8 +341,10 @@ src/main/resources/db/migration/
   V3__description_not_null.sql  aprašymas NOT NULL DEFAULT ''
   V4__users_and_tokens.sql      naudotojai (BCrypt) ir refresh žetonai
   V5__guild_membership.sql      narystės, savininkai, autoriai ir seed ryšiai
+demo/                   Windows paleidimo skriptai demonstracijai (API, newman, curl, psql)
 docs/
   LD2.md                LD2 pakeitimai ir gynimo klausimai
+  DEMO_PLANAS.md        ką ir kokia tvarka rodyti gynime
   gynimas/              LD2 gynimo puslapis (HTML) ir jo šaltiniai (Archify)
   openapi.json          sugeneruota OpenAPI specifikacija
   visual/               LD1 gynimo gidas, demo komandos, WALKTHROUGH.md ir diagramos
