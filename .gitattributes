@@ -2,3 +2,4 @@
 mvnw text eol=lf
 mvnw.cmd text eol=crlf
 *.jar binary
+*.cmd text eol=crlf
