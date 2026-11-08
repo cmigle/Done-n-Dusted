@@ -1,5 +1,6 @@
 package lt.ktu.donendusted.repository;
 
+import java.util.List;
 import java.util.Optional;
 import lt.ktu.donendusted.domain.GuildMembership;
 import lt.ktu.donendusted.domain.GuildRole;
@@ -24,4 +25,7 @@ public interface GuildMembershipRepository extends JpaRepository<GuildMembership
 
     @EntityGraph(attributePaths = "user")
     Page<GuildMembership> findByGuildIdAndRole(Long guildId, GuildRole role, Pageable pageable);
+
+    @EntityGraph(attributePaths = "guild")
+    List<GuildMembership> findByUserIdOrderByGuildName(Long userId);
 }

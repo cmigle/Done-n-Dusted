@@ -13,6 +13,7 @@ import lt.ktu.donendusted.domain.User;
 import lt.ktu.donendusted.error.ApiError;
 import lt.ktu.donendusted.service.AuthService;
 import lt.ktu.donendusted.web.dto.LoginRequest;
+import lt.ktu.donendusted.web.dto.MeResponse;
 import lt.ktu.donendusted.web.dto.RefreshRequest;
 import lt.ktu.donendusted.web.dto.RegisterRequest;
 import lt.ktu.donendusted.web.dto.TokenResponse;
@@ -100,9 +101,9 @@ public class AuthController {
     }
 
     @GetMapping("/me")
-    @Operation(summary = "Prisijunges naudotojas")
+    @Operation(summary = "Prisijunges naudotojas", description = "Kartu grazinamos grupes ir naudotojo role kiekvienoje is ju.")
     @ApiResponse(responseCode = "200", description = "Naudotojo duomenys")
-    public UserResponse me() {
-        return UserResponse.from(auth.me());
+    public MeResponse me() {
+        return auth.me();
     }
 }
