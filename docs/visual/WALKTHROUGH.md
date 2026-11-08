@@ -337,6 +337,7 @@ nuorodas, išsaugančias filtrus."*
 
 ```json
 {
+  "totalElements": 42,
   "content": [ ... ],
   "page":  { "number": 1, "size": 20, "totalElements": 42, "totalPages": 3 },
   "links": {

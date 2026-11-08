@@ -13,6 +13,7 @@ response:
     type: json
     content: |-
       {
+        "totalElements": 5,
         "content": [
           {
             "id": 1,

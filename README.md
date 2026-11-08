@@ -98,10 +98,11 @@ Swagger UI.
 
 Visi `GET` sąrašai grąžina vienodą struktūrą. Navigacijos nuorodos statomos iš tikrosios užklausos
 URI, todėl **visi filtrai ir rikiavimas jose išlieka**. `prev` ir `next` nepateikiami, kai tokio
-puslapio nėra.
+puslapio nėra. `totalElements` pirmas, kad bendras kiekis (pvz. kiek iš viso grupių) matytųsi iškart.
 
 ```json
 {
+  "totalElements": 3,
   "content": [ { "id": 2, "name": "Iron Vow", "...": "..." } ],
   "page":  { "number": 0, "size": 20, "totalElements": 3, "totalPages": 1 },
   "links": {

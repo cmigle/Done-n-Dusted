@@ -14,7 +14,7 @@
             "method": "GET",
             "header": [],
             "url": "{{baseUrl}}/guilds?size=100",
-            "description": "Apibendrina visus duomenis: kiek yra grupių, kiek jose užduočių ir kiek užduotyse progreso įrašų.\n\nTestas eina per visą hierarchiją **Guild → Quest → LogEntry**: kiekvienai grupei paima jos užduotis, kiekvienai užduočiai — jos įrašus. Jei sąrašas netelpa į vieną puslapį, jis seka serverio grąžinamą `links.next` nuorodą.\n\n*Test Results* skiltyje matyti:\n\n* po eilutę kiekvienai grupei su jos užduočių ir įrašų ID;\n* bendra eilutė, pvz. `Is viso - grupiu: 3, uzduociu: 9, irasu: 12` (taip atrodo švariai paleista DB).\n\nKartu patikrinama, kad kiekvienos užduoties `guildId` ir kiekvieno įrašo `questId` rodo į tikrą tėvinį objektą, o ID nesikartoja."
+            "description": "Apibendrina visus duomenis: kiek yra grupių, kiek jose užduočių ir kiek užduotyse progreso įrašų.\n\nAtsakymo pradžioje `totalElements` — kiek iš viso yra grupių, pvz. `{ \"totalElements\": 3, \"content\": [...] }`.\n\nTestas eina per visą hierarchiją **Guild → Quest → LogEntry**: kiekvienai grupei paima jos užduotis, kiekvienai užduočiai — jos įrašus. Jei sąrašas netelpa į vieną puslapį, jis seka serverio grąžinamą `links.next` nuorodą.\n\n*Test Results* skiltyje matyti:\n\n* po eilutę kiekvienai grupei su jos užduočių ir įrašų ID;\n* bendra eilutė, pvz. `Is viso - grupiu: 3, uzduociu: 9, irasu: 12` (taip atrodo švariai paleista DB).\n\nKartu patikrinama, kad kiekvienos užduoties `guildId` ir kiekvieno įrašo `questId` rodo į tikrą tėvinį objektą, o ID nesikartoja."
           },
           "event": [
             {
@@ -67,7 +67,7 @@
                   "  const summary = `Is viso - grupiu: ${guilds.length}, uzduociu: ${questIds.length}, irasu: ${logIds.length}`;",
                   "  console.log(summary);",
                   "  pm.test(summary, () => {",
-                  "    pm.expect(guilds.length).to.eql(pm.response.json().page.totalElements);",
+                  "    pm.expect(guilds.length).to.eql(pm.response.json().totalElements);",
                   "    pm.expect(new Set(questIds).size, 'uzduociu ID nesikartoja').to.eql(questIds.length);",
                   "    pm.expect(new Set(logIds).size, 'irasu ID nesikartoja').to.eql(logIds.length);",
                   "  });",

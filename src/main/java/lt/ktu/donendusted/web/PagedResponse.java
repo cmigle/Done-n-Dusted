@@ -10,9 +10,13 @@ import org.springframework.web.util.UriComponentsBuilder;
 /**
  * Vieninga puslapiuoto saraso struktura su self/first/prev/next/last nuorodomis.
  * Nuorodos statomos is dabartines uzklausos URI, todel visi filtrai ir rikiavimas islieka.
+ * totalElements pirmas, kad bendras kiekis (pvz. kiek is viso grupiu) matytusi atsakymo virsuje.
  */
 @Schema(name = "PagedResponse", description = "Puslapiuotas sarasas su navigacijos nuorodomis")
-public record PagedResponse<T>(List<T> content, PageInfo page, PageLinks links) {
+public record PagedResponse<T>(
+        @Schema(description = "Kiek is viso elementu atitinka uzklausa (visuose puslapiuose)", example = "42")
+        long totalElements,
+        List<T> content, PageInfo page, PageLinks links) {
 
     @Schema(name = "PageInfo")
     public record PageInfo(
@@ -45,7 +49,7 @@ public record PagedResponse<T>(List<T> content, PageInfo page, PageLinks links) 
                 page.hasNext() ? link(base, current + 1, size) : null,
                 link(base, lastIndex, size));
 
-        return new PagedResponse<>(content,
+        return new PagedResponse<>(page.getTotalElements(), content,
                 new PageInfo(current, size, page.getTotalElements(), page.getTotalPages()),
                 links);
     }

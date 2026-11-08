@@ -51,7 +51,7 @@ scripts:
         const summary = `Is viso - grupiu: ${guilds.length}, uzduociu: ${questIds.length}, irasu: ${logIds.length}`;
         console.log(summary);
         pm.test(summary, () => {
-          pm.expect(guilds.length).to.eql(pm.response.json().page.totalElements);
+          pm.expect(guilds.length).to.eql(pm.response.json().totalElements);
           pm.expect(new Set(questIds).size, 'uzduociu ID nesikartoja').to.eql(questIds.length);
           pm.expect(new Set(logIds).size, 'irasu ID nesikartoja').to.eql(logIds.length);
         });
@@ -60,6 +60,8 @@ scripts:
 order: 1000
 description: |-
   Apibendrina visus duomenis: kiek yra grupių, kiek jose užduočių ir kiek užduotyse progreso įrašų.
+
+  Atsakymo pradžioje `totalElements` — kiek iš viso yra grupių, pvz. `{ "totalElements": 3, "content": [...] }`.
 
   Testas eina per visą hierarchiją **Guild → Quest → LogEntry**: kiekvienai grupei paima jos užduotis, kiekvienai užduočiai — jos įrašus. Jei sąrašas netelpa į vieną puslapį, jis seka serverio grąžinamą `links.next` nuorodą.
 
