@@ -7,9 +7,11 @@ import java.util.List;
 import lt.ktu.donendusted.domain.LogEntry;
 import lt.ktu.donendusted.domain.LogStatus;
 import lt.ktu.donendusted.domain.Quest;
+import lt.ktu.donendusted.domain.User;
 import lt.ktu.donendusted.error.BusinessRuleException;
 import lt.ktu.donendusted.error.ResourceNotFoundException;
 import lt.ktu.donendusted.repository.LogEntryRepository;
+import lt.ktu.donendusted.repository.UserRepository;
 import lt.ktu.donendusted.web.dto.LogEntryCreateRequest;
 import lt.ktu.donendusted.web.dto.LogEntryUpdateRequest;
 import org.springframework.data.domain.Page;
@@ -18,26 +20,39 @@ import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+/**
+ * Matomumas (LD0): zaidejas mato tik savo irasus, grupes DM ir ADMIN - visus.
+ * Tvirtina tik grupes DM ir niekada ne savo iraso.
+ */
 @Service
 @Transactional
 public class LogEntryService {
 
     private final LogEntryRepository logs;
     private final QuestService quests;
+    private final GuildService guilds;
+    private final UserRepository users;
 
-    public LogEntryService(LogEntryRepository logs, QuestService quests) {
+    public LogEntryService(LogEntryRepository logs, QuestService quests, GuildService guilds, UserRepository users) {
         this.logs = logs;
         this.quests = quests;
+        this.guilds = guilds;
+        this.users = users;
     }
 
     @Transactional(readOnly = true)
     public Page<LogEntry> list(Long guildId, Long questId, LogStatus status, Pageable pageable) {
-        quests.get(guildId, questId); // patvirtina visa tevine grandine
+        GuildAccess access = guilds.access(guildId);
+        quests.get(access, questId); // patvirtina visa tevine grandine
+        boolean seesAll = access.isDm() || access.isAdmin();
         Specification<LogEntry> spec = (root, query, cb) -> {
             List<Predicate> predicates = new ArrayList<>();
             predicates.add(cb.equal(root.get("quest").get("id"), questId));
             if (status != null) {
                 predicates.add(cb.equal(root.get("status"), status));
+            }
+            if (!seesAll) {
+                predicates.add(cb.equal(root.get("author").get("id"), access.user().id()));
             }
             return cb.and(predicates.toArray(Predicate[]::new));
         };
@@ -46,34 +61,52 @@ public class LogEntryService {
 
     @Transactional(readOnly = true)
     public LogEntry get(Long guildId, Long questId, Long logId) {
-        // Tas pats principas kaip QuestService.get(): tikrinama visa grandine vienu SQL (JOIN i quest),
-        // o jei nerasta - lambda issiaiskina, kuris lygis luzo (grupe, uzduotis ar pats irasas).
-        return logs.findByIdAndQuestIdAndQuestGuildId(logId, questId, guildId)
-                .orElseThrow(() -> {
-                    quests.get(guildId, questId); // jei luzta auksciau, pranesame apie ta lygi
-                    return ResourceNotFoundException.logEntry(questId, logId);
-                });
+        GuildAccess access = guilds.access(guildId);
+        LogEntry entry = find(access, questId, logId);
+        access.require(access.isDm() || access.isAdmin() || access.is(entry.getAuthor()),
+                "Svetimus irasus mato tik grupes DM");
+        return entry;
     }
 
     public LogEntry create(Long guildId, Long questId, LogEntryCreateRequest request) {
-        Quest quest = quests.get(guildId, questId);
+        GuildAccess access = guilds.access(guildId);
+        access.require(access.isMember(), "Progresa registruoti gali tik grupes nariai");
+        Quest quest = quests.get(access, questId);
         requireNotInFuture(request.occurredAt());
         if (!quest.isActive()) {
             throw new BusinessRuleException("Uzduotis neaktyvi - nauju irasu prie jos registruoti negalima");
         }
         // XP ir busena cia nenustatomi: konstruktorius palieka PENDING ir 0 tasku.
-        return logs.save(new LogEntry(quest, request.note(), request.evidenceUrl(), request.occurredAt()));
+        User author = users.getReferenceById(access.user().id());
+        return logs.save(new LogEntry(quest, author, request.note(), request.evidenceUrl(), request.occurredAt()));
     }
 
     /**
      * PATCH - dalinis atnaujinimas: keiciami tik atsiusti (ne null) laukai.
-     * xpAwarded, inspirationAwarded ir reviewerNote yra DM sprendimo dalis, todel priimami tik kartu su status.
-     * Busenu perejimai (PENDING/APPROVED/REJECTED) atliekami per LogEntry metodus approve/reject/
-     * resetToPending, o ne per setterius - taip XP niekada negali atsidurti ne APPROVED irase.
+     * Turini (note, evidenceUrl, occurredAt) keicia tik autorius ir tik kol irasas PENDING.
+     * Perziuros laukus (status, xpAwarded, inspirationAwarded, reviewerNote) keicia tik grupes DM, ne autorius.
+     * Busenu perejimai atliekami per LogEntry metodus approve/reject/resetToPending, o ne per setterius -
+     * taip XP niekada negali atsidurti ne APPROVED irase.
      */
     public LogEntry update(Long guildId, Long questId, Long logId, LogEntryUpdateRequest request) {
-        LogEntry entry = get(guildId, questId, logId);
-        Quest quest = quests.get(guildId, questId); // reikia sudetingumo XP apskaiciavimui
+        GuildAccess access = guilds.access(guildId);
+        LogEntry entry = find(access, questId, logId);
+        Quest quest = entry.getQuest(); // reikia sudetingumo XP apskaiciavimui
+
+        boolean contentSent = request.note() != null || request.evidenceUrl() != null || request.occurredAt() != null;
+        boolean reviewSent = request.status() != null || request.xpAwarded() != null
+                || request.inspirationAwarded() != null || request.reviewerNote() != null;
+
+        if (contentSent) {
+            access.require(access.is(entry.getAuthor()), "Iraso turini keisti gali tik jo autorius");
+            if (entry.getStatus() != LogStatus.PENDING) {
+                throw new BusinessRuleException("Perziureto iraso turinio keisti negalima - DM pirma turi grazinti ji i PENDING");
+            }
+        }
+        if (reviewSent) {
+            access.require(access.isDm(), "Irasus perziuri tik grupes DM");
+            access.require(!access.is(entry.getAuthor()), "Savo iraso tvirtinti negalima");
+        }
 
         if (request.note() != null) {
             entry.setNote(request.note());
@@ -87,25 +120,24 @@ public class LogEntryService {
         }
 
         if (request.status() == null) {
-            boolean reviewFieldsSent = request.xpAwarded() != null || request.inspirationAwarded() != null
-                    || request.reviewerNote() != null;
-            if (reviewFieldsSent) {
+            if (reviewSent) {
                 throw new BusinessRuleException("xpAwarded, inspirationAwarded ir reviewerNote keiciami tik kartu su status");
             }
             return entry;
         }
 
+        User reviewer = users.getReferenceById(access.user().id());
         // Java 21 "arrow" switch per enum: kompiliatorius nereikalauja break, o kiekviena saka atskira.
         switch (request.status()) {
             case APPROVED -> {
                 // Praleidus xpAwarded, serveris isveda verte is uzduoties sudetingumo.
                 int xp = request.xpAwarded() != null ? request.xpAwarded() : quest.getDifficulty().xpValue();
                 int inspiration = request.inspirationAwarded() != null ? request.inspirationAwarded() : 0;
-                entry.approve(xp, inspiration, request.reviewerNote(), Instant.now());
+                entry.approve(reviewer, xp, inspiration, request.reviewerNote(), Instant.now());
             }
             case REJECTED -> {
                 requireNoAwards(request, "REJECTED");
-                entry.reject(request.reviewerNote(), Instant.now());
+                entry.reject(reviewer, request.reviewerNote(), Instant.now());
             }
             case PENDING -> {
                 requireNoAwards(request, "PENDING");
@@ -116,7 +148,18 @@ public class LogEntryService {
     }
 
     public void delete(Long guildId, Long questId, Long logId) {
-        logs.delete(get(guildId, questId, logId));
+        GuildAccess access = guilds.access(guildId);
+        LogEntry entry = find(access, questId, logId);
+        access.require(access.is(entry.getAuthor()) || access.isDm() || access.isAdmin(),
+                "Irasa istrinti gali jo autorius, grupes DM arba administratorius");
+        logs.delete(entry);
+    }
+
+    /** Tikrinama visa grandine guild -> quest -> log: neteisingas kelias - 404 tam lygiui, kuris luzo. */
+    private LogEntry find(GuildAccess access, Long questId, Long logId) {
+        quests.get(access, questId);
+        return logs.findByIdAndQuestIdAndQuestGuildId(logId, questId, access.guild().getId())
+                .orElseThrow(() -> ResourceNotFoundException.logEntry(questId, logId));
     }
 
     private void requireNotInFuture(Instant occurredAt) {

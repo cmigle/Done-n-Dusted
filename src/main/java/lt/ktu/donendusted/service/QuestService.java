@@ -12,6 +12,8 @@ import lt.ktu.donendusted.error.BusinessRuleException;
 import lt.ktu.donendusted.error.ConflictException;
 import lt.ktu.donendusted.error.ResourceNotFoundException;
 import lt.ktu.donendusted.repository.QuestRepository;
+import lt.ktu.donendusted.repository.UserRepository;
+import lt.ktu.donendusted.security.CurrentUser;
 import lt.ktu.donendusted.web.dto.QuestRequest;
 import lt.ktu.donendusted.web.dto.QuestUpdateRequest;
 import org.springframework.data.domain.Page;
@@ -26,16 +28,18 @@ public class QuestService {
 
     private final QuestRepository quests;
     private final GuildService guilds;
+    private final UserRepository users;
 
-    public QuestService(QuestRepository quests, GuildService guilds) {
+    public QuestService(QuestRepository quests, GuildService guilds, UserRepository users) {
         this.quests = quests;
         this.guilds = guilds;
+        this.users = users;
     }
 
     @Transactional(readOnly = true)
     public Page<Quest> list(Long guildId, Stat stat, QuestType type, Difficulty difficulty,
                             Boolean active, Pageable pageable) {
-        guilds.get(guildId); // neegzistuojanti grupe -> 404, o ne tuscias sarasas
+        guilds.access(guildId); // grupes nera -> 404 (ne tuscias sarasas), ne narys -> 403
         // Kiekvienas nepaduotas filtras (null) tiesiog nepridedamas, o visi likusieji sujungiami AND.
         // Taip vienas metodas aptarnauja bet kokia filtru kombinacija be atskiru uzklausu kiekvienai.
         Specification<Quest> spec = (root, query, cb) -> {
@@ -60,24 +64,31 @@ public class QuestService {
 
     @Transactional(readOnly = true)
     public Quest get(Long guildId, Long questId) {
+        return get(guilds.access(guildId), questId);
+    }
+
+    /** Uzduotis grupeje, kurios teises jau patikrintos. */
+    @Transactional(readOnly = true)
+    public Quest get(GuildAccess access, Long questId) {
         // Ieskome pagal abu id, todel /guilds/1/quests/5 grazins 404, jei quest 5 yra kitoje grupeje.
-        // Jei nerado - lambda dar patikrina grupe: kai nera pacios grupes, guilds.get() ismes
-        // "Guild X nerasta", ir klientas suzinos tikslesne priezasti nei "Quest nerasta".
+        Long guildId = access.guild().getId();
         return quests.findByIdAndGuildId(questId, guildId)
-                .orElseThrow(() -> {
-                    guilds.get(guildId); // jei nera ir grupes, pranesame apie ja
-                    return ResourceNotFoundException.quest(guildId, questId);
-                });
+                .orElseThrow(() -> ResourceNotFoundException.quest(guildId, questId));
     }
 
     public Quest create(Long guildId, QuestRequest request) {
-        Guild guild = guilds.get(guildId);
+        GuildAccess access = guilds.access(guildId);
+        access.require(access.isMember(), "Uzduotis kurti gali tik grupes nariai");
+        access.require(request.type() != QuestType.SIDE_QUEST || access.isDm(),
+                "SIDE_QUEST uzduotis gali kurti tik grupes DM");
+        Guild guild = access.guild();
         validate(request.type(), request.targetCount());
         if (quests.existsByGuildIdAndTitleIgnoreCase(guildId, request.title())) {
             throw new ConflictException("Grupeje jau yra uzduotis pavadinimu '" + request.title() + "'");
         }
         return quests.save(new Quest(guild, request.title(), request.description(), request.stat(),
-                request.type(), request.difficulty(), request.targetCount(), request.activeOrDefault()));
+                request.type(), request.difficulty(), request.targetCount(), request.activeOrDefault(),
+                users.getReferenceById(CurrentUser.get().id())));
     }
 
     /**
@@ -85,7 +96,12 @@ public class QuestService {
      * busenai - atsiustos reiksmes sujungiamos su esamomis.
      */
     public Quest update(Long guildId, Long questId, QuestUpdateRequest request) {
-        Quest quest = get(guildId, questId);
+        GuildAccess access = guilds.access(guildId);
+        Quest quest = get(access, questId);
+        access.require(access.is(quest.getCreatedBy()) || access.isDm() || access.isOwner(),
+                "Uzduoti keisti gali jos kurejas, grupes DM arba savininkas");
+        access.require(request.type() != QuestType.SIDE_QUEST || quest.getType() == QuestType.SIDE_QUEST
+                || access.isDm(), "Paversti uzduoti SIDE_QUEST gali tik grupes DM");
 
         QuestType type = request.type() != null ? request.type() : quest.getType();
         Integer targetCount;
@@ -124,7 +140,11 @@ public class QuestService {
     }
 
     public void delete(Long guildId, Long questId) {
-        quests.delete(get(guildId, questId));
+        GuildAccess access = guilds.access(guildId);
+        Quest quest = get(access, questId);
+        access.require(access.is(quest.getCreatedBy()) || access.isDm() || access.isOwner() || access.isAdmin(),
+                "Uzduoti istrinti gali jos kurejas, grupes DM, savininkas arba administratorius");
+        quests.delete(quest);
     }
 
     /**

@@ -24,6 +24,7 @@ public record QuestResponse(
                 example = "50")
         int xpPerCompletion,
 
+        @Schema(description = "Kas sukure uzduoti (naudotojo id)", example = "4") Long createdBy,
         Instant createdAt) {
 
     public static QuestResponse from(Quest quest) {
@@ -38,6 +39,7 @@ public record QuestResponse(
                 quest.getTargetCount(),
                 quest.isActive(),
                 quest.getDifficulty().xpValue(),
+                quest.getCreatedBy() == null ? null : quest.getCreatedBy().getId(),
                 quest.getCreatedAt());
     }
 }

@@ -54,6 +54,11 @@ public class Quest {
     @Column(nullable = false)
     private boolean active = true;
 
+    /** Kas sukure; null, jei naudotojas pasalintas. */
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "created_by")
+    private User createdBy;
+
     @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)
     private Instant createdAt;
@@ -63,8 +68,9 @@ public class Quest {
     }
 
     public Quest(Guild guild, String title, String description, Stat stat, QuestType type,
-                 Difficulty difficulty, Integer targetCount, boolean active) {
+                 Difficulty difficulty, Integer targetCount, boolean active, User createdBy) {
         this.guild = guild;
+        this.createdBy = createdBy;
         this.title = title;
         setDescription(description);
         this.stat = stat;
@@ -136,6 +142,10 @@ public class Quest {
 
     public void setActive(boolean active) {
         this.active = active;
+    }
+
+    public User getCreatedBy() {
+        return createdBy;
     }
 
     public Instant getCreatedAt() {
