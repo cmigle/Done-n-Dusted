@@ -1,0 +1,21 @@
+$kind: http-example
+request:
+  url: "{{baseUrl}}/auth/refresh"
+  method: POST
+response:
+  statusCode: 401
+  statusText: Unauthorized
+  headers:
+    WWW-Authenticate: Bearer
+    Content-Type: application/json
+  body:
+    type: json
+    content: |-
+      {
+        "timestamp": "2026-11-08T14:31:29.557563200Z",
+        "status": 401,
+        "error": "Unauthorized",
+        "message": "Refresh zetonas jau panaudotas arba atsauktas - del saugumo atsauktos visos sesijos",
+        "path": "/api/auth/refresh"
+      }
+order: 1000

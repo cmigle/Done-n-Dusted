@@ -1,0 +1,50 @@
+$kind: http-example
+request:
+  url: "{{baseUrl}}/guilds?size=100"
+  method: GET
+response:
+  statusCode: 200
+  statusText: OK
+  headers:
+    Content-Type: application/json
+  body:
+    type: json
+    content: |-
+      {
+        "totalElements": 3,
+        "content": [
+          {
+            "id": 2,
+            "name": "Iron Vow",
+            "description": "Sporto ir sveikatos ipirociu grupe, pastoviai augina STR ir CON.",
+            "ownerId": 2,
+            "createdAt": "2026-11-08T14:31:19.403902Z"
+          },
+          {
+            "id": 3,
+            "name": "The Quiet Library",
+            "description": "Skaitymo ir mokymosi grupe - daugiausia INT ir WIS uzduotys.",
+            "ownerId": 3,
+            "createdAt": "2026-11-08T14:31:19.403902Z"
+          },
+          {
+            "id": 1,
+            "name": "Thursday Night Crew",
+            "description": "Ketvirtadieniais renkasi kampanija - keturi zaidejai ir vienas DM.",
+            "ownerId": 2,
+            "createdAt": "2026-11-08T14:31:19.403902Z"
+          }
+        ],
+        "page": {
+          "number": 0,
+          "size": 100,
+          "totalElements": 3,
+          "totalPages": 1
+        },
+        "links": {
+          "self": "http://localhost:8080/api/guilds?page=0&size=100",
+          "first": "http://localhost:8080/api/guilds?page=0&size=100",
+          "last": "http://localhost:8080/api/guilds?page=0&size=100"
+        }
+      }
+order: 1000

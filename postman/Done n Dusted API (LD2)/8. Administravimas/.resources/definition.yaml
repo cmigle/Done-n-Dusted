@@ -1,0 +1,12 @@
+$kind: collection
+description: |-
+  Naudotojų valdymas — tik rolei `ADMIN` (aplanko *Authorization*: `{{adminToken}}`).
+
+  Administratorius mato naudotojus, keičia jų rolę ir gali **užblokuoti** paskyrą: tada atšaukiamos visos naudotojo sesijos ir prisijungti nebeleidžiama (`403`).
+auth:
+  - id: 4a62b28e-74ca-4ba0-83ae-599315cb9838
+    type: bearer
+    name: bearer auth
+    credentials:
+      token: "{{adminToken}}"
+order: 9000

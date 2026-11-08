@@ -1,0 +1,19 @@
+$kind: http-example
+request:
+  url: "{{baseUrl}}/auth/refresh"
+  method: POST
+response:
+  statusCode: 200
+  statusText: OK
+  headers:
+    Content-Type: application/json
+  body:
+    type: json
+    content: |-
+      {
+        "accessToken": "eyJraWQiOiIzaVhYNm9yenhyenJrV0xqN2RTVW9mMnFWSGFxbzVBQnFBbDd0Z3U2MTU4IiwiYWxnIjoiSFMyNTYifQ.eyJpc3MiOiJkb25lLW4tZHVzdGVkIiwic3ViIjoiNSIsInJvbGUiOiJVU0VSIiwiZXhwIjoxNzk0MTQ5MTg5LCJpYXQiOjE3OTQxNDgyODksInVzZXJuYW1lIjoicG9zdG1hbl8xNzk0MTQ4Mjg3MzI3In0.B4uA_6g8HIWZrwRaknPcTwFFguxVATrCCMMmN5lJ-Ws",
+        "tokenType": "Bearer",
+        "expiresIn": 900,
+        "refreshToken": "3c8ZNWG5xyo0VN8teHS-N0mQonguU2vDI8DjjV9-Vj0"
+      }
+order: 1000

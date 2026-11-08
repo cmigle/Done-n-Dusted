@@ -1,0 +1,20 @@
+$kind: http-example
+request:
+  url: "{{baseUrl}}/guilds/{{guildA}}/members/{{playerId}}"
+  method: PATCH
+response:
+  statusCode: 409
+  statusText: Conflict
+  headers:
+    Content-Type: application/json
+  body:
+    type: json
+    content: |-
+      {
+        "timestamp": "2026-11-08T14:31:34.361252900Z",
+        "status": 409,
+        "error": "Conflict",
+        "message": "Grupe jau turi DM - pirma pakeiskite esamo DM role i PLAYER",
+        "path": "/api/guilds/4/members/4"
+      }
+order: 1000

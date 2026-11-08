@@ -1,0 +1,26 @@
+$kind: http-example
+request:
+  url: "{{baseUrl}}/auth/register"
+  method: POST
+response:
+  statusCode: 400
+  statusText: Bad Request
+  headers:
+    Content-Type: application/json
+  body:
+    type: json
+    content: |-
+      {
+        "timestamp": "2026-11-08T14:31:28.306010500Z",
+        "status": 400,
+        "error": "Bad Request",
+        "message": "Neteisingas uzklausos turinys",
+        "path": "/api/auth/register",
+        "details": [
+          {
+            "field": "password",
+            "message": "size must be between 8 and 72"
+          }
+        ]
+      }
+order: 1000

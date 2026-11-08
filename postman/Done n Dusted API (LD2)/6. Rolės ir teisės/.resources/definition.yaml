@@ -1,0 +1,14 @@
+$kind: collection
+description: |-
+  Autorizacijos taisyklės iš LD0 — kiekviena parodyta `403 Forbidden` atsakymu su paaiškinimu.
+
+  | Kas | Ką gali |
+  | --- | --- |
+  | Svečias | Tik registruotis ir prisijungti (`401` visur kitur) |
+  | `PLAYER` | Mato grupę ir jos užduotis, kuria užduotis, registruoja ir mato **tik savo** įrašus |
+  | `DUNGEON_MASTER` | Mato visus grupės įrašus, tvirtina / atmeta (ne savo), kuria `SIDE_QUEST` |
+  | Savininkas | Keičia ir trina grupę, valdo narius |
+  | `ADMIN` | Mato visas grupes, trina bet kurį turinį, valdo naudotojus |
+
+  Ne grupės narys apie grupę negauna nieko — tik `403`.
+order: 7000

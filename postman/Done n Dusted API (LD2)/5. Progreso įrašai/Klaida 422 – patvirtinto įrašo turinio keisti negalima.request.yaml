@@ -1,0 +1,24 @@
+$kind: http-request
+description: Autorius turinį (`note`, `evidenceUrl`, `occurredAt`) keisti gali tik kol įrašas `PENDING`. Patvirtinus įrodymų pakeisti nebegalima — DM pirma turi grąžinti įrašą į `PENDING`.
+url: "{{baseUrl}}/guilds/{{guildA}}/quests/{{questId}}/logs/{{logId}}"
+method: PATCH
+headers:
+  Content-Type: application/json
+body:
+  type: json
+  content: |-
+    {
+      "note": "Pataisyta jau po patvirtinimo"
+    }
+auth:
+  type: bearer
+  credentials:
+    token: "{{playerToken}}"
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test('422 Unprocessable Entity', () => pm.response.to.have.status(422));
+      pm.test('Perziureto iraso turinys uzsaldytas', () => pm.expect(pm.response.json().message).to.include('Perziureto'));
+    language: text/javascript
+examples: ./.resources/Klaida 422 – patvirtinto įrašo turinio keisti negalima.resources/examples
+order: 7000

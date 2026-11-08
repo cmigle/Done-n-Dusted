@@ -1,0 +1,21 @@
+$kind: http-example
+request:
+  url: "{{baseUrl}}/guilds"
+  method: GET
+response:
+  statusCode: 401
+  statusText: Unauthorized
+  headers:
+    WWW-Authenticate: Bearer
+    Content-Type: application/json
+  body:
+    type: json
+    content: |-
+      {
+        "timestamp": "2026-11-08T14:31:29.062315100Z",
+        "status": 401,
+        "error": "Unauthorized",
+        "message": "Reikalingas prisijungimas: Authorization: Bearer <accessToken>",
+        "path": "/api/guilds"
+      }
+order: 1000

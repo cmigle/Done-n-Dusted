@@ -1,0 +1,43 @@
+$kind: http-example
+request:
+  url: "{{baseUrl}}/guilds"
+  method: GET
+response:
+  statusCode: 200
+  statusText: OK
+  headers:
+    Content-Type: application/json
+  body:
+    type: json
+    content: |-
+      {
+        "totalElements": 2,
+        "content": [
+          {
+            "id": 4,
+            "name": "Postman Guild 1794148292021",
+            "description": "Postman demonstracijai sukurta grupe",
+            "ownerId": 5,
+            "createdAt": "2026-11-08T14:31:32.096916Z"
+          },
+          {
+            "id": 5,
+            "name": "Postman Guild 1794148292021 (B)",
+            "description": "",
+            "ownerId": 5,
+            "createdAt": "2026-11-08T14:31:32.219774Z"
+          }
+        ],
+        "page": {
+          "number": 0,
+          "size": 20,
+          "totalElements": 2,
+          "totalPages": 1
+        },
+        "links": {
+          "self": "http://localhost:8080/api/guilds?page=0&size=20",
+          "first": "http://localhost:8080/api/guilds?page=0&size=20",
+          "last": "http://localhost:8080/api/guilds?page=0&size=20"
+        }
+      }
+order: 1000

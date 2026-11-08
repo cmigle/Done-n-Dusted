@@ -1,0 +1,17 @@
+$kind: http-request
+description: Užklausos turinys siunčiamas `text/plain` tipu. API priima tik `application/json`, todėl grąžinamas `415 Unsupported Media Type`.
+url: "{{baseUrl}}/guilds"
+method: POST
+headers:
+  Content-Type: text/plain
+body:
+  type: text
+  content: sveiki
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test('415 Unsupported Media Type', () => pm.response.to.have.status(415));
+      pm.test('ApiError paaiskina palaikoma tipa', () => pm.expect(pm.response.json().message).to.include('application/json'));
+    language: text/javascript
+examples: ./.resources/Klaida 415 – ne JSON turinys.resources/examples
+order: 10000

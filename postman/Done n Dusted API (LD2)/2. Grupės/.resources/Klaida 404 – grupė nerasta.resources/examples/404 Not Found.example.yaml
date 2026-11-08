@@ -1,0 +1,20 @@
+$kind: http-example
+request:
+  url: "{{baseUrl}}/guilds/999999"
+  method: GET
+response:
+  statusCode: 404
+  statusText: Not Found
+  headers:
+    Content-Type: application/json
+  body:
+    type: json
+    content: |-
+      {
+        "timestamp": "2026-11-08T14:31:33.334639500Z",
+        "status": 404,
+        "error": "Not Found",
+        "message": "Guild 999999 nerasta",
+        "path": "/api/guilds/999999"
+      }
+order: 1000

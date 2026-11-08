@@ -1,0 +1,19 @@
+$kind: http-example
+request:
+  url: "{{baseUrl}}/guilds/{{guildA}}/members/{{playerId}}"
+  method: GET
+response:
+  statusCode: 200
+  statusText: OK
+  headers:
+    Content-Type: application/json
+  body:
+    type: json
+    content: |-
+      {
+        "userId": 4,
+        "username": "jonas",
+        "role": "PLAYER",
+        "joinedAt": "2026-11-08T14:31:33.607019Z"
+      }
+order: 1000

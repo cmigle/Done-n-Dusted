@@ -1,0 +1,20 @@
+$kind: http-example
+request:
+  url: "{{baseUrl}}/guilds/{{guildA}}/quests"
+  method: POST
+response:
+  statusCode: 403
+  statusText: Forbidden
+  headers:
+    Content-Type: application/json
+  body:
+    type: json
+    content: |-
+      {
+        "timestamp": "2026-11-08T14:31:37.872118900Z",
+        "status": 403,
+        "error": "Forbidden",
+        "message": "SIDE_QUEST uzduotis gali kurti tik grupes DM",
+        "path": "/api/guilds/4/quests"
+      }
+order: 1000

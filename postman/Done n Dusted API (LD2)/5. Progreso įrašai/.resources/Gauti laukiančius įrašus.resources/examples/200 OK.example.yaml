@@ -1,0 +1,41 @@
+$kind: http-example
+request:
+  url: "{{baseUrl}}/guilds/{{guildA}}/quests/{{questId}}/logs?status=PENDING"
+  method: GET
+response:
+  statusCode: 200
+  statusText: OK
+  headers:
+    Content-Type: application/json
+  body:
+    type: json
+    content: |-
+      {
+        "totalElements": 1,
+        "content": [
+          {
+            "id": 13,
+            "questId": 10,
+            "authorId": 4,
+            "note": "Nubegau 10 km per 52 minutes",
+            "evidenceUrl": "https://example.org/evidence/run.png",
+            "status": "PENDING",
+            "xpAwarded": 0,
+            "inspirationAwarded": 0,
+            "occurredAt": "2026-11-08T13:31:32.021Z",
+            "createdAt": "2026-11-08T14:31:35.447144Z"
+          }
+        ],
+        "page": {
+          "number": 0,
+          "size": 20,
+          "totalElements": 1,
+          "totalPages": 1
+        },
+        "links": {
+          "self": "http://localhost:8080/api/guilds/4/quests/10/logs?status=PENDING&page=0&size=20",
+          "first": "http://localhost:8080/api/guilds/4/quests/10/logs?status=PENDING&page=0&size=20",
+          "last": "http://localhost:8080/api/guilds/4/quests/10/logs?status=PENDING&page=0&size=20"
+        }
+      }
+order: 1000

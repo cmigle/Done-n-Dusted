@@ -1,0 +1,20 @@
+$kind: http-example
+request:
+  url: "{{baseUrl}}/guilds/{{guildA}}/quests/{{questId}}/logs/{{logDm}}"
+  method: GET
+response:
+  statusCode: 403
+  statusText: Forbidden
+  headers:
+    Content-Type: application/json
+  body:
+    type: json
+    content: |-
+      {
+        "timestamp": "2026-11-08T14:31:37.499435600Z",
+        "status": 403,
+        "error": "Forbidden",
+        "message": "Svetimus irasus mato tik grupes DM",
+        "path": "/api/guilds/4/quests/10/logs/15"
+      }
+order: 1000

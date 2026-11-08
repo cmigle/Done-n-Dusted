@@ -1,0 +1,22 @@
+$kind: http-request
+description: Tas pats sąrašo kelias kaip DM, bet žaidėjui serveris grąžina tik jo paties įrašus.
+url: "{{baseUrl}}/guilds/{{guildA}}/quests/{{questId}}/logs"
+method: GET
+auth:
+  type: bearer
+  credentials:
+    token: "{{playerToken}}"
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test('200 OK', () => pm.response.to.have.status(200));
+      const logs = pm.response.json().content;
+      const ids = logs.map(x => x.id);
+      pm.test('Visi irasai - jono, ID: ' + ids.join(', '), () => {
+        logs.forEach(x => pm.expect(x.authorId).to.eql(Number(pm.collectionVariables.get('playerId'))));
+        pm.expect(ids).to.include(Number(pm.collectionVariables.get('logPlayer')));
+        pm.expect(ids).to.not.include(Number(pm.collectionVariables.get('logDm')));
+      });
+    language: text/javascript
+examples: ./.resources/Žaidėjas mato tik savo įrašus.resources/examples
+order: 8000

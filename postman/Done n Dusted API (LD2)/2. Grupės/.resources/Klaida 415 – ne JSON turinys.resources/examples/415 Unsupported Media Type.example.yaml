@@ -1,0 +1,20 @@
+$kind: http-example
+request:
+  url: "{{baseUrl}}/guilds"
+  method: POST
+response:
+  statusCode: 415
+  statusText: Unsupported Media Type
+  headers:
+    Content-Type: application/json
+  body:
+    type: json
+    content: |-
+      {
+        "timestamp": "2026-11-08T14:31:33.146433200Z",
+        "status": 415,
+        "error": "Unsupported Media Type",
+        "message": "Palaikomas tik application/json; gauta: text/plain",
+        "path": "/api/guilds"
+      }
+order: 1000

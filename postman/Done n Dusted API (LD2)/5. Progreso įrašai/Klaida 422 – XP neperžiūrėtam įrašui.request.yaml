@@ -1,0 +1,21 @@
+$kind: http-request
+description: Bandoma `PENDING` įrašui priskirti `xpAwarded = 500`. Neperžiūrėtas įrašas negali turėti XP, todėl grąžinamas `422 Unprocessable Entity`.
+url: "{{baseUrl}}/guilds/{{guildA}}/quests/{{questId}}/logs/{{logId}}"
+method: PATCH
+headers:
+  Content-Type: application/json
+body:
+  type: json
+  content: |-
+    {
+      "status": "PENDING",
+      "xpAwarded": 500
+    }
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test('422 Unprocessable Entity', () => pm.response.to.have.status(422));
+      pm.test('Neperziuretas irasas negali tureti tasku', () => pm.expect(pm.response.json().message).to.include('PENDING'));
+    language: text/javascript
+examples: ./.resources/Klaida 422 – XP neperžiūrėtam įrašui.resources/examples
+order: 6000

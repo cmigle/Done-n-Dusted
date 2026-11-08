@@ -1,0 +1,23 @@
+$kind: http-request
+description: "`GRIND` tipo užduotis privalo turėti `targetCount`. JSON teisingas, bet pažeista dalykinė taisyklė, todėl grąžinamas `422 Unprocessable Entity`."
+url: "{{baseUrl}}/guilds/{{guildA}}/quests"
+method: POST
+headers:
+  Content-Type: application/json
+body:
+  type: json
+  content: |-
+    {
+      "title": "Grind be tikslo",
+      "stat": "STR",
+      "type": "GRIND",
+      "difficulty": "EASY"
+    }
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test('422 Unprocessable Entity', () => pm.response.to.have.status(422));
+      pm.test('Pranesimas paaiskina taisykle', () => pm.expect(pm.response.json().message).to.include('targetCount'));
+    language: text/javascript
+examples: ./.resources/Klaida 422 – GRIND užduotis be targetCount.resources/examples
+order: 2000

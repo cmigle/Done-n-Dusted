@@ -1,0 +1,20 @@
+$kind: http-request
+description: Atsijungus refresh žetonu naujos poros gauti nebegalima.
+url: "{{baseUrl}}/auth/refresh"
+method: POST
+headers:
+  Content-Type: application/json
+body:
+  type: json
+  content: |-
+    {
+      "refreshToken": "{{refreshToken}}"
+    }
+auth:
+  type: noauth
+scripts:
+  - type: afterResponse
+    code: pm.test('401 Unauthorized', () => pm.response.to.have.status(401));
+    language: text/javascript
+examples: ./.resources/Klaida 401 – refresh po atsijungimo.resources/examples
+order: 14000

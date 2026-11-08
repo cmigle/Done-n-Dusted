@@ -1,0 +1,20 @@
+$kind: http-example
+request:
+  url: "{{baseUrl}}/guilds/{{guildA}}/members"
+  method: POST
+response:
+  statusCode: 403
+  statusText: Forbidden
+  headers:
+    Content-Type: application/json
+  body:
+    type: json
+    content: |-
+      {
+        "timestamp": "2026-11-08T14:31:34.230938200Z",
+        "status": 403,
+        "error": "Forbidden",
+        "message": "Narius prideti gali tik grupes savininkas arba administratorius",
+        "path": "/api/guilds/4/members"
+      }
+order: 1000

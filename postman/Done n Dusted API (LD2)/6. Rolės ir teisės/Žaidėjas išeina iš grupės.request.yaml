@@ -1,0 +1,17 @@
+$kind: http-request
+description: |-
+  Narys gali pašalinti pats save (išeiti). Kitus narius šalina tik savininkas arba administratorius.
+
+  README lentelės metodas **#25**.
+url: "{{baseUrl}}/guilds/{{guildA}}/members/{{playerId}}"
+method: DELETE
+auth:
+  type: bearer
+  credentials:
+    token: "{{playerToken}}"
+scripts:
+  - type: afterResponse
+    code: pm.test('204 No Content', () => pm.response.to.have.status(204));
+    language: text/javascript
+examples: ./.resources/Žaidėjas išeina iš grupės.resources/examples
+order: 13000

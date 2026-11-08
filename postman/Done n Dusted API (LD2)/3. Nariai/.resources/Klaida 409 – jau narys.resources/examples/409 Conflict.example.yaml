@@ -1,0 +1,20 @@
+$kind: http-example
+request:
+  url: "{{baseUrl}}/guilds/{{guildA}}/members"
+  method: POST
+response:
+  statusCode: 409
+  statusText: Conflict
+  headers:
+    Content-Type: application/json
+  body:
+    type: json
+    content: |-
+      {
+        "timestamp": "2026-11-08T14:31:33.863217700Z",
+        "status": 409,
+        "error": "Conflict",
+        "message": "Naudotojas 'jonas' jau yra grupes narys",
+        "path": "/api/guilds/4/members"
+      }
+order: 1000

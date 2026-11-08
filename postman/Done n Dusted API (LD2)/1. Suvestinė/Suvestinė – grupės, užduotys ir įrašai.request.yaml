@@ -1,0 +1,89 @@
+$kind: http-request
+description: |-
+  Apibendrina visus duomenis: kiek yra grupių, kiek jose užduočių ir kiek užduotyse progreso įrašų.
+
+  Atsakymo pradžioje `totalElements` — kiek iš viso yra grupių, pvz. `{ "totalElements": 3, "content": [...] }`.
+
+  Testas eina per visą hierarchiją **Guild → Quest → LogEntry**: kiekvienai grupei paima jos užduotis, kiekvienai užduočiai — jos įrašus. Jei sąrašas netelpa į vieną puslapį, jis seka serverio grąžinamą `links.next` nuorodą.
+
+  *Test Results* skiltyje matyti:
+
+  * po eilutę kiekvienai grupei su jos užduočių ir įrašų ID;
+  * bendra eilutė, pvz. `Is viso - grupiu: 3, uzduociu: 9, irasu: 12` (taip atrodo švariai paleista DB).
+
+  Kartu patikrinama, kad kiekvienos užduoties `guildId` ir kiekvieno įrašo `questId` rodo į tikrą tėvinį objektą, o ID nesikartoja.
+
+  Užklausa siunčiama **administratoriaus** vardu (`adminToken`): tik jis mato visas grupes ir visus įrašus. Prieš užklausą administratorius prisijungia pats, todėl aplanką galima leisti ir atskirai. Vidinės `pm.sendRequest` užklausos kolekcijos autorizacijos nepaveldi, todėl `Authorization` antraštė joms pridedama ranka.
+url: "{{baseUrl}}/guilds?size=100"
+method: GET
+auth:
+  type: bearer
+  credentials:
+    token: "{{adminToken}}"
+scripts:
+  - type: beforeRequest
+    code: |-
+      // Suvestine daroma ADMIN vardu - tik jis mato visas grupes ir visus irasus.
+      // Prisijungiama cia pat, todel aplanka galima leisti ir atskirai.
+      pm.sendRequest({
+        url: pm.variables.get('baseUrl') + '/auth/login',
+        method: 'POST',
+        header: [{ key: 'Content-Type', value: 'application/json' }],
+        body: { mode: 'raw', raw: JSON.stringify({ username: 'admin', password: pm.variables.get('password') }) }
+      }, (err, res) => pm.collectionVariables.set('adminToken', res.json().accessToken));
+    language: text/javascript
+  - type: afterResponse
+    code: |-
+      pm.test('200 OK', () => pm.response.to.have.status(200));
+
+      const baseUrl = pm.variables.get('baseUrl');
+      const sortedIds = items => items.map(x => x.id).sort((a, b) => a - b).join(', ');
+      const get = url => new Promise((resolve, reject) =>
+        pm.sendRequest({ url, header: [{ key: 'Authorization', value: 'Bearer ' + pm.collectionVariables.get('adminToken') }] }, (err, res) => (err ? reject(err) : resolve(res.json()))));
+
+      // Surenka visus saraso puslapius: eina serverio duota links.next nuoroda, kol jos nebera.
+      async function getAll(firstPage) {
+        const items = [...firstPage.content];
+        for (let next = firstPage.links.next; next; ) {
+          const page = await get(next);
+          items.push(...page.content);
+          next = page.links.next;
+        }
+        return items;
+      }
+
+      (async () => {
+        const guilds = (await getAll(pm.response.json())).sort((a, b) => a.id - b.id);
+        const questIds = [];
+        const logIds = [];
+
+        for (const guild of guilds) {
+          const quests = await getAll(await get(`${baseUrl}/guilds/${guild.id}/quests?size=100`));
+          const guildLogs = [];
+          const wrongParent = [];
+          quests.forEach(q => { if (q.guildId !== guild.id) wrongParent.push(`uzduotis ${q.id} rodo i grupe ${q.guildId}`); });
+
+          for (const quest of quests) {
+            const logs = await getAll(await get(`${baseUrl}/guilds/${guild.id}/quests/${quest.id}/logs?size=100`));
+            logs.forEach(l => { if (l.questId !== quest.id) wrongParent.push(`irasas ${l.id} rodo i uzduoti ${l.questId}`); });
+            guildLogs.push(...logs);
+          }
+
+          questIds.push(...quests.map(q => q.id));
+          logIds.push(...guildLogs.map(l => l.id));
+          const line = `Grupe ${guild.id} "${guild.name}" - uzduotys [${sortedIds(quests)}], irasai [${sortedIds(guildLogs)}]`;
+          console.log(line);
+          pm.test(line, () => pm.expect(wrongParent, 'vaikiniai objektai rodo i teisinga tevini ID').to.be.empty);
+        }
+
+        const summary = `Is viso - grupiu: ${guilds.length}, uzduociu: ${questIds.length}, irasu: ${logIds.length}`;
+        console.log(summary);
+        pm.test(summary, () => {
+          pm.expect(guilds.length).to.eql(pm.response.json().totalElements);
+          pm.expect(new Set(questIds).size, 'uzduociu ID nesikartoja').to.eql(questIds.length);
+          pm.expect(new Set(logIds).size, 'irasu ID nesikartoja').to.eql(logIds.length);
+        });
+      })().catch(err => pm.test('Suvestine sudaryta be klaidu', () => { throw err; }));
+    language: text/javascript
+examples: ./.resources/Suvestinė – grupės, užduotys ir įrašai.resources/examples
+order: 1000

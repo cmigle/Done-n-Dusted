@@ -1,0 +1,21 @@
+$kind: http-example
+request:
+  url: "{{baseUrl}}/auth/register"
+  method: POST
+response:
+  statusCode: 201
+  statusText: Created
+  headers:
+    Location: http://localhost:8080/api/users/5
+    Content-Type: application/json
+  body:
+    type: json
+    content: |-
+      {
+        "id": 5,
+        "username": "postman_1794148287327",
+        "role": "USER",
+        "enabled": true,
+        "createdAt": "2026-11-08T14:31:27.913432Z"
+      }
+order: 1000

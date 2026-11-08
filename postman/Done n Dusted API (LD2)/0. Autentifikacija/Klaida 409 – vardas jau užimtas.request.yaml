@@ -1,0 +1,26 @@
+$kind: http-request
+description: Tas pats vardas didžiosiomis raidėmis. Vardai unikalūs neatsižvelgiant į raidžių dydį, todėl `409 Conflict`.
+url: "{{baseUrl}}/auth/register"
+method: POST
+headers:
+  Content-Type: application/json
+body:
+  type: json
+  content: |-
+    {
+      "username": "{{usernameUpper}}",
+      "password": "{{password}}"
+    }
+auth:
+  type: noauth
+scripts:
+  - type: beforeRequest
+    code: pm.variables.set('usernameUpper', pm.collectionVariables.get('username').toUpperCase());
+    language: text/javascript
+  - type: afterResponse
+    code: |-
+      pm.test('409 Conflict', () => pm.response.to.have.status(409));
+      pm.test('Vardas uzimtas, nors parasytas kitokiomis raidemis', () => pm.expect(pm.response.json().message).to.include('uzimtas'));
+    language: text/javascript
+examples: ./.resources/Klaida 409 – vardas jau užimtas.resources/examples
+order: 2000

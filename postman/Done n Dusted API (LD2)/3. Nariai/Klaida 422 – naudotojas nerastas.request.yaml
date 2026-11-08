@@ -1,0 +1,21 @@
+$kind: http-request
+description: Naudotojas nurodomas užklausos turinyje, ne kelyje, todėl jo nebuvimas yra turinio klaida (`422`), o ne `404`.
+url: "{{baseUrl}}/guilds/{{guildA}}/members"
+method: POST
+headers:
+  Content-Type: application/json
+body:
+  type: json
+  content: |-
+    {
+      "username": "nera_tokio_naudotojo",
+      "role": "PLAYER"
+    }
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test('422 Unprocessable Entity', () => pm.response.to.have.status(422));
+      pm.test('Pranesimas apie nezinoma naudotoja', () => pm.expect(pm.response.json().message).to.include('nerastas'));
+    language: text/javascript
+examples: ./.resources/Klaida 422 – naudotojas nerastas.resources/examples
+order: 6000

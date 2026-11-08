@@ -1,0 +1,17 @@
+$kind: http-request
+description: Prie žetono pridėta viena raidė — parašas nebetinka. Serveris kiekvieną žetoną tikrina pats, todėl suklastoto ar pakeisto žetono nepriims.
+url: "{{baseUrl}}/guilds"
+method: GET
+auth:
+  type: bearer
+  credentials:
+    token: "{{accessToken}}x"
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test('401 Unauthorized', () => pm.response.to.have.status(401));
+      pm.test('WWW-Authenticate nurodo invalid_token', () => pm.expect(pm.response.headers.get('WWW-Authenticate')).to.include('invalid_token'));
+      pm.test('ApiError pranesimas', () => pm.expect(pm.response.json().message).to.include('neteisingas'));
+    language: text/javascript
+examples: ./.resources/Klaida 401 – sugadintas žetonas.resources/examples
+order: 8000

@@ -1,0 +1,20 @@
+$kind: http-example
+request:
+  url: "{{baseUrl}}/auth/login"
+  method: POST
+response:
+  statusCode: 403
+  statusText: Forbidden
+  headers:
+    Content-Type: application/json
+  body:
+    type: json
+    content: |-
+      {
+        "timestamp": "2026-11-08T14:31:39.522086500Z",
+        "status": 403,
+        "error": "Forbidden",
+        "message": "Paskyra uzblokuota",
+        "path": "/api/auth/login"
+      }
+order: 1000

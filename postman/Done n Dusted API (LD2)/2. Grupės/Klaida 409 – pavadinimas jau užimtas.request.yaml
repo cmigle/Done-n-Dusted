@@ -1,0 +1,26 @@
+$kind: http-request
+description: Grupės pavadinimas turi būti unikalus. Bandant sukurti grupę jau naudojamu pavadinimu, grąžinamas `409 Conflict`.
+url: "{{baseUrl}}/guilds"
+method: POST
+headers:
+  Content-Type: application/json
+body:
+  type: json
+  content: |-
+    {
+      "name": "{{guildName}}"
+    }
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test('409 Conflict', () => pm.response.to.have.status(409));
+      const e = pm.response.json();
+      pm.test('ApiError struktura', () => {
+        pm.expect(e.status).to.eql(409);
+        pm.expect(e.error).to.eql('Conflict');
+        pm.expect(e.path).to.eql('/api/guilds');
+        pm.expect(e.message).to.be.a('string');
+      });
+    language: text/javascript
+examples: ./.resources/Klaida 409 – pavadinimas jau užimtas.resources/examples
+order: 8000

@@ -1,0 +1,20 @@
+$kind: http-example
+request:
+  url: "{{baseUrl}}/guilds/{{guildA}}/quests/{{questId}}/logs"
+  method: POST
+response:
+  statusCode: 422
+  statusText: Unprocessable Entity (WebDAV) (RFC 4918)
+  headers:
+    Content-Type: application/json
+  body:
+    type: json
+    content: |-
+      {
+        "timestamp": "2026-11-08T14:31:35.587001900Z",
+        "status": 422,
+        "error": "Unprocessable Entity",
+        "message": "occurredAt negali buti ateityje",
+        "path": "/api/guilds/4/quests/10/logs"
+      }
+order: 1000

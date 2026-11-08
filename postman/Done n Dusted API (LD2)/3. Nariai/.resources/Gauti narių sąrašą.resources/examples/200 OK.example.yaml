@@ -1,0 +1,35 @@
+$kind: http-example
+request:
+  url: "{{baseUrl}}/guilds/{{guildA}}/members"
+  method: GET
+response:
+  statusCode: 200
+  statusText: OK
+  headers:
+    Content-Type: application/json
+  body:
+    type: json
+    content: |-
+      {
+        "totalElements": 1,
+        "content": [
+          {
+            "userId": 5,
+            "username": "postman_1794148287327",
+            "role": "DUNGEON_MASTER",
+            "joinedAt": "2026-11-08T14:31:32.100283Z"
+          }
+        ],
+        "page": {
+          "number": 0,
+          "size": 20,
+          "totalElements": 1,
+          "totalPages": 1
+        },
+        "links": {
+          "self": "http://localhost:8080/api/guilds/4/members?page=0&size=20",
+          "first": "http://localhost:8080/api/guilds/4/members?page=0&size=20",
+          "last": "http://localhost:8080/api/guilds/4/members?page=0&size=20"
+        }
+      }
+order: 1000
