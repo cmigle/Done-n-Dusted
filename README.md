@@ -99,7 +99,7 @@ Prisijungimo duomenys imami iš `DB_URL`, `DB_USER`, `DB_PASSWORD` aplinkos kint
 | --- | --- |
 | **Svečias** (be žetono) | Registruotis, prisijungti, atnaujinti žetonus, žiūrėti Swagger. Kitur — `401` |
 | **Naudotojas** (`USER`) | Kurti grupes (tampa savininku ir DM), matyti savo grupes, `/api/auth/me` |
-| **`PLAYER`** grupėje | Matyti grupę, jos narius ir užduotis; kurti užduotis (ne `SIDE_QUEST`); registruoti progresą; matyti ir keisti **tik savo** įrašus (kol jie `PENDING`); išeiti iš grupės |
+| **`PLAYER`** grupėje | Matyti grupę, jos narius ir užduotis; kurti užduotis (ne `SIDE_QUEST`); registruoti progresą; matyti **tik savo** įrašus, keisti ir trinti juos — kol jie `PENDING`; išeiti iš grupės |
 | **`DUNGEON_MASTER`** grupėje | Tai, ką ir žaidėjas, plius: matyti visus grupės įrašus, juos tvirtinti / atmesti ir skirti XP bei inspiration (**ne savo**), kurti `SIDE_QUEST`, keisti ir trinti bet kurią grupės užduotį |
 | **Savininkas** (grupės kūrėjas) | Keisti ir trinti grupę, pridėti ir šalinti narius, keisti jų roles |
 | **`ADMIN`** | Matyti visas grupes ir jų turinį, trinti bet kurią grupę, užduotį ar įrašą, valdyti naudotojus (`/api/users`) |
@@ -145,7 +145,7 @@ grandinė grąžina `404`. Stulpelis **Kas** — kam leidžiama (kitiems — `40
 | 12 | `GET` | `/api/guilds/{guildId}/quests/{questId}/logs/{logId}` | Vienas įrašas | Autorius, DM, `ADMIN` | `200` |
 | 13 | `POST` | `/api/guilds/{guildId}/quests/{questId}/logs` | Registruoti progresą (visada `PENDING`, 0 XP) | Narys | `201` + `Location` |
 | 14 | `PATCH` | `/api/guilds/{guildId}/quests/{questId}/logs/{logId}` | Turinys — autorius (kol `PENDING`); peržiūra — DM, ne savo įrašo | Autorius / DM | `200` |
-| 15 | `DELETE` | `/api/guilds/{guildId}/quests/{questId}/logs/{logId}` | Ištrinti įrašą | Autorius, DM, `ADMIN` | `204` |
+| 15 | `DELETE` | `/api/guilds/{guildId}/quests/{questId}/logs/{logId}` | Ištrinti įrašą | Autorius (kol `PENDING`), DM, `ADMIN` | `204` |
 
 ### Autentifikacija (Auth)
 
@@ -210,8 +210,18 @@ puslapio nėra. `totalElements` pirmas, kad bendras kiekis (pvz. kiek iš viso g
 }
 ```
 
-Puslapiavimo parametrai: `?page=0&size=20&sort=name,asc`. Didžiausias leidžiamas `size` — 100.
-Numatytasis dydis — 20, puslapiai skaičiuojami nuo 0.
+Puslapiavimo parametrai: `?page=0&size=20&sort=name,asc`. Didžiausias leidžiamas `size` — 100,
+`page` — 1 000 000. Numatytasis dydis — 20, puslapiai skaičiuojami nuo 0.
+
+Rikiuoti galima tik pagal paprastus sąrašo laukus — kitaip `400` su leidžiamų laukų sąrašu:
+
+| Sąrašas | `sort` laukai |
+| --- | --- |
+| Grupės | `id`, `name`, `createdAt` |
+| Užduotys | `id`, `title`, `stat`, `type`, `difficulty`, `targetCount`, `active`, `createdAt` |
+| Įrašai | `id`, `occurredAt`, `createdAt`, `status`, `xpAwarded`, `reviewedAt` |
+| Nariai | `joinedAt`, `role` |
+| Naudotojai | `id`, `username`, `role`, `enabled`, `createdAt` |
 
 Nuorodos (`links`) yra hypermedia elementas: klientas pats nekonstruoja kito puslapio URL, o tiesiog
 eina serverio duota `links.next` nuoroda, kol jos nebėra. Taip veikia ir Postman suvestinės testas.
