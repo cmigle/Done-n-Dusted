@@ -7,6 +7,7 @@ import lt.ktu.donendusted.error.ApiError.FieldViolation;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.dao.InvalidDataAccessApiUsageException;
 import org.springframework.data.core.PropertyReferenceException;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
@@ -169,6 +170,21 @@ public class ApiExceptionHandler {
                                                               HttpServletRequest request) {
         return build(HttpStatus.BAD_REQUEST,
                 "Rikiuoti pagal lauka '" + ex.getPropertyName() + "' negalima - tokio lauko nera", request);
+    }
+
+    /**
+     * Rikiavimas su skyrybos zenklais, pvz. ?sort=["string"]: Spring Data JPA tokia israiska atmeta dar
+     * pries ieskodama lauko (apsauga nuo JPQL injekcijos). Kitos sios isimties priezastys - kodo klaida (500).
+     */
+    @ExceptionHandler(InvalidDataAccessApiUsageException.class)
+    public ResponseEntity<ApiError> handleInvalidSortExpression(InvalidDataAccessApiUsageException ex,
+                                                                HttpServletRequest request) {
+        String[] sort = request.getParameterValues("sort");
+        if (sort == null || ex.getMessage() == null || !ex.getMessage().startsWith("Sort expression")) {
+            return handleUnexpected(ex, request);
+        }
+        return build(HttpStatus.BAD_REQUEST, "Rikiuoti pagal '" + String.join("', '", sort)
+                + "' negalima - nurodykite lauka ir krypti, pvz. sort=name,desc", request);
     }
 
     @ExceptionHandler(Exception.class)
