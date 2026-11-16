@@ -72,6 +72,9 @@ public class AuthService {
         RefreshToken stored = refreshTokens.findByTokenHash(TokenService.hash(refreshToken))
                 .orElseThrow(() -> new UnauthorizedException("Neteisingas refresh zetonas"));
         User user = stored.getUser();
+        // Pirma: uzblokuojant atsaukiami visi zetonai, todel kitaip visada laimetu "jau panaudotas" (401),
+        // o dokumentuotas 403 "Paskyra uzblokuota" niekada nebutu pasiektas.
+        requireEnabled(user);
 
         if (stored.isRevoked()) {
             refreshTokens.revokeAllForUser(user.getId(), now);
@@ -82,7 +85,6 @@ public class AuthService {
             throw new UnauthorizedException("Refresh zetonas nebegalioja - prisijunkite is naujo");
         }
         stored.revoke(now);
-        requireEnabled(user);
         return issueTokens(user);
     }
 

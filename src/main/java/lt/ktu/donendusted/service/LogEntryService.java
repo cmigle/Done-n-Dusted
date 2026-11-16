@@ -91,6 +91,9 @@ public class LogEntryService {
     public LogEntry update(Long guildId, Long questId, Long logId, LogEntryUpdateRequest request) {
         GuildAccess access = guilds.access(guildId);
         LogEntry entry = find(access, questId, logId);
+        // Ta pati matomumo taisykle kaip get(): be jos tuscias PATCH {} grazintu svetima irasa zaidejui.
+        access.require(access.isDm() || access.isAdmin() || access.is(entry.getAuthor()),
+                "Svetimus irasus mato tik grupes DM");
         Quest quest = entry.getQuest(); // reikia sudetingumo XP apskaiciavimui
 
         boolean contentSent = request.note() != null || request.evidenceUrl() != null || request.occurredAt() != null;
@@ -152,6 +155,10 @@ public class LogEntryService {
         LogEntry entry = find(access, questId, logId);
         access.require(access.is(entry.getAuthor()) || access.isDm() || access.isAdmin(),
                 "Irasa istrinti gali jo autorius, grupes DM arba administratorius");
+        // Kaip ir turinio keitimas: perziuretas irasas - DM patvirtinta istorija, autorius jos nebetrina.
+        if (!access.isDm() && !access.isAdmin() && entry.getStatus() != LogStatus.PENDING) {
+            throw new BusinessRuleException("Perziureto iraso istrinti negalima - DM pirma turi grazinti ji i PENDING");
+        }
         logs.delete(entry);
     }
 
@@ -162,11 +169,17 @@ public class LogEntryService {
                 .orElseThrow(() -> ResourceNotFoundException.logEntry(questId, logId));
     }
 
+    /** Ivykio data - ne ateityje ir ne absurdiskai sena (kitaip DB jos neissaugotu: "timestamp out of range"). */
     private void requireNotInFuture(Instant occurredAt) {
         if (occurredAt.isAfter(Instant.now())) {
             throw new BusinessRuleException("occurredAt negali buti ateityje");
         }
+        if (occurredAt.isBefore(EARLIEST_OCCURRED_AT)) {
+            throw new BusinessRuleException("occurredAt negali buti ankstesnis nei 2000-01-01");
+        }
     }
+
+    private static final Instant EARLIEST_OCCURRED_AT = Instant.parse("2000-01-01T00:00:00Z");
 
     /** Tik patvirtinti irasai duoda tasku - kitos busenos privalo likti be apdovanojimu. */
     private void requireNoAwards(LogEntryUpdateRequest request, String status) {
