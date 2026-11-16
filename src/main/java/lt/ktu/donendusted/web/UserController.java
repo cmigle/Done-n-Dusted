@@ -12,6 +12,7 @@ import lt.ktu.donendusted.error.ApiError;
 import lt.ktu.donendusted.service.UserService;
 import lt.ktu.donendusted.web.dto.UserResponse;
 import lt.ktu.donendusted.web.dto.UserUpdateRequest;
+import org.springdoc.core.annotations.ParameterObject;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.MediaType;
@@ -40,7 +41,7 @@ public class UserController {
     @ApiResponse(responseCode = "200", description = "Sarasas grazintas")
     public PagedResponse<UserResponse> list(
             @Parameter(description = "Filtras pagal vardo dali") @RequestParam(required = false) String username,
-            @PageableDefault(size = 20, sort = "username") Pageable pageable) {
+            @ParameterObject @PageableDefault(size = 20, sort = "username") Pageable pageable) {
 
         return PagedResponse.from(users.list(username, pageable), UserResponse::from);
     }

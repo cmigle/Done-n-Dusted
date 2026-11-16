@@ -16,6 +16,7 @@ import lt.ktu.donendusted.service.MembershipService;
 import lt.ktu.donendusted.web.dto.MemberRequest;
 import lt.ktu.donendusted.web.dto.MemberResponse;
 import lt.ktu.donendusted.web.dto.MemberRoleRequest;
+import org.springdoc.core.annotations.ParameterObject;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.MediaType;
@@ -49,7 +50,7 @@ public class MemberController {
     public PagedResponse<MemberResponse> list(
             @PathVariable Long guildId,
             @Parameter(description = "Filtras pagal role") @RequestParam(required = false) GuildRole role,
-            @PageableDefault(size = 20, sort = "joinedAt") Pageable pageable) {
+            @ParameterObject @PageableDefault(size = 20, sort = "joinedAt") Pageable pageable) {
 
         return PagedResponse.from(members.list(guildId, role, pageable), MemberResponse::from);
     }
