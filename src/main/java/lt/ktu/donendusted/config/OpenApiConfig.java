@@ -59,12 +59,23 @@ public class OpenApiConfig {
     }
 
     /**
-     * Kad nereiketu kartoti anotaciju prie kiekvieno metodo: visiems apsaugotiems metodams pridedamas
-     * 401, o konkrecios grupes ir naudotoju metodams - ir 403. Viesi metodai (security: []) praleidziami.
+     * Kad nereiketu kartoti anotaciju prie kiekvieno metodo: kiekvienam metodui su parametrais ar turiniu
+     * pridedamas 400, keliams su ID - 404, apsaugotiems metodams - 401, o grupes ir naudotoju metodams - 403.
+     * Viesiems metodams (security: []) 401/403 nepridedami.
      */
     @Bean
     public OpenApiCustomizer authErrorResponses() {
         return openApi -> openApi.getPaths().forEach((path, item) -> item.readOperations().forEach(operation -> {
+            boolean hasInput = operation.getRequestBody() != null
+                    || (operation.getParameters() != null && !operation.getParameters().isEmpty());
+            if (hasInput) {
+                operation.getResponses().putIfAbsent("400",
+                        error("Neteisingi parametrai ar turinys (pvz. ne skaicius vietoje ID, netinkamas sort ar JSON)"));
+            }
+            if (path.contains("{")) {
+                operation.getResponses().putIfAbsent("404",
+                        error("Resursas nerastas arba neteisinga tevine grandine"));
+            }
             if (operation.getSecurity() != null && operation.getSecurity().isEmpty()) {
                 return;
             }

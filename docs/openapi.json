@@ -116,6 +116,16 @@
               }
             }
           },
+          "400": {
+            "description": "Neteisingi parametrai ar turinys (pvz. ne skaicius vietoje ID, netinkamas sort ar JSON)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
           "401": {
             "description": "Nera access zetono arba jis neteisingas / pasibaiges",
             "content": {
@@ -308,6 +318,16 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/PagedResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Neteisingi parametrai ar turinys (pvz. ne skaicius vietoje ID, netinkamas sort ar JSON)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
                 }
               }
             }
@@ -535,6 +555,16 @@
               }
             }
           },
+          "400": {
+            "description": "Neteisingi parametrai ar turinys (pvz. ne skaicius vietoje ID, netinkamas sort ar JSON)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
           "401": {
             "description": "Nera access zetono arba jis neteisingas / pasibaiges",
             "content": {
@@ -748,6 +778,16 @@
               }
             }
           },
+          "400": {
+            "description": "Neteisingi parametrai ar turinys (pvz. ne skaicius vietoje ID, netinkamas sort ar JSON)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
           "401": {
             "description": "Nera access zetono arba jis neteisingas / pasibaiges",
             "content": {
@@ -760,6 +800,16 @@
           },
           "403": {
             "description": "Neuztenka teisiu: ne grupes narys, netinkama role grupeje arba ne ADMIN",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Resursas nerastas arba neteisinga tevine grandine",
             "content": {
               "application/json": {
                 "schema": {
@@ -831,6 +881,16 @@
           },
           "403": {
             "description": "Neuztenka teisiu: ne grupes narys, netinkama role grupeje arba ne ADMIN",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Resursas nerastas arba neteisinga tevine grandine",
             "content": {
               "application/json": {
                 "schema": {
@@ -944,6 +1004,16 @@
               }
             }
           },
+          "400": {
+            "description": "Neteisingi parametrai ar turinys (pvz. ne skaicius vietoje ID, netinkamas sort ar JSON)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
           "401": {
             "description": "Zetonas neteisingas, pasibaiges arba jau panaudotas",
             "content": {
@@ -989,6 +1059,16 @@
         "responses": {
           "204": {
             "description": "Atsijungta"
+          },
+          "400": {
+            "description": "Neteisingi parametrai ar turinys (pvz. ne skaicius vietoje ID, netinkamas sort ar JSON)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
           }
         },
         "security": []
@@ -1086,6 +1166,16 @@
               }
             }
           },
+          "400": {
+            "description": "Neteisingi parametrai ar turinys (pvz. ne skaicius vietoje ID, netinkamas sort ar JSON)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
           "401": {
             "description": "Nera access zetono arba jis neteisingas / pasibaiges",
             "content": {
@@ -1153,6 +1243,16 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/UserResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Neteisingi parametrai ar turinys (pvz. ne skaicius vietoje ID, netinkamas sort ar JSON)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
                 }
               }
             }
@@ -1229,6 +1329,16 @@
               }
             }
           },
+          "400": {
+            "description": "Neteisingi parametrai ar turinys (pvz. ne skaicius vietoje ID, netinkamas sort ar JSON)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
           "401": {
             "description": "Nera access zetono arba jis neteisingas / pasibaiges",
             "content": {
@@ -1282,6 +1392,16 @@
         "responses": {
           "204": {
             "description": "Istrinta; atsakymas be turinio"
+          },
+          "400": {
+            "description": "Neteisingi parametrai ar turinys (pvz. ne skaicius vietoje ID, netinkamas sort ar JSON)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
           },
           "401": {
             "description": "Nera access zetono arba jis neteisingas / pasibaiges",
@@ -1446,6 +1566,16 @@
               }
             }
           },
+          "400": {
+            "description": "Neteisingi parametrai ar turinys (pvz. ne skaicius vietoje ID, netinkamas sort ar JSON)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
           "401": {
             "description": "Nera access zetono arba jis neteisingas / pasibaiges",
             "content": {
@@ -1508,6 +1638,16 @@
         "responses": {
           "204": {
             "description": "Istrinta; atsakymas be turinio"
+          },
+          "400": {
+            "description": "Neteisingi parametrai ar turinys (pvz. ne skaicius vietoje ID, netinkamas sort ar JSON)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
           },
           "401": {
             "description": "Nera access zetono arba jis neteisingas / pasibaiges",
@@ -1699,6 +1839,16 @@
               }
             }
           },
+          "400": {
+            "description": "Neteisingi parametrai ar turinys (pvz. ne skaicius vietoje ID, netinkamas sort ar JSON)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
           "401": {
             "description": "Nera access zetono arba jis neteisingas / pasibaiges",
             "content": {
@@ -1769,6 +1919,16 @@
         "responses": {
           "204": {
             "description": "Istrinta; atsakymas be turinio"
+          },
+          "400": {
+            "description": "Neteisingi parametrai ar turinys (pvz. ne skaicius vietoje ID, netinkamas sort ar JSON)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
           },
           "401": {
             "description": "Nera access zetono arba jis neteisingas / pasibaiges",
@@ -1950,6 +2110,16 @@
               }
             }
           },
+          "400": {
+            "description": "Neteisingi parametrai ar turinys (pvz. ne skaicius vietoje ID, netinkamas sort ar JSON)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
           "401": {
             "description": "Nera access zetono arba jis neteisingas / pasibaiges",
             "content": {
@@ -2012,6 +2182,16 @@
         "responses": {
           "204": {
             "description": "Pasalinta"
+          },
+          "400": {
+            "description": "Neteisingi parametrai ar turinys (pvz. ne skaicius vietoje ID, netinkamas sort ar JSON)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
           },
           "401": {
             "description": "Nera access zetono arba jis neteisingas / pasibaiges",
@@ -2099,6 +2279,16 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/MemberResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Neteisingi parametrai ar turinys (pvz. ne skaicius vietoje ID, netinkamas sort ar JSON)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
                 }
               }
             }
@@ -2208,6 +2398,16 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/PagedResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Neteisingi parametrai ar turinys (pvz. ne skaicius vietoje ID, netinkamas sort ar JSON)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
                 }
               }
             }
@@ -2688,7 +2888,7 @@
           },
           "password": {
             "type": "string",
-            "description": "8-72 simboliai",
+            "description": "8-72 simboliai (daugiausia 72 baitai UTF-8)",
             "example": "Demo123!",
             "maxLength": 72,
             "minLength": 8
@@ -2793,6 +2993,9 @@
       "UserUpdateRequest": {
         "type": "object",
         "description": "Administratoriaus atliekamas naudotojo roles ar busenos keitimas",
+        "example": {
+          "enabled": true
+        },
         "properties": {
           "role": {
             "type": "string",
@@ -2899,6 +3102,11 @@
       "LogEntryUpdateRequest": {
         "type": "object",
         "description": "Dalinis iraso turinio ir perziuros rezultato atnaujinimas",
+        "example": {
+          "status": "APPROVED",
+          "xpAwarded": 50,
+          "reviewerNote": "Uzskaitau, nors nuotrauka neryski."
+        },
         "properties": {
           "note": {
             "type": "string",
