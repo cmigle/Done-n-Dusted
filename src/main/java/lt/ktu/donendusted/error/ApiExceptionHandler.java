@@ -2,8 +2,10 @@ package lt.ktu.donendusted.error;
 
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.ConstraintViolationException;
+import java.sql.SQLException;
 import java.util.List;
 import lt.ktu.donendusted.error.ApiError.FieldViolation;
+import org.apache.tomcat.util.http.InvalidParameterException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.dao.DataIntegrityViolationException;
@@ -18,12 +20,15 @@ import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.oauth2.core.OAuth2AuthenticationException;
 import org.springframework.web.HttpMediaTypeNotAcceptableException;
 import org.springframework.web.HttpMediaTypeNotSupportedException;
+import org.springframework.web.ErrorResponse;
 import org.springframework.web.HttpRequestMethodNotSupportedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
+import org.springframework.web.bind.MissingPathVariableException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.method.annotation.HandlerMethodValidationException;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
+import org.springframework.web.server.ResponseStatusException;
 import org.springframework.web.servlet.resource.NoResourceFoundException;
 
 /**
@@ -81,10 +86,17 @@ public class ApiExceptionHandler {
         return build(HttpStatus.CONFLICT, ex.getMessage(), request);
     }
 
-    /** Paskutine apsauga, jei lenktynes tarp dvieju uzklausu praslysta pro patikra servise. */
+    /**
+     * Paskutine apsauga, jei lenktynes tarp dvieju uzklausu praslysta pro patikra servise (409).
+     * SQLState 22xxx - pati reiksme netinka saugoti (pvz. NUL simbolis tekste), tai kliento klaida (400).
+     */
     @ExceptionHandler(DataIntegrityViolationException.class)
     public ResponseEntity<ApiError> handleIntegrity(DataIntegrityViolationException ex, HttpServletRequest request) {
         log.warn("Duomenu vientisumo pazeidimas: {}", ex.getMostSpecificCause().getMessage());
+        if (ex.getMostSpecificCause() instanceof SQLException sql && String.valueOf(sql.getSQLState()).startsWith("22")) {
+            return build(HttpStatus.BAD_REQUEST,
+                    "Neteisinga reiksme - jos negalima issaugoti (pvz. neleistinas simbolis)", request);
+        }
         return build(HttpStatus.CONFLICT, "Uzklausa pazeidzia duomenu vientisumo taisykle", request);
     }
 
@@ -130,7 +142,16 @@ public class ApiExceptionHandler {
                                                          HttpServletRequest request) {
         // Jackson pranesimas daugiaeilis ir su vidinemis detalemis - paliekame tik pirmaja eilute.
         String cause = ex.getMostSpecificCause().getMessage();
-        String firstLine = cause == null ? "netinkamas JSON" : cause.split("\\R", 2)[0];
+        if (cause == null || cause.startsWith("Required request body is missing")) {
+            // Spring pranesime butu visas kontrolerio metodo parasas - klientui jo nereikia.
+            return build(HttpStatus.BAD_REQUEST, "Uzklausos turinys (JSON) privalomas", request);
+        }
+        if (cause.contains("Enum value out of number")) {
+            return build(HttpStatus.BAD_REQUEST,
+                    "Uzklausos turinio nepavyko perskaityti: enum reiksme rasoma tekstu (pvz. \"APPROVED\"), ne skaiciumi",
+                    request);
+        }
+        String firstLine = cause.split("\\R", 2)[0];
         return build(HttpStatus.BAD_REQUEST, "Uzklausos turinio nepavyko perskaityti: " + firstLine, request);
     }
 
@@ -141,6 +162,24 @@ public class ApiExceptionHandler {
         String expected = ex.getRequiredType() == null ? "kito tipo" : ex.getRequiredType().getSimpleName();
         return build(HttpStatus.BAD_REQUEST,
                 "Parametras '" + ex.getName() + "' turi buti " + expected + ", gauta: " + ex.getValue(), request);
+    }
+
+    /** Blogai uzkoduoti query parametrai (?name=100%, ?name=%ZZ, ne UTF-8) - Tomcat juos atmeta skaitydamas. */
+    @ExceptionHandler(InvalidParameterException.class)
+    public ResponseEntity<ApiError> handleInvalidParameters(InvalidParameterException ex, HttpServletRequest request) {
+        return build(HttpStatus.BAD_REQUEST,
+                "Neteisingai uzkoduoti uzklausos parametrai (pvz. % reikia rasyti %25)", request);
+    }
+
+    /** Tuscias kelio kintamasis po konvertavimo, pvz. /api/guilds/%20 (tarpas vietoj ID). */
+    @ExceptionHandler(MissingPathVariableException.class)
+    public ResponseEntity<ApiError> handleMissingPathVariable(MissingPathVariableException ex,
+                                                              HttpServletRequest request) {
+        if (!ex.isMissingAfterConversion()) {
+            return handleUnexpected(ex, request);
+        }
+        return build(HttpStatus.BAD_REQUEST,
+                "Parametras '" + ex.getVariableName() + "' turi buti skaicius, gauta tuscia reiksme", request);
     }
 
     @ExceptionHandler(HttpRequestMethodNotSupportedException.class)
@@ -187,8 +226,17 @@ public class ApiExceptionHandler {
                 + "' negalima - nurodykite lauka ir krypti, pvz. sort=name,desc", request);
     }
 
+    /**
+     * Kitos Spring MVC kliento klaidos (ResponseStatusException, truksta parametro ir pan.) - jos pacios zino
+     * savo 4xx statusa; 500 lieka tik tikroms serverio klaidoms.
+     */
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ApiError> handleUnexpected(Exception ex, HttpServletRequest request) {
+        if (ex instanceof ErrorResponse er && er.getStatusCode().is4xxClientError()) {
+            String reason = ex instanceof ResponseStatusException rse ? rse.getReason() : null;
+            return build(HttpStatus.valueOf(er.getStatusCode().value()),
+                    reason != null ? reason : "Neteisinga uzklausa", request);
+        }
         log.error("Netiketa klaida apdorojant {} {}", request.getMethod(), request.getRequestURI(), ex);
         return build(HttpStatus.INTERNAL_SERVER_ERROR, "Vidine serverio klaida", request);
     }
