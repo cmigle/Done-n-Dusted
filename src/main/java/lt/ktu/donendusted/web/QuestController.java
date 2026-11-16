@@ -18,6 +18,7 @@ import lt.ktu.donendusted.service.QuestService;
 import lt.ktu.donendusted.web.dto.QuestRequest;
 import lt.ktu.donendusted.web.dto.QuestResponse;
 import lt.ktu.donendusted.web.dto.QuestUpdateRequest;
+import org.springdoc.core.annotations.ParameterObject;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.MediaType;
@@ -58,7 +59,7 @@ public class QuestController {
             @Parameter(description = "Filtras pagal uzduoties tipa") @RequestParam(required = false) QuestType type,
             @Parameter(description = "Filtras pagal sudetinguma") @RequestParam(required = false) Difficulty difficulty,
             @Parameter(description = "Filtras pagal aktyvuma") @RequestParam(required = false) Boolean active,
-            @PageableDefault(size = 20, sort = "title") Pageable pageable) {
+            @ParameterObject @PageableDefault(size = 20, sort = "title") Pageable pageable) {
 
         return PagedResponse.from(quests.list(guildId, stat, type, difficulty, active, pageable),
                 QuestResponse::from);

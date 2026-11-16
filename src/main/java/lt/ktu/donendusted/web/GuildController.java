@@ -15,6 +15,7 @@ import lt.ktu.donendusted.service.GuildService;
 import lt.ktu.donendusted.web.dto.GuildRequest;
 import lt.ktu.donendusted.web.dto.GuildResponse;
 import lt.ktu.donendusted.web.dto.GuildUpdateRequest;
+import org.springdoc.core.annotations.ParameterObject;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.MediaType;
@@ -53,7 +54,7 @@ public class GuildController {
     public PagedResponse<GuildResponse> list(
             @Parameter(description = "Filtras pagal pavadinimo dali, neatsizvelgiant i raidziu dydi")
             @RequestParam(required = false) String name,
-            @PageableDefault(size = 20, sort = "name") Pageable pageable) {
+            @ParameterObject @PageableDefault(size = 20, sort = "name") Pageable pageable) {
 
         return PagedResponse.from(guilds.list(name, pageable), GuildResponse::from);
     }

@@ -16,6 +16,7 @@ import lt.ktu.donendusted.service.LogEntryService;
 import lt.ktu.donendusted.web.dto.LogEntryCreateRequest;
 import lt.ktu.donendusted.web.dto.LogEntryResponse;
 import lt.ktu.donendusted.web.dto.LogEntryUpdateRequest;
+import org.springdoc.core.annotations.ParameterObject;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
@@ -55,7 +56,7 @@ public class LogEntryController {
             @PathVariable Long guildId,
             @PathVariable Long questId,
             @Parameter(description = "Filtras pagal iraso busena") @RequestParam(required = false) LogStatus status,
-            @PageableDefault(size = 20, sort = "occurredAt", direction = Sort.Direction.DESC) Pageable pageable) {
+            @ParameterObject @PageableDefault(size = 20, sort = "occurredAt", direction = Sort.Direction.DESC) Pageable pageable) {
 
         return PagedResponse.from(logs.list(guildId, questId, status, pageable), LogEntryResponse::from);
     }
