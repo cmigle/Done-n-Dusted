@@ -52,7 +52,8 @@ public class MemberController {
             @Parameter(description = "Filtras pagal role") @RequestParam(required = false) GuildRole role,
             @ParameterObject @PageableDefault(size = 20, sort = "joinedAt") Pageable pageable) {
 
-        return PagedResponse.from(members.list(guildId, role, pageable), MemberResponse::from);
+        return PagedResponse.from(members.list(guildId, role, Sorting.allow(pageable, "joinedAt", "role")),
+                MemberResponse::from);
     }
 
     @GetMapping("/{userId}")

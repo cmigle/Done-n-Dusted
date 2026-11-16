@@ -43,7 +43,9 @@ public class UserController {
             @Parameter(description = "Filtras pagal vardo dali") @RequestParam(required = false) String username,
             @ParameterObject @PageableDefault(size = 20, sort = "username") Pageable pageable) {
 
-        return PagedResponse.from(users.list(username, pageable), UserResponse::from);
+        return PagedResponse.from(
+                users.list(username, Sorting.allow(pageable, "id", "username", "role", "enabled", "createdAt")),
+                UserResponse::from);
     }
 
     @GetMapping("/{userId}")

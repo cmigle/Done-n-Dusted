@@ -56,7 +56,8 @@ public class GuildController {
             @RequestParam(required = false) String name,
             @ParameterObject @PageableDefault(size = 20, sort = "name") Pageable pageable) {
 
-        return PagedResponse.from(guilds.list(name, pageable), GuildResponse::from);
+        return PagedResponse.from(guilds.list(name, Sorting.allow(pageable, "id", "name", "createdAt")),
+                GuildResponse::from);
     }
 
     @GetMapping("/{guildId}")

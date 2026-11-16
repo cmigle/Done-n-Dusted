@@ -58,7 +58,9 @@ public class LogEntryController {
             @Parameter(description = "Filtras pagal iraso busena") @RequestParam(required = false) LogStatus status,
             @ParameterObject @PageableDefault(size = 20, sort = "occurredAt", direction = Sort.Direction.DESC) Pageable pageable) {
 
-        return PagedResponse.from(logs.list(guildId, questId, status, pageable), LogEntryResponse::from);
+        return PagedResponse.from(logs.list(guildId, questId, status,
+                Sorting.allow(pageable, "id", "occurredAt", "createdAt", "status", "xpAwarded", "reviewedAt")),
+                LogEntryResponse::from);
     }
 
     @GetMapping("/{logId}")
