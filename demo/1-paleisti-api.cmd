@@ -1,5 +1,6 @@
 @echo off
 rem Paleidzia LD2 API su svaria demonstracine DB ir atidaro Swagger, kai API pasiruosusi.
+rem Jei API jau veikia (ar paleista antra karta), senas langas uzdaromas ir paleidziama is naujo.
 title LD2 Done-n-Dusted API
 cd /d "%~dp0.."
 call "%~dp00-sustabdyti.cmd" quiet
