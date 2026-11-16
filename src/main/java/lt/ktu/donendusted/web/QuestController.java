@@ -61,7 +61,8 @@ public class QuestController {
             @Parameter(description = "Filtras pagal aktyvuma") @RequestParam(required = false) Boolean active,
             @ParameterObject @PageableDefault(size = 20, sort = "title") Pageable pageable) {
 
-        return PagedResponse.from(quests.list(guildId, stat, type, difficulty, active, pageable),
+        return PagedResponse.from(quests.list(guildId, stat, type, difficulty, active,
+                Sorting.allow(pageable, "id", "title", "stat", "type", "difficulty", "targetCount", "active", "createdAt")),
                 QuestResponse::from);
     }
 

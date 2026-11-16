@@ -12,7 +12,10 @@ import org.hibernate.validator.constraints.URL;
  * neatsiustas (null) laukas nekeiciamas. Tai vienintele vieta, kurioje XP apskritai gali buti
  * paduotas is kliento - ir tik kartu su status.
  */
-@Schema(name = "LogEntryUpdateRequest", description = "Dalinis iraso turinio ir perziuros rezultato atnaujinimas")
+// Swagger pavyzdys - vien DM sprendimas: turinio ir perziuros laukai kartu niekam nepraeitu
+// (turini keicia autorius, perziuri DM, kuris nera autorius).
+@Schema(name = "LogEntryUpdateRequest", description = "Dalinis iraso turinio ir perziuros rezultato atnaujinimas",
+        example = "{\"status\": \"APPROVED\", \"xpAwarded\": 50, \"reviewerNote\": \"Uzskaitau, nors nuotrauka neryski.\"}")
 public record LogEntryUpdateRequest(
 
         @Schema(example = "Begau 8 km palei upe.")

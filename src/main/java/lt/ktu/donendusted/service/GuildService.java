@@ -52,7 +52,7 @@ public class GuildService {
         Specification<Guild> spec = (root, query, cb) -> {
             List<Predicate> predicates = new ArrayList<>();
             if (StringUtils.hasText(nameFilter)) {
-                predicates.add(cb.like(cb.lower(root.get("name")), "%" + nameFilter.toLowerCase() + "%"));
+                predicates.add(cb.like(cb.lower(root.get("name")), LikePattern.contains(nameFilter), LikePattern.ESCAPE));
             }
             if (!me.admin()) {
                 // WHERE guild.id IN (SELECT guild_id FROM guild_membership WHERE user_id = :me)

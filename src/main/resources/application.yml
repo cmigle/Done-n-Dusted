@@ -18,6 +18,13 @@ spring:
     default-property-inclusion: non_null   # null laukai (pvz. prev/next) i JSON neirasomi
     deserialization:
       fail-on-unknown-properties: true     # nezinomas laukas (pvz. xpAwarded kuriant irasa) -> 400
+    datatype:
+      enum:
+        fail-on-numbers-for-enums: true    # "status": 1 nebereiskia APPROVED (enum eiles nr.) -> 400
+  mvc:
+    formcontent:
+      filter:
+        enabled: false   # API priima tik JSON; formos filtras blogai uzkoduota forma luzdavo dar pries sauguma (500)
   data:
     web:
       pageable:

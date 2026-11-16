@@ -62,7 +62,7 @@ nepamirštami. Tas pats failas — `docs/openapi.json`.
 | 2.3 | Tas pats dar kartą; vardą parašyti `Gynimas` | `409` — vardas unikalus nepaisant raidžių dydžio |
 | 2.4 | `register` su `"password":"123"` | `400`, `details` nurodo lauką `password` (8–72 simboliai) |
 | 2.5 | `POST /api/auth/login` `{"username":"jonas","password":"blogas"}` | `401`, `"Neteisingas naudotojo vardas arba slaptazodis"` — tas pats ir nežinomam vardui |
-| 2.6 | `login` `{"username":"jonas","password":"Demo123!"}` | `200`: `accessToken`, `tokenType: Bearer`, `expiresIn: 900`, `refreshToken` |
+| 2.6 | `login` `{"username":"jonas","password":"Demo123!"}` (Swagger pavyzdys jau toks) | `200`: `accessToken`, `tokenType: Bearer`, `expiresIn: 900`, `refreshToken` |
 | 2.7 | Nukopijuoti `accessToken` → **Authorize** → įklijuoti → `GET /api/guilds` | `200`, tik grupės 1 ir 2 (jonas grupės 3 nemato) |
 | 2.8 | `GET /api/auth/me` | jonas, `role: USER`, `memberships`: dvi grupės su `PLAYER` |
 | 2.9 | Git Bash (`3-curl-komandos`) → `jwt` | JWT turinys: `iss: done-n-dusted`, `sub: "2"`, `username: rokas`, `role: USER`, `iat`, `exp` (`exp - iat = 900`). Žetono neklijuoti į svetimas svetaines (jwt.io) |
@@ -176,4 +176,6 @@ Kolekciją galima leisti kartotinai — ji pati susikuria vardus ir pasivalo.
 | Postman visur `401` | Pirma paleisti `0. Autentifikacija` → „Prisijungti“ (užpildo `accessToken`) |
 | Postman pavienė užklausa iš `6.` aplanko meta klaidą | Ji naudoja ankstesnių aplankų kintamuosius — leisti visą kolekciją arba aplankus iš eilės |
 | Swagger vis dar rodo seną žetoną | **Authorize** → *Logout* → įklijuoti naują |
+| Swagger „Failed to load API definition“ | Viršutiniame laukelyje turi būti `/v3/api-docs` (jis skirtas API aprašui, ne užklausoms) → **Explore** |
+| Prisijungus rodo tik 2 grupes | Swagger prisijungimo pavyzdyje įrašytas `jonas` — rokui pakeisti `username` |
 | Duomenys pasikeitė po testų | `1-paleisti-api` iš naujo — DB švari |

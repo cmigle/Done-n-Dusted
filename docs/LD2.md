@@ -145,12 +145,26 @@ tikrina `!access.is(entry.getAuthor())`. Postman: „Klaida 403 – savo įrašo
 **Ką gali ADMIN?** Mato visas grupes ir jų turinį, trina bet ką, valdo naudotojus. Tvirtinti įrašų
 ir kurti turinio svetimose grupėse negali — tai grupės DM ir narių darbas.
 
+**Ar API tikrinta su netinkamais duomenimis?** Taip. Automatinis testas kiekvienam metodui siuntė
+apie 1700 blogų užklausų: tuščius ir per didelius ID, per ilgus laukus, NUL simbolį, skaičius vietoj
+enum, sugadintą JSON, suklastotus žetonus, keistus `sort` ir `page`. `500` liko tik tikroms serverio
+klaidoms; kliento klaidos — `400`/`401`/`403`/`404`/`422`. Pavyzdžiai:
+
+* `sort` — tik iš leidžiamų laukų. Kitaip Spring Data priimtų bet kurį getterį: `?sort=class` lūžtų, o
+  `?sort=user.passwordHash` leistų iš eilės tvarkos spręsti apie svetimus duomenis.
+* `page` — iki 1 000 000, nes Hibernate poslinkį (`page * size`) laiko `int`.
+* Slaptažodis — iki 72 **baitų** (BCrypt riba). Lietuviška raidė UTF-8 užima 2 baitus, todėl 72
+  simbolių slaptažodis su „ą“ būtų per ilgas.
+* Žetone `sub` turi būti skaičius, `role` — `USER` arba `ADMIN`; kitaip `401` jau saugumo filtre.
+
 ---
 
 ## 6. Silpnos vietos (pasakyti atvirai)
 
 * Access žetonas po atsijungimo ar užblokavimo galioja iki 15 min — kaina už tai, kad serveris jų
-  nesaugo. Sprendimas, jei prireiktų: trumpesnis galiojimas arba atšauktų `jti` sąrašas.
+  nesaugo. Sprendimas, jei prireiktų: trumpesnis galiojimas arba atšauktų `jti` sąrašas. Naudotojų
+  teisių keitimas (`PATCH /api/users`) vis dėlto tikrina kvietėją DB, todėl ką tik atimtas ar
+  užblokuotas administratorius per tas 15 min savęs atgal nepaaukštins.
 * Nėra prisijungimo bandymų ribojimo (rate limiting), slaptažodžio atkūrimo ir el. pašto.
 * Naudotojų ištrinti negalima — tik užblokuoti (jų turinys ir istorija lieka).
 * Refresh žetonas grąžinamas JSON, ne `HttpOnly` slapuke (žr. 5 skyrių).

@@ -1,6 +1,7 @@
 package lt.ktu.donendusted.config;
 
 import java.nio.charset.StandardCharsets;
+import java.util.List;
 import javax.crypto.SecretKey;
 import javax.crypto.spec.SecretKeySpec;
 import lt.ktu.donendusted.security.ApiAuthErrorHandler;
@@ -13,7 +14,10 @@ import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.oauth2.core.DelegatingOAuth2TokenValidator;
 import org.springframework.security.oauth2.jose.jws.MacAlgorithm;
+import org.springframework.security.oauth2.jwt.JwtClaimNames;
+import org.springframework.security.oauth2.jwt.JwtClaimValidator;
 import org.springframework.security.oauth2.jwt.JwtDecoder;
 import org.springframework.security.oauth2.jwt.JwtEncoder;
 import org.springframework.security.oauth2.jwt.JwtValidators;
@@ -21,6 +25,8 @@ import org.springframework.security.oauth2.jwt.NimbusJwtDecoder;
 import org.springframework.security.oauth2.jwt.NimbusJwtEncoder;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationConverter;
 import org.springframework.security.oauth2.server.resource.authentication.JwtGrantedAuthoritiesConverter;
+import org.springframework.security.oauth2.server.resource.web.BearerTokenResolver;
+import org.springframework.security.oauth2.server.resource.web.DefaultBearerTokenResolver;
 import org.springframework.security.web.SecurityFilterChain;
 
 /**
@@ -50,12 +56,23 @@ public class SecurityConfig {
                         // Visa kita - tik prisijungus. Grupiu teises (narys, DM, savininkas) tikrina servisai.
                         .anyRequest().authenticated())
                 .oauth2ResourceServer(rs -> rs
+                        .bearerTokenResolver(publicAuthIgnoresToken())
                         .jwt(jwt -> jwt.jwtAuthenticationConverter(jwtAuthenticationConverter()))
                         .authenticationEntryPoint(errors)
                         .accessDeniedHandler(errors))
                 // 401/403 is filtru - ta pati ApiError struktura kaip ir kitos klaidos
                 .exceptionHandling(e -> e.authenticationEntryPoint(errors).accessDeniedHandler(errors));
         return http.build();
+    }
+
+    /**
+     * Viesi /api/auth keliai Authorization antrastes neskaito. Klientas (pvz. LD3) pasibaigusi access
+     * zetona dazniausiai prideda prie visu uzklausu - jis neturi trukdyti prisijungti ar atnaujinti zetonu.
+     */
+    private static BearerTokenResolver publicAuthIgnoresToken() {
+        DefaultBearerTokenResolver resolver = new DefaultBearerTokenResolver();
+        List<String> publicPaths = List.of(PUBLIC_AUTH);
+        return request -> publicPaths.contains(request.getRequestURI()) ? null : resolver.resolve(request);
     }
 
     /** "role" claim (USER/ADMIN) virsta Spring authority ROLE_USER / ROLE_ADMIN. */
@@ -82,13 +99,19 @@ public class SecurityConfig {
         return NimbusJwtEncoder.withSecretKey(jwtSigningKey).algorithm(MacAlgorithm.HS256).build();
     }
 
-    /** Tikrina parasa, galiojimo laika (exp) ir isdavija (iss). */
+    /**
+     * Tikrina parasa, galiojimo laika (exp), isdavija (iss) ir claims forma: sub - naudotojo ID (skaicius),
+     * role - USER arba ADMIN. Kitoks zetonas atmetamas filtre (401), o ne luzta giliau kode.
+     */
     @Bean
     public JwtDecoder jwtDecoder(SecretKey jwtSigningKey, JwtProperties props) {
         NimbusJwtDecoder decoder = NimbusJwtDecoder.withSecretKey(jwtSigningKey)
                 .macAlgorithm(MacAlgorithm.HS256)
                 .build();
-        decoder.setJwtValidator(JwtValidators.createDefaultWithIssuer(props.issuer()));
+        decoder.setJwtValidator(new DelegatingOAuth2TokenValidator<>(
+                JwtValidators.createDefaultWithIssuer(props.issuer()),
+                new JwtClaimValidator<String>(JwtClaimNames.SUB, sub -> sub != null && sub.matches("\\d{1,18}")),
+                new JwtClaimValidator<Object>("role", role -> "USER".equals(role) || "ADMIN".equals(role))));
         return decoder;
     }
 
