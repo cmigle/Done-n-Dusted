@@ -1,4 +1,6 @@
 cloudResources:
+  collections:
+    ../Done n Dusted API (LD2): 57331514-b4fda429-83f9-422e-9a5c-94c4ffb6098f
   globals:
     ../postman/globals/workspace.globals.yaml: f8c2a9dd-68a7-4652-85b2-3875163d2985
 localResources:
