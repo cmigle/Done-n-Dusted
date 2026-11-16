@@ -7,9 +7,6 @@ diagram twice:
 - **Technical:** the terms you would use in a report or an exam answer.
 - **Plain English:** what the same thing means, in everyday words.
 
-The older text walkthrough is still in [`../WALKTHROUGH.md`](WALKTHROUGH.md). This guide
-does not replace it; it explains the pictures.
-
 ---
 
 ## Contents

@@ -357,7 +357,7 @@ docs/
   DEMO_PLANAS.md        ką ir kokia tvarka rodyti gynime
   gynimas/              LD2 gynimo puslapis (HTML) ir jo šaltiniai (Archify)
   openapi.json          sugeneruota OpenAPI specifikacija
-  visual/               LD1 gynimo gidas, demo komandos, WALKTHROUGH.md ir diagramos
+  visual/               LD1 gynimo gidas, demo komandos ir diagramos
 postman/
   Done n Dusted API (LD2)/              kolekcija Postman v3 formatu (YAML)
   DoneNDusted.postman_collection.json   ta pati kolekcija v2.1 JSON (newman)
