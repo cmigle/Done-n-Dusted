@@ -8,7 +8,7 @@ import type { LogEntry, LogStatus } from '../api/types'
 import { useAuth } from '../auth/AuthContext'
 import { QuestFormModal } from '../components/QuestFormModal'
 import { ConfirmModal, ReviewModal } from '../components/ReviewModal'
-import { StatIcon } from '../components/StatIcon'
+import { StatTile } from '../components/StatIcon'
 import { useToast } from '../components/toast'
 import { Empty, ErrorNote, Field, Loading, PixelAvatar, Window } from '../components/ui'
 import {
@@ -95,15 +95,17 @@ export function QuestPage() {
       <div className="grid grid--sidebar">
         <div className="stack">
           <Window className="quest-detail">
-            <div className="quest-detail__icon" style={{ color: stat.color }}>
-              <StatIcon stat={q.stat} size={48} />
+            <div className="quest-detail__icon">
+              <StatTile stat={q.stat} size="lg" />
             </div>
             <h1 className="quest-detail__title">{q.title}</h1>
             {q.description && <p>{q.description}</p>}
             <dl className="facts">
               <div>
                 <dt>Stat</dt>
-                <dd style={{ color: stat.color }}>{stat.name}</dd>
+                <dd className="stat-name">
+                  <StatTile stat={q.stat} size="sm" /> {stat.name}
+                </dd>
               </div>
               <div>
                 <dt>Difficulty</dt>
@@ -115,7 +117,9 @@ export function QuestPage() {
               </div>
               <div>
                 <dt>Reward</dt>
-                <dd className="text-gold">{xp(q.xpPerCompletion)}</dd>
+                <dd>
+                  <span className="xp-chip">{xp(q.xpPerCompletion)}</span>
+                </dd>
               </div>
               {q.targetCount && (
                 <div>
@@ -202,7 +206,7 @@ export function QuestPage() {
                   </div>
                   <div className="log__actions">
                     {isDm && !mine && entry.status === 'PENDING' && (
-                      <button type="button" className="btn btn--small" onClick={() => setReviewing(entry)}>
+                      <button type="button" className="btn btn--secondary btn--small" onClick={() => setReviewing(entry)}>
                         Review
                       </button>
                     )}

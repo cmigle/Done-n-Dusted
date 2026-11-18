@@ -9,6 +9,7 @@ import { GuildFormModal } from '../components/GuildFormModal'
 import { QuestFormModal } from '../components/QuestFormModal'
 import { ConfirmModal, ReviewModal } from '../components/ReviewModal'
 import { QuestCard } from '../components/QuestCard'
+import { StatTile } from '../components/StatIcon'
 import { useToast } from '../components/toast'
 import { Empty, ErrorNote, Field, Loading, PixelAvatar, Window } from '../components/ui'
 import {
@@ -167,18 +168,21 @@ function QuestsTab({ guildId, isDm, canCreate }: { guildId: number; isDm: boolea
     <div className="stack">
       <Window className="window--compact">
         <form className="filters" onSubmit={(e) => e.preventDefault()} aria-label="Quest filters">
-          <Field label="Stat">
-            {(p) => (
-              <select {...p} className="select" value={filters.stat} onChange={(e) => update({ stat: e.target.value as Stat | '' })}>
-                <option value="">All</option>
-                {STATS.map((s) => (
-                  <option key={s} value={s}>
-                    {STAT_INFO[s].name}
-                  </option>
-                ))}
-              </select>
-            )}
-          </Field>
+          <fieldset className="chips">
+            <legend>Stat</legend>
+            <label className="chip chip--plain">
+              <input type="radio" name="stat-filter" checked={!filters.stat} onChange={() => update({ stat: '' })} />
+              <span>All</span>
+            </label>
+            {STATS.map((s) => (
+              <label key={s} className="chip">
+                <input type="radio" name="stat-filter" checked={filters.stat === s} onChange={() => update({ stat: s as Stat })} />
+                <span>
+                  <StatTile stat={s} size="sm" /> {STAT_INFO[s].name}
+                </span>
+              </label>
+            ))}
+          </fieldset>
           <Field label="Type">
             {(p) => (
               <select {...p} className="select" value={filters.type} onChange={(e) => update({ type: e.target.value as QuestType | '' })}>
@@ -367,7 +371,7 @@ function MembersTab({
         </Window>
       )}
 
-      <Window title={`Members (${list.length})`} headingLevel={3}>
+      <Window title={<>Members <span className="digits">({list.length})</span></>} headingLevel={3}>
         <ul className="list">
           {list.map((m) => (
             <li key={m.userId} className="member">
@@ -436,7 +440,7 @@ function ReviewTab({ guildId, names }: { guildId: number; names: Map<number, str
   if (loading) return <Loading />
 
   return (
-    <Window title={`Awaiting review (${pending.length})`} headingLevel={3}>
+    <Window title={<>Awaiting review <span className="digits">({pending.length})</span></>} headingLevel={3}>
       {pending.length === 0 ? (
         <Empty icon={<Script size={48} aria-hidden="true" />}>All entries reviewed. Nice work!</Empty>
       ) : (
@@ -454,7 +458,7 @@ function ReviewTab({ guildId, names }: { guildId: number; names: Map<number, str
                   {entry.note && <p className="log__note">{entry.note}</p>}
                   <span className="muted">{formatDateTime(entry.occurredAt)}</span>
                 </div>
-                <button type="button" className="btn btn--small" onClick={() => setReviewing({ quest, entry })}>
+                <button type="button" className="btn btn--secondary btn--small" onClick={() => setReviewing({ quest, entry })}>
                   Review
                 </button>
               </li>

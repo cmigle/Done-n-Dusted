@@ -1,3 +1,4 @@
+import type { CSSProperties } from 'react'
 import { DIFFICULTIES, DIFFICULTY_INFO, STATS, STAT_INFO, xp } from '../lib/game'
 import { Modal } from './ui'
 
@@ -15,14 +16,24 @@ export function XpRulesModal({ open, onClose }: { open: boolean; onClose: () => 
           <thead>
             <tr>
               <th scope="col">Difficulty</th>
-              <th scope="col">XP</th>
+              <th scope="col" className="num">
+                XP
+              </th>
             </tr>
           </thead>
           <tbody>
-            {DIFFICULTIES.map((d) => (
+            {DIFFICULTIES.map((d, i) => (
               <tr key={d}>
-                <td>{DIFFICULTY_INFO[d].name}</td>
-                <td>{xp(DIFFICULTY_INFO[d].xp)}</td>
+                <td>
+                  {/* 1–5 pips, coloured from green to red */}
+                  <span className="pips" aria-hidden="true" style={{ '--heat': `var(--heat-${i + 1})` } as CSSProperties}>
+                    {DIFFICULTIES.map((_, j) => (
+                      <i key={j} className={j <= i ? 'on' : undefined} />
+                    ))}
+                  </span>
+                  {DIFFICULTY_INFO[d].name}
+                </td>
+                <td className="num">{xp(DIFFICULTY_INFO[d].xp)}</td>
               </tr>
             ))}
           </tbody>

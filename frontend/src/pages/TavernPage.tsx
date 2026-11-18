@@ -47,7 +47,7 @@ export function TavernPage() {
               <p>
                 You have {incoming} new {plural(incoming, 'friend request', 'friend requests')}.
               </p>
-              <Link to="/friends" className="btn btn--small">
+              <Link to="/friends" className="btn btn--secondary btn--small">
                 View
               </Link>
             </Window>

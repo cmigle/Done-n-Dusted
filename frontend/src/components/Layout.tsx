@@ -3,6 +3,8 @@ import { Link, NavLink, Navigate, Outlet, useLocation } from 'react-router'
 import { BookOpen, Close, Github, Home, Login, Logout, Menu, Shield, UserPlus, Users } from '@nsmr/pixelart-react'
 import { API_DOCS_URL } from '../api/client'
 import { useAuth } from '../auth/AuthContext'
+import { GrassStrip } from './Scene'
+import { ThemeToggle } from './ThemeToggle'
 import { PixelAvatar, Spinner } from './ui'
 
 function Header() {
@@ -23,16 +25,19 @@ function Header() {
           Done n Dusted
         </Link>
 
-        <button
-          type="button"
-          className="btn btn--ghost btn--icon menu-toggle"
-          aria-expanded={open}
-          aria-controls="main-nav"
-          aria-label={open ? 'Close menu' : 'Open menu'}
-          onClick={() => setOpenOn(open ? null : location.pathname)}
-        >
-          {open ? <Close size={24} aria-hidden="true" /> : <Menu size={24} aria-hidden="true" />}
-        </button>
+        <div className="header-tools">
+          <ThemeToggle />
+          <button
+            type="button"
+            className="btn btn--ghost btn--icon menu-toggle"
+            aria-expanded={open}
+            aria-controls="main-nav"
+            aria-label={open ? 'Close menu' : 'Open menu'}
+            onClick={() => setOpenOn(open ? null : location.pathname)}
+          >
+            {open ? <Close size={24} aria-hidden="true" /> : <Menu size={24} aria-hidden="true" />}
+          </button>
+        </div>
 
         <nav id="main-nav" className={`nav${open ? ' is-open' : ''}`} aria-label="Main menu">
           <ul className="nav__list">
@@ -94,10 +99,9 @@ const YEAR = new Date().getFullYear()
 function Footer() {
   return (
     <footer className="site-footer">
+      <GrassStrip className="site-footer__grass" />
       <div className="container site-footer__bar">
-        <p className="site-footer__legal">
-          <span className="legal-sign">©</span> {YEAR} Miglė Cirtautaitė
-        </p>
+        <p className="site-footer__legal">© {YEAR} Miglė Cirtautaitė</p>
         <ul className="site-footer__links">
           <li>
             <a href="https://github.com/cmigle/Done-n-Dusted" target="_blank" rel="noreferrer">
