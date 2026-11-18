@@ -46,6 +46,10 @@
     {
       "name": "Users",
       "description": "Naudotoju valdymas (tik ADMIN)"
+    },
+    {
+      "name": "Friends",
+      "description": "Draugystes kvietimai ir draugu veikejo korteles"
     }
   ],
   "paths": {
@@ -911,6 +915,171 @@
           },
           "422": {
             "description": "Tokio naudotojo nera",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/friends": {
+      "get": {
+        "tags": [
+          "Friends"
+        ],
+        "summary": "Mano draugystes ir kvietimai",
+        "description": "Abiem kryptimis (OUTGOING ir INCOMING). Rikiuojama nuo naujausio kvietimo.",
+        "operationId": "list_4",
+        "parameters": [
+          {
+            "name": "status",
+            "in": "query",
+            "description": "Filtras pagal busena",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "PENDING",
+                "ACCEPTED",
+                "BLOCKED"
+              ]
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "description": "Zero-based page index (0..N)",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "default": 0,
+              "minimum": 0
+            }
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "description": "The size of the page to be returned",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "default": 20,
+              "minimum": 1
+            }
+          },
+          {
+            "name": "sort",
+            "in": "query",
+            "description": "Sorting criteria in the format: property,(asc|desc). Default sort order is ascending. Multiple sort criteria are supported.",
+            "required": false,
+            "schema": {
+              "type": "array",
+              "default": [
+                "createdAt,DESC"
+              ],
+              "items": {
+                "type": "string"
+              }
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Sarasas grazintas",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PagedResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Neteisingi parametrai ar turinys (pvz. ne skaicius vietoje ID, netinkamas sort ar JSON)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Nera access zetono arba jis neteisingas / pasibaiges",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Friends"
+        ],
+        "summary": "Pakviesti i draugus",
+        "description": "Kvietimas sukuriamas PENDING busenoje.",
+        "operationId": "request",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/FriendRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Kvietimas issiustas",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FriendshipResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Neteisingas payload",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Nera access zetono arba jis neteisingas / pasibaiges",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Su siuo naudotoju draugyste ar kvietimas jau yra",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Tokio naudotojo nera arba kvieciamas pats save",
             "content": {
               "application/json": {
                 "schema": {
@@ -2336,13 +2505,220 @@
         }
       }
     },
+    "/api/friends/{friendshipId}": {
+      "get": {
+        "tags": [
+          "Friends"
+        ],
+        "summary": "Viena draugyste",
+        "operationId": "get_5",
+        "parameters": [
+          {
+            "name": "friendshipId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Draugyste rasta",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FriendshipResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Neteisingi parametrai ar turinys (pvz. ne skaicius vietoje ID, netinkamas sort ar JSON)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Nera access zetono arba jis neteisingas / pasibaiges",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Draugystes nera arba ji ne jusu",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Friends"
+        ],
+        "summary": "Atsaukti, atmesti, nutraukti arba atblokuoti",
+        "description": "Bet kuri puse; uzblokuota draugyste istrina (atblokuoja) tik uzblokaves naudotojas.",
+        "operationId": "delete_3",
+        "parameters": [
+          {
+            "name": "friendshipId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Istrinta; atsakymas be turinio"
+          },
+          "400": {
+            "description": "Neteisingi parametrai ar turinys (pvz. ne skaicius vietoje ID, netinkamas sort ar JSON)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Nera access zetono arba jis neteisingas / pasibaiges",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Draugystes nera arba ji ne jusu",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "patch": {
+        "tags": [
+          "Friends"
+        ],
+        "summary": "Priimti kvietima arba uzblokuoti",
+        "description": "ACCEPTED - laukianti kvietima priima tik jo gavejas. BLOCKED - uzblokuoti gali bet kuri puse;\nuzblokuotasis sios draugystes nebemato. Atmesti, atsaukti ar atblokuoti - DELETE.\n",
+        "operationId": "update_4",
+        "parameters": [
+          {
+            "name": "friendshipId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/FriendshipUpdateRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Busena pakeista",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FriendshipResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Neteisingas payload",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Nera access zetono arba jis neteisingas / pasibaiges",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Savo issiusta kvietima priima ne siuntejas",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Draugystes nera arba ji ne jusu",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Negalimas busenos perejimas",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/users": {
       "get": {
         "tags": [
           "Users"
         ],
         "summary": "Naudotoju sarasas",
-        "operationId": "list_4",
+        "operationId": "list_5",
         "parameters": [
           {
             "name": "username",
@@ -2424,6 +2800,161 @@
           },
           "403": {
             "description": "Neuztenka teisiu: ne grupes narys, netinkama role grupeje arba ne ADMIN",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/guilds/{guildId}/members/{userId}/sheet": {
+      "get": {
+        "tags": [
+          "Members"
+        ],
+        "summary": "Nario veikejo kortele",
+        "description": "Lygis, XP, charakteristikos, inspiration ir serija - tik is patvirtintu (APPROVED) nario irasu\nsioje grupeje. FULL pjuvis (su 10 naujausiu irasu ir laukianciu skaiciumi) - pats narys,\ngrupes DM ir ADMIN; kiti grupes nariai gauna PUBLIC.\n",
+        "operationId": "sheet",
+        "parameters": [
+          {
+            "name": "guildId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          },
+          {
+            "name": "userId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Kortele grazinta",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CharacterSheetResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Neteisingi parametrai ar turinys (pvz. ne skaicius vietoje ID, netinkamas sort ar JSON)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Nera access zetono arba jis neteisingas / pasibaiges",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Neuztenka teisiu: ne grupes narys, netinkama role grupeje arba ne ADMIN",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Grupes nera arba naudotojas nera jos narys",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/friends/{friendshipId}/sheet": {
+      "get": {
+        "tags": [
+          "Friends"
+        ],
+        "summary": "Draugo veikejo kortele",
+        "description": "Tik patvirtintai draugystei: PUBLIC pjuvis, sujungtas per visas draugo grupes.",
+        "operationId": "sheet_1",
+        "parameters": [
+          {
+            "name": "friendshipId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Kortele grazinta",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CharacterSheetResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Neteisingi parametrai ar turinys (pvz. ne skaicius vietoje ID, netinkamas sort ar JSON)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Nera access zetono arba jis neteisingas / pasibaiges",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Draugyste dar nepatvirtinta arba uzblokuota",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Draugystes nera arba ji ne jusu",
             "content": {
               "application/json": {
                 "schema": {
@@ -2875,6 +3406,70 @@
           }
         }
       },
+      "FriendRequest": {
+        "type": "object",
+        "description": "Draugystes kvietimas",
+        "properties": {
+          "username": {
+            "type": "string",
+            "description": "Esamo naudotojo vardas",
+            "example": "jonas",
+            "minLength": 1
+          }
+        },
+        "required": [
+          "username"
+        ]
+      },
+      "FriendshipResponse": {
+        "type": "object",
+        "description": "Draugyste arba kvietimas",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int64",
+            "example": 1
+          },
+          "userId": {
+            "type": "integer",
+            "format": "int64",
+            "description": "Kito naudotojo id",
+            "example": 4
+          },
+          "username": {
+            "type": "string",
+            "description": "Kito naudotojo vardas",
+            "example": "jonas"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "PENDING",
+              "ACCEPTED",
+              "BLOCKED"
+            ],
+            "example": "ACCEPTED"
+          },
+          "direction": {
+            "type": "string",
+            "description": "OUTGOING - kvietima siunte (BLOCKED - uzblokavo) prisijunges naudotojas; INCOMING - kitas naudotojas",
+            "enum": [
+              "OUTGOING",
+              "INCOMING"
+            ],
+            "example": "OUTGOING"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "respondedAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Kada kvietimas priimtas ar uzblokuotas; nera, kol PENDING"
+          }
+        }
+      },
       "RegisterRequest": {
         "type": "object",
         "description": "Naujo naudotojo registracija",
@@ -3176,6 +3771,25 @@
           "role"
         ]
       },
+      "FriendshipUpdateRequest": {
+        "type": "object",
+        "description": "Atsakymas i kvietima arba uzblokavimas",
+        "properties": {
+          "status": {
+            "type": "string",
+            "description": "ACCEPTED - priimti kvietima (tik gavejas); BLOCKED - uzblokuoti (bet kuri puse)",
+            "enum": [
+              "PENDING",
+              "ACCEPTED",
+              "BLOCKED"
+            ],
+            "example": "ACCEPTED"
+          }
+        },
+        "required": [
+          "status"
+        ]
+      },
       "PageInfo": {
         "type": "object",
         "properties": {
@@ -3243,6 +3857,187 @@
           },
           "links": {
             "$ref": "#/components/schemas/PageLinks"
+          }
+        }
+      },
+      "CharacterSheetResponse": {
+        "type": "object",
+        "description": "Veikejo kortele: lygis, XP ir charakteristikos is patvirtintu irasu",
+        "properties": {
+          "userId": {
+            "type": "integer",
+            "format": "int64",
+            "example": 4
+          },
+          "username": {
+            "type": "string",
+            "example": "jonas"
+          },
+          "guildId": {
+            "type": "integer",
+            "format": "int64",
+            "description": "Grupe; draugo kortelei (visos grupes kartu) nepateikiama",
+            "example": 2
+          },
+          "guildName": {
+            "type": "string",
+            "description": "Draugo kortelei nepateikiama",
+            "example": "Iron Vow"
+          },
+          "role": {
+            "type": "string",
+            "description": "Role grupeje; draugo kortelei nepateikiama",
+            "enum": [
+              "PLAYER",
+              "DUNGEON_MASTER"
+            ],
+            "example": "PLAYER"
+          },
+          "view": {
+            "type": "string",
+            "description": "FULL - pats naudotojas, grupes DM arba ADMIN; PUBLIC - kiti grupes nariai ir draugai",
+            "enum": [
+              "FULL",
+              "PUBLIC"
+            ],
+            "example": "FULL"
+          },
+          "level": {
+            "type": "integer",
+            "format": "int32",
+            "description": "totalXp / 100 + 1",
+            "example": 2
+          },
+          "totalXp": {
+            "type": "integer",
+            "format": "int64",
+            "description": "Visu patvirtintu irasu XP suma",
+            "example": 100
+          },
+          "xpIntoLevel": {
+            "type": "integer",
+            "format": "int32",
+            "description": "totalXp % 100 - kiek XP jau surinkta dabartiniame lygyje",
+            "example": 0
+          },
+          "xpForNextLevel": {
+            "type": "integer",
+            "format": "int32",
+            "description": "Kiek XP reikia vienam lygiui (visada 100)",
+            "example": 100
+          },
+          "inspiration": {
+            "type": "integer",
+            "format": "int64",
+            "description": "Patvirtintu irasu inspiration suma",
+            "example": 1
+          },
+          "streakDays": {
+            "type": "integer",
+            "format": "int32",
+            "description": "Kiek UTC dienu is eiles, baigiant siandien arba vakar, turi bent viena patvirtinta irasa (pagal occurredAt); kitaip 0",
+            "example": 3
+          },
+          "stats": {
+            "type": "array",
+            "description": "Visada 6 charakteristikos tvarka STR, DEX, CON, INT, WIS, CHA",
+            "items": {
+              "$ref": "#/components/schemas/StatScore"
+            }
+          },
+          "recentLogs": {
+            "type": "array",
+            "description": "Tik FULL: 10 naujausiu patvirtintu irasu, naujausias pirmas",
+            "items": {
+              "$ref": "#/components/schemas/SheetRecentLog"
+            }
+          },
+          "pendingCount": {
+            "type": "integer",
+            "format": "int64",
+            "description": "Tik FULL: kiek siu irasu dar laukia DM perziuros (PENDING)",
+            "example": 1
+          }
+        }
+      },
+      "SheetRecentLog": {
+        "type": "object",
+        "description": "Patvirtintas irasas veikejo korteleje",
+        "properties": {
+          "logId": {
+            "type": "integer",
+            "format": "int64",
+            "example": 5
+          },
+          "questId": {
+            "type": "integer",
+            "format": "int64",
+            "example": 4
+          },
+          "questTitle": {
+            "type": "string",
+            "example": "Run 50 kilometers"
+          },
+          "stat": {
+            "type": "string",
+            "enum": [
+              "STR",
+              "DEX",
+              "CON",
+              "INT",
+              "WIS",
+              "CHA"
+            ],
+            "example": "CON"
+          },
+          "xpAwarded": {
+            "type": "integer",
+            "format": "int32",
+            "example": 50
+          },
+          "inspirationAwarded": {
+            "type": "integer",
+            "format": "int32",
+            "example": 0
+          },
+          "occurredAt": {
+            "type": "string",
+            "format": "date-time",
+            "example": "2026-09-13T07:00:00Z"
+          },
+          "reviewedAt": {
+            "type": "string",
+            "format": "date-time",
+            "example": "2026-09-14T08:30:00Z"
+          }
+        }
+      },
+      "StatScore": {
+        "type": "object",
+        "description": "Charakteristikos reiksme ir jai skirtas XP",
+        "properties": {
+          "stat": {
+            "type": "string",
+            "enum": [
+              "STR",
+              "DEX",
+              "CON",
+              "INT",
+              "WIS",
+              "CHA"
+            ],
+            "example": "CON"
+          },
+          "score": {
+            "type": "integer",
+            "format": "int32",
+            "description": "min(20, 10 + xp / 50)",
+            "example": 12
+          },
+          "xp": {
+            "type": "integer",
+            "format": "int64",
+            "example": 100
           }
         }
       },
