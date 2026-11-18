@@ -149,6 +149,16 @@ code {
   gap: var(--s2);
   align-items: center;
 }
+.friend {
+  flex-wrap: wrap;
+}
+.friend__name {
+  min-width: 8rem;
+}
+.friend > .row {
+  margin-left: auto;
+  gap: var(--s1);
+}
 .member__info,
 .log__body,
 .friend__name {
