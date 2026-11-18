@@ -12,7 +12,9 @@ import java.net.URI;
 import lt.ktu.donendusted.domain.GuildMembership;
 import lt.ktu.donendusted.domain.GuildRole;
 import lt.ktu.donendusted.error.ApiError;
+import lt.ktu.donendusted.service.CharacterSheetService;
 import lt.ktu.donendusted.service.MembershipService;
+import lt.ktu.donendusted.web.dto.CharacterSheetResponse;
 import lt.ktu.donendusted.web.dto.MemberRequest;
 import lt.ktu.donendusted.web.dto.MemberResponse;
 import lt.ktu.donendusted.web.dto.MemberRoleRequest;
@@ -39,9 +41,11 @@ import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 public class MemberController {
 
     private final MembershipService members;
+    private final CharacterSheetService sheets;
 
-    public MemberController(MembershipService members) {
+    public MemberController(MembershipService members, CharacterSheetService sheets) {
         this.members = members;
+        this.sheets = sheets;
     }
 
     @GetMapping
@@ -65,6 +69,22 @@ public class MemberController {
     })
     public MemberResponse get(@PathVariable Long guildId, @PathVariable Long userId) {
         return MemberResponse.from(members.get(guildId, userId));
+    }
+
+    @GetMapping("/{userId}/sheet")
+    @Operation(summary = "Nario veikejo kortele",
+            description = """
+                    Lygis, XP, charakteristikos, inspiration ir serija - tik is patvirtintu (APPROVED) nario irasu
+                    sioje grupeje. FULL pjuvis (su 10 naujausiu irasu ir laukianciu skaiciumi) - pats narys,
+                    grupes DM ir ADMIN; kiti grupes nariai gauna PUBLIC.
+                    """)
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Kortele grazinta"),
+            @ApiResponse(responseCode = "404", description = "Grupes nera arba naudotojas nera jos narys",
+                    content = @Content(schema = @Schema(implementation = ApiError.class)))
+    })
+    public CharacterSheetResponse sheet(@PathVariable Long guildId, @PathVariable Long userId) {
+        return sheets.guildSheet(guildId, userId);
     }
 
     @PostMapping(consumes = MediaType.APPLICATION_JSON_VALUE)
