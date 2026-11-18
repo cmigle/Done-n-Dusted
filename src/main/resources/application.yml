@@ -45,6 +45,17 @@ springdoc:
   api-docs:
     path: /v3/api-docs
 
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health    # tik /actuator/health (debesu sveikatos patikrai); kiti actuator keliai neatidaromi
+  endpoint:
+    health:
+      show-details: never  # atsakyme tik {"status":"UP"} - jokiu DB ar disko detaliu
+      probes:
+        enabled: false     # Kubernetes liveness/readiness grupiu nereikia (ir ju sarasas atsakyme nerodomas)
+
 app:
   jwt:
     issuer: done-n-dusted

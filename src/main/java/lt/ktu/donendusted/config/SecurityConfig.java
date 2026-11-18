@@ -32,8 +32,8 @@ import org.springframework.security.web.SecurityFilterChain;
 
 /**
  * Visas API apsaugotas JWT access zetonu (Authorization: Bearer ...), isskyrus registracija,
- * prisijungima, zetono atnaujinima ir Swagger dokumentacija. Serveris busenos nesaugo (STATELESS) -
- * kiekviena uzklausa autentifikuojama is naujo pagal zetona.
+ * prisijungima, zetono atnaujinima, Swagger dokumentacija ir /actuator/health. Serveris busenos
+ * nesaugo (STATELESS) - kiekviena uzklausa autentifikuojama is naujo pagal zetona.
  */
 @Configuration
 @EnableConfigurationProperties(JwtProperties.class)
@@ -55,6 +55,8 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(HttpMethod.POST, PUBLIC_AUTH).permitAll()
                         .requestMatchers("/swagger-ui.html", "/swagger-ui/**", "/v3/api-docs/**", "/error").permitAll()
+                        // Debesu platformos (Azure App Service) sveikatos patikra - be zetono, tik UP/DOWN be detaliu.
+                        .requestMatchers(HttpMethod.GET, "/actuator/health").permitAll()
                         .requestMatchers("/api/users/**").hasRole("ADMIN")
                         // Visa kita - tik prisijungus. Grupiu teises (narys, DM, savininkas) tikrina servisai.
                         .anyRequest().authenticated())
