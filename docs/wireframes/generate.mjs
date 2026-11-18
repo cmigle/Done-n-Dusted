@@ -114,7 +114,10 @@ const NAV = ['Taverna', 'Draugai', 'Administravimas', 'Atsijungti']
   f.box(104, 112, 420, 52, { fill: DARK }).text(116, 146, 'H1: Tavo veikėjas auga tarp sesijų', { size: 18, weight: 700 })
   f.lines(104, 190, 400, 4)
   f.button(104, 280, 180, 'Sukurti veikėją').button(300, 280, 180, 'Jau turiu paskyrą', false)
-  f.image(568, 112, 608, 300, 'Pikselinė iliustracija (max-width: 100%)')
+  f.box(700, 112, 476, 400).avatar(724, 136, 64).text(804, 160, 'Pavyzdinis veikėjas', { weight: 700 }).box(1096, 136, 56, 56, { fill: DARK }).text(1124, 170, 'Lv', { anchor: 'middle', weight: 700 })
+  f.bar(724, 220, 428, 0.65)
+  for (let i = 0; i < 6; i++) f.text(724, 270 + i * 30, ['Jėga', 'Vikrumas', 'Ištvermė', 'Intelektas', 'Išmintis', 'Charizma'][i], { size: 14 }).bar(900, 258 + i * 30, 252, [0.3, 0.1, 0.5, 0.2, 0.6, 0.1][i])
+  f.box(724, 446, 428, 44, { fill: '#fff' }).text(740, 474, 'Žurnalo įrašo pavyzdys: +20 XP', { size: 14 })
   f.text(104, 476, 'H2: Kaip tai veikia', { size: 18, weight: 700 })
   f.button(916, 450, 260, 'Kaip skaičiuojama patirtis?', false)
   for (let i = 0; i < 3; i++) {

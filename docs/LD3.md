@@ -15,19 +15,19 @@ API aprašas — [`API.md`](API.md). Šaka `ld3`, žyma `v0.3.0`.
 | Sąsaja REST API | 31 iš 35 API metodų: grupės, užduotys, įrašai, nariai, kortelė, draugai, naudotojai, autentifikacija. Nenaudojami tik 4 pavieniai `GET` pagal ID (įrašas, narys, naudotojas, draugystė) — tie duomenys jau ateina sąraše | `frontend/src/api/endpoints.ts` |
 | Responsive, bent 1 breakpoint | Pagrindinis lūžis **768 px** (meniu, tinklelis, formos, sąrašai); papildomai 1024 px (3 stulpelių kortelės) | `styles/layout.css`, `styles/pages.css` |
 | Paveikslėlių prisitaikymas | `img, svg { max-width: 100%; height: auto }`; iliustracija ir avatarai mažėja kartu su konteineriu | `styles/base.css`, [ekrano nuotraukos](#3-ekrano-nuotraukos) |
-| Header, Content, Footer — skirtingi stiliai | Header — akmenų siena, auksinis logotipas, skirtukai; Content — RPG meniu langai ant žvaigždėto fono; Footer — žolė ir žemė, taškiniai pabraukimai | `styles/layout.css`, `styles/components.css` |
+| Header, Content, Footer — skirtingi stiliai | Header — akmenų siena, pikselinis logotipas, rėmeliuoti skirtukai; Content — `shadow` paviršiai su `slate` rėmeliu ant žvaigždėto fono; Footer — tamsiausia juosta su žolės skirtuku viršuje, taškiniai pabraukimai | `styles/layout.css`, `styles/components.css` |
 | Analogiški elementai skirtingose srityse atrodo skirtingai | Nuorodos: header'yje — skirtukai su rėmeliu, turinyje — mėlynos pabrauktos, footer'yje — baltos su taškiniu žaliu pabraukimu. Antraštės: header'yje — logotipas, turinyje — su šešėliu, footer'yje — žalios mažos | tie patys |
 | Įvedimo sąsaja, keli input tipai | `text`, `password`, `textarea`, `select`, `radio`, `checkbox`, `number`, `url`, `datetime-local`, `range`, `search` | `QuestFormModal`, `ReviewModal`, `QuestPage` (žygio forma), `AuthPages`, `AdminUsersPage` |
 | Transitions / animacijos | XP ir charakteristikų juostos užsipildo pikseliniais žingsniais; modalinis langas „iššoka“; pranešimai įslysta; mygtukas „nusispaudžia“; meniu išsiskleidžia; laukų rėmelio spalvos perėjimas. `prefers-reduced-motion` — animacijos išjungiamos | `styles/components.css` |
 | Responsive meniu (desktop — horizontalus, mobile — hamburger) | ≥ 768 px — horizontalūs skirtukai; < 768 px — hamburger mygtukas su `aria-expanded`, meniu išsiskleidžia po header'iu ir užsidaro pasirinkus punktą | `components/Layout.tsx`, `styles/layout.css` |
 | Vektorinės ikonos | [pixelarticons](https://pixelarticons.com) (SVG, MIT) per `@nsmr/pixelart-react`; logotipas, iliustracija ir avatarai — taip pat SVG | `components/StatIcon.tsx`, `public/*.svg` |
-| Kitoks šriftas | Google Fonts **Pixelify Sans** (400–700) — viena šeima visai sąsajai | `index.html` |
+| Kitoks šriftas | Google Fonts: **Pixelify Sans** — logotipui, H1 ir H2; **IBM Plex Mono** — tekstui, mygtukams, lentelėms ir skaičiams (`tabular-nums`). Pikselinio šrifto skaitmenys painiojosi (20 ↔ 80, 5 ↔ S), todėl jo skaičiams nenaudojam | `index.html`, `styles/tokens.css` |
 | Modalinis langas su prasminga informacija | „Kaip skaičiuojama patirtis?“ (XP lentelė ir formulės), DM įrašo peržiūra, užduoties ir grupės formos, draugo kortelė, trynimo patvirtinimas. Natūralus `<dialog>`: fokusas lange, `Esc` ir paspaudimas šalia uždaro | `components/ui.tsx` (`Modal`), `XpRulesModal.tsx`, `ReviewModal.tsx` |
 | Derančios spalvos | „Sweetie-16“ pikselių paletė (16 spalvų, sukurta derėti tarpusavyje); charakteristikos turi savo spalvas | `styles/tokens.css` |
 | Išdėstymas pagal tinklelį | 12 kolonų logika per CSS Grid (`grid--2`, `grid--3`, `grid--sidebar` 4/8), visi tarpai — 8 px kartotiniai, konteineris 1120 px | `styles/layout.css` |
 | Matomumas ir pasiekiamumas | Kontrastas tikrintas (tekstas ≥ 4,5:1), matomas fokusas (geltonas brūkšninis), „Pereiti prie turinio“ nuoroda, `aria-*` progreso juostoms, skirtukams ir meniu, etiketės visiems laukams, klaidos susietos su laukais | `styles/base.css`, `components/ui.tsx` |
 | Aiškios ir nuoseklios formos | Visur ta pati struktūra: etiketė → laukas → užuomina → klaida; serverio klaidos rodomos prie konkretaus lauko; veiksmo mygtukas sako, kas įvyks („Patvirtinti ir skirti 50 XP“) | `components/ui.tsx` (`Field`) |
-| Vientisas dizainas | Viena paletė, vienas šriftas, vienas „pikselio“ vienetas (4 px rėmeliai ir iškirpti kampai) visuose komponentuose | [5 skyrius](#5-dizaino-sistema) |
+| Vientisas dizainas | Viena paletė su 60/30/10 taisykle, dvi šriftų rolės, vienas „pikselio“ vienetas (rėmeliai ir iškirpti kampai) visuose komponentuose | [5 skyrius](#5-dizaino-sistema) |
 | Pasiekiama saityne (debesys) | Azure App Service + Azure Database for PostgreSQL: <https://done-n-dusted.azurewebsites.net> | [7 skyrius](#7-diegimas-į-debesį) |
 | Kodas Git, dokumentacija | GitHub, šakos `ld1`/`ld2`/`ld3`, PR istorija, šis dokumentas ir [`README.md`](../README.md) | |
 
@@ -92,8 +92,9 @@ meniu langai.
 
 | Žetonas | Reikšmė |
 | --- | --- |
-| Paletė | Sweetie-16: `midnight #1a1c2c` fonas, `navy #29366f` langai, `frost #f4f4f4` tekstas, `gold #ffcd75` veiksmai ir XP, `ruby`/`leaf`/`sky` būsenoms |
-| Šriftas | Pixelify Sans, skalė 1,25 (14–44 px), pagrindinis 18 px |
+| Paletė | Sweetie-16, taisyklė 60/30/10: `midnight #1a1c2c` fonas (60 %), `shadow #333c57` paviršiai su `slate` rėmeliu (30 %), `gold #ffcd75` — tik pagrindiniai veiksmai, lygis ir XP (10 %) |
+| Charakteristikų spalvos | Visame saite tos pačios: STR `ruby`, DEX `lime`, CON `ember`, INT `sky`, WIS `aqua`, CHA rožinė `#f08fb0` (`--stat-*` žetonai) |
+| Šriftai | Pixelify Sans (H1, H2, logotipas) ir IBM Plex Mono (visa kita), skalė 1,25, pagrindinis 16 px; H1 telefone ~32 px su `text-wrap: balance` |
 | Tinklelis | 8 px žingsnis, konteineris 1120 px, lūžiai 768 ir 1024 px |
 | „Pikselis“ | 4 px rėmeliai, iškirpti kampai (`clip-path`), šešėliai be suliejimo |
 | Judesys | `steps()` laiptinė animacija — kaip senuose žaidimuose; vienas automatinis momentas — kortelės juostos |
