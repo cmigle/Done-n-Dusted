@@ -9,6 +9,9 @@ approved entries grow the player's character — level, XP and six D&D stats.
 Full-stack project: **Spring Boot 4 REST API** with JWT auth and role-based access, and a **React 19 +
 TypeScript** client. Built for the KTU course *Web Application Design* (T120B165) in three labs.
 
+**Live demo: <https://done-n-dusted.azurewebsites.net>** · API docs: [Swagger UI](https://done-n-dusted.azurewebsites.net/swagger-ui.html) ·
+demo accounts `rokas`, `jonas`, `ieva`, `admin` (password `Demo123!`)
+
 ![Character sheet](docs/screenshots/05-sheet-desktop.png)
 
 | Guild with quests | DM review | Mobile |
@@ -34,16 +37,21 @@ TypeScript** client. Built for the KTU course *Web Application Design* (T120B165
 | Frontend | React 19, TypeScript, Vite, TanStack Query, React Router, pixelarticons |
 | Tests | JUnit 5 + MockMvc on embedded PostgreSQL, Postman/newman, Vitest + Testing Library, Playwright |
 | CI | GitHub Actions: backend tests, frontend lint/tests/build, API contract and end-to-end tests on every PR |
+| Cloud | Azure App Service (Linux, Java 21) and Azure Database for PostgreSQL Flexible Server |
 
 ## Architecture
 
 ```mermaid
 flowchart LR
-    Browser["React SPA<br/>(Vite build)"] -- "JSON over HTTPS<br/>Authorization: Bearer JWT" --> API["Spring Boot API"]
-    API -- "JPA, Flyway migrations" --> DB[("PostgreSQL")]
-    API -. "health check" .- Cloud["Cloud platform"]
+    Browser["Browser<br/>React SPA"] -- "HTTPS, JSON<br/>Authorization: Bearer JWT" --> App
+    subgraph Azure
+        App["App Service · Italy North<br/>Spring Boot API + React build"]
+        DB[("PostgreSQL 17 Flexible Server<br/>Poland Central")]
+    end
+    App -- "JDBC over SSL, Flyway" --> DB
 ```
 
+- One App Service serves both the API (`/api`) and the React build (`classpath:/static`): one URL, no CORS. Static Web Apps was not an option because the student subscription only allows regions where it is not offered.
 - The API is stateless: each request carries a signed access token; group roles are read from the database on every request, so role changes apply immediately.
 - Permission rules live in the service layer (`GuildAccess`), not in annotations, because they depend on data (author, DM, owner).
 - Every error, including 401/403 from security filters, uses one `ApiError` JSON shape.
@@ -67,11 +75,17 @@ Demo accounts (password `Demo123!`): `rokas` (DM), `ieva` (DM in another guild),
 ## Tests
 
 ```bash
-./mvnw test                                            # 39 backend integration and unit tests
+./mvnw test                                            # 42 backend integration and unit tests
 npx newman run postman/DoneNDusted.postman_collection.json   # 78 requests, 176 assertions
 cd frontend && npm test                                # 12 unit tests
 cd frontend && npm run test:e2e                        # 10 Playwright scenarios (API and UI running)
 ```
+
+## Deployment
+
+`scripts/package.sh` builds the React app into `src/main/resources/static` and packages one jar; it runs on Azure App
+Service with the `prod` profile. Configuration comes from environment variables (`DB_URL`, `DB_USER`, `DB_PASSWORD`,
+`JWT_SECRET`, `CORS_ORIGINS`); details in [`docs/LD3.md`](docs/LD3.md#7-diegimas-į-debesį).
 
 ## Documentation
 

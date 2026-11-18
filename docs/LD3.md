@@ -28,7 +28,7 @@ API aprašas — [`API.md`](API.md). Šaka `ld3`, žyma `v0.3.0`.
 | Matomumas ir pasiekiamumas | Kontrastas tikrintas (tekstas ≥ 4,5:1), matomas fokusas (geltonas brūkšninis), „Pereiti prie turinio“ nuoroda, `aria-*` progreso juostoms, skirtukams ir meniu, etiketės visiems laukams, klaidos susietos su laukais | `styles/base.css`, `components/ui.tsx` |
 | Aiškios ir nuoseklios formos | Visur ta pati struktūra: etiketė → laukas → užuomina → klaida; serverio klaidos rodomos prie konkretaus lauko; veiksmo mygtukas sako, kas įvyks („Patvirtinti ir skirti 50 XP“) | `components/ui.tsx` (`Field`) |
 | Vientisas dizainas | Viena paletė, vienas šriftas, vienas „pikselio“ vienetas (4 px rėmeliai ir iškirpti kampai) visuose komponentuose | [5 skyrius](#5-dizaino-sistema) |
-| Pasiekiama saityne (debesys) | Azure — žr. [7 skyrių](#7-diegimas-į-debesį) | |
+| Pasiekiama saityne (debesys) | Azure App Service + Azure Database for PostgreSQL: <https://done-n-dusted.azurewebsites.net> | [7 skyrius](#7-diegimas-į-debesį) |
 | Kodas Git, dokumentacija | GitHub, šakos `ld1`/`ld2`/`ld3`, PR istorija, šis dokumentas ir [`README.md`](../README.md) | |
 
 ---
@@ -111,7 +111,7 @@ Grafika (logotipas, iliustracija) generuojama skriptu iš ASCII piešinių ir fo
 
 | Lygis | Kas | Kiekis | Komanda |
 | --- | --- | --- | --- |
-| Backend integraciniai | MockMvc + įterptinė PostgreSQL: autentifikacija, teisės, validacija, kortelė, draugystės | 39 | `./mvnw test` |
+| Backend integraciniai | MockMvc + įterptinė PostgreSQL: autentifikacija, teisės, validacija, kortelė, draugystės, sąsajos maršrutai | 42 | `./mvnw test` |
 | API kontraktas | Postman kolekcija | 78 užklausos, 176 patikros | `npx newman run postman/DoneNDusted.postman_collection.json` |
 | Frontend unit | Vitest + Testing Library: API klientas (refresh vienu metu), avataras, komponentai, formos | 12 | `npm test` |
 | End-to-end | Playwright: svečias, prisijungimas, žygis → DM patvirtinimas → kortelė, užduoties forma, `409` prie lauko, draugo kortelė, administravimas, telefono meniu, 404 | 10 | `npm run test:e2e` |
@@ -124,7 +124,38 @@ ankstesnio naudotojo puslapį (pataisyta `AuthContext` — `signedOut`).
 
 ## 7. Diegimas į debesį
 
-*Pildoma diegiant.*
+**Adresas: <https://done-n-dusted.azurewebsites.net>** — sąsaja, API (`/api`), Swagger
+(`/swagger-ui.html`) ir sveikatos patikra (`/actuator/health`) vienu adresu.
+
+```
+Naršyklė ──HTTPS──► Azure App Service (Italy North, Linux, Java 21, B1)
+                      Spring Boot "prod" + React build viduje (classpath:/static)
+                          │ JDBC, sslmode=require
+                          ▼
+                    Azure Database for PostgreSQL 17 (Poland Central, Burstable B1ms, 32 GB)
+```
+
+| Sprendimas | Kodėl |
+| --- | --- |
+| Azure for Students | Nemokamas studentų kreditas; prenumeratos politika leidžia tik 5 regionus: Poland Central, Italy North, Austria East, Belgium Central, Denmark East |
+| App Service Italy North | Poland Central regione studentų prenumeratos B1 App Service kvota — 0; Italy North — leidžiama |
+| UI tame pačiame App Service | Azure Static Web Apps veikia tik regionuose, kurių politika neleidžia. Todėl React build supakuojamas į jar, o Spring Boot jį atiduoda (`FrontendConfig`): vienas adresas, nereikia CORS, Swagger tame pačiame domene |
+| PostgreSQL Flexible Server | Ta pati PostgreSQL kaip lokaliai; Flyway pirmo paleidimo metu sukuria schemą ir demonstracinius duomenis |
+| Konfigūracija aplinkos kintamaisiais | `SPRING_PROFILES_ACTIVE=prod`, `DB_URL`, `DB_USER`, `DB_PASSWORD`, `JWT_SECRET` (48 atsitiktiniai simboliai), `CORS_ORIGINS`, `PORT`/`WEBSITES_PORT=8080` — App Service nustatymuose, ne Git'e |
+| Saugumas | Tik HTTPS, TLS ≥ 1.2, FTP išjungtas; DB pasiekiama tik iš Azure paslaugų ir tik su SSL |
+| Always On | Programa neužmiega — pirmas atsakymas greitas |
+
+**Diegimas:**
+
+```bash
+scripts/package.sh                                   # React build -> static, mvn package
+az webapp deploy -g rg-done-n-dusted -n done-n-dusted --type jar \
+  --src-path target/done-n-dusted-0.3.0.jar
+```
+
+**Patikrinta debesyje:** Postman kolekcija — 176 patikros be klaidų, Playwright — 10 iš 10
+scenarijų (`E2E_BASE_URL=https://done-n-dusted.azurewebsites.net npm run test:e2e`). Po testų
+duomenų bazė sukurta iš naujo, todėl debesyje — švarūs demonstraciniai duomenys.
 
 ---
 
