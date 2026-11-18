@@ -78,13 +78,13 @@ public class QuestService {
 
     public Quest create(Long guildId, QuestRequest request) {
         GuildAccess access = guilds.access(guildId);
-        access.require(access.isMember(), "Uzduotis kurti gali tik grupes nariai");
+        access.require(access.isMember(), "Only guild members can create quests.");
         access.require(request.type() != QuestType.SIDE_QUEST || access.isDm(),
-                "SIDE_QUEST uzduotis gali kurti tik grupes DM");
+                "Only the game master can create SIDE_QUEST quests.");
         Guild guild = access.guild();
         validate(request.type(), request.targetCount());
         if (quests.existsByGuildIdAndTitleIgnoreCase(guildId, request.title())) {
-            throw new ConflictException("Grupeje jau yra uzduotis pavadinimu '" + request.title() + "'");
+            throw new ConflictException("Quest \"" + request.title() + "\" already exists in this guild.");
         }
         return quests.save(new Quest(guild, request.title(), request.description(), request.stat(),
                 request.type(), request.difficulty(), request.targetCount(), request.activeOrDefault(),
@@ -99,9 +99,9 @@ public class QuestService {
         GuildAccess access = guilds.access(guildId);
         Quest quest = get(access, questId);
         access.require(access.is(quest.getCreatedBy()) || access.isDm() || access.isOwner(),
-                "Uzduoti keisti gali jos kurejas, grupes DM arba savininkas");
+                "Only the quest creator, the game master or the guild owner can edit this quest.");
         access.require(request.type() != QuestType.SIDE_QUEST || quest.getType() == QuestType.SIDE_QUEST
-                || access.isDm(), "Paversti uzduoti SIDE_QUEST gali tik grupes DM");
+                || access.isDm(), "Only the game master can change a quest to SIDE_QUEST.");
 
         QuestType type = request.type() != null ? request.type() : quest.getType();
         Integer targetCount;
@@ -117,7 +117,7 @@ public class QuestService {
         if (request.title() != null) {
             // "IdNot" - pavadinimas gali sutapti su pacia atnaujinama uzduotimi, bet ne su kita.
             if (quests.existsByGuildIdAndTitleIgnoreCaseAndIdNot(guildId, request.title(), questId)) {
-                throw new ConflictException("Grupeje jau yra uzduotis pavadinimu '" + request.title() + "'");
+                throw new ConflictException("Quest \"" + request.title() + "\" already exists in this guild.");
             }
             quest.setTitle(request.title());
         }
@@ -143,7 +143,7 @@ public class QuestService {
         GuildAccess access = guilds.access(guildId);
         Quest quest = get(access, questId);
         access.require(access.is(quest.getCreatedBy()) || access.isDm() || access.isOwner() || access.isAdmin(),
-                "Uzduoti istrinti gali jos kurejas, grupes DM, savininkas arba administratorius");
+                "Only the quest creator, the game master, the guild owner or an admin can delete this quest.");
         quests.delete(quest);
     }
 
@@ -152,10 +152,10 @@ public class QuestService {
      */
     private void validate(QuestType type, Integer targetCount) {
         if (type == QuestType.GRIND && targetCount == null) {
-            throw new BusinessRuleException("GRIND tipo uzduotis privalo tureti targetCount");
+            throw new BusinessRuleException("A GRIND quest requires targetCount.");
         }
         if (type != QuestType.GRIND && targetCount != null) {
-            throw new BusinessRuleException("targetCount leidziamas tik GRIND tipo uzduotims");
+            throw new BusinessRuleException("targetCount is only allowed for GRIND quests.");
         }
     }
 }

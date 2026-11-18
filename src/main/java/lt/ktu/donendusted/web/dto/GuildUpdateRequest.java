@@ -14,7 +14,7 @@ public record GuildUpdateRequest(
         // @NotBlank cia netinka - jis atmestu ir null (neatsiusta lauka). @Pattern null praleidzia,
         // o atsiusta reiksme privalo tureti bent viena ne tarpo simboli.
         @Schema(description = "Naujas unikalus pavadinimas; nenurodzius nekeiciamas", example = "Thursday Night Crew")
-        @Pattern(regexp = ".*\\S.*", message = "must not be blank")
+        @Pattern(regexp = ".*\\S.*", message = "Must not be blank")
         @Size(min = 3, max = 60)
         String name,
 

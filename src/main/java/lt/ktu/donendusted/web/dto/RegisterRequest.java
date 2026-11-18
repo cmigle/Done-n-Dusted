@@ -13,7 +13,7 @@ public record RegisterRequest(
 
         @Schema(description = "Unikalus vardas (raidziu dydis nesvarbus)", example = "naujokas")
         @NotBlank
-        @Pattern(regexp = "[A-Za-z0-9_.-]{3,30}", message = "3-30 simboliu: raides, skaiciai, _ . -")
+        @Pattern(regexp = "[A-Za-z0-9_.-]{3,30}", message = "Must be 3-30 characters: letters, digits, _ . -")
         String username,
 
         @Schema(description = "8-72 simboliai (daugiausia 72 baitai UTF-8)", example = "Demo123!")
@@ -23,7 +23,7 @@ public record RegisterRequest(
 
     /** BCrypt riba - 72 baitai, ne simboliai: lietuviska raide UTF-8 uzima 2 baitus. Ilgesnio BCrypt neuzsifruotu. */
     @JsonIgnore
-    @AssertTrue(message = "slaptazodis per ilgas - daugiausia 72 baitai (lietuviskos raides uzima po 2)")
+    @AssertTrue(message = "Password is too long: at most 72 bytes (non-ASCII letters take 2 bytes each)")
     public boolean isPasswordWithinBcryptLimit() {
         return password == null || password.getBytes(StandardCharsets.UTF_8).length <= 72;
     }
