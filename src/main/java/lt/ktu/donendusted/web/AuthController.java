@@ -29,7 +29,7 @@ import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 @RestController
 @RequestMapping(path = "/api/auth", produces = MediaType.APPLICATION_JSON_VALUE)
-@Tag(name = "Auth", description = "Registracija, prisijungimas ir JWT zetonai")
+@Tag(name = "Auth", description = "Registration, login and JWT tokens")
 public class AuthController {
 
     private final AuthService auth;
@@ -40,12 +40,12 @@ public class AuthController {
 
     @PostMapping(path = "/register", consumes = MediaType.APPLICATION_JSON_VALUE)
     @SecurityRequirements
-    @Operation(summary = "Registruotis", description = "Sukuria naudotoja su role USER. Zetonu negrazina - po to reikia prisijungti.")
+    @Operation(summary = "Register", description = "Creates a user with the USER role. Returns no tokens, so log in afterwards.")
     @ApiResponses({
-            @ApiResponse(responseCode = "201", description = "Naudotojas sukurtas"),
-            @ApiResponse(responseCode = "400", description = "Neteisingas vardas ar slaptazodis",
+            @ApiResponse(responseCode = "201", description = "User created"),
+            @ApiResponse(responseCode = "400", description = "Invalid username or password format",
                     content = @Content(schema = @Schema(implementation = ApiError.class))),
-            @ApiResponse(responseCode = "409", description = "Vardas jau uzimtas",
+            @ApiResponse(responseCode = "409", description = "Username already taken",
                     content = @Content(schema = @Schema(implementation = ApiError.class)))
     })
     public ResponseEntity<UserResponse> register(@Valid @RequestBody RegisterRequest request) {
@@ -59,14 +59,14 @@ public class AuthController {
 
     @PostMapping(path = "/login", consumes = MediaType.APPLICATION_JSON_VALUE)
     @SecurityRequirements
-    @Operation(summary = "Prisijungti", description = "Grazina trumpalaiki access zetona (JWT) ir refresh zetona.")
+    @Operation(summary = "Log in", description = "Returns a short-lived access token (JWT) and a refresh token.")
     @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "Prisijungta"),
-            @ApiResponse(responseCode = "400", description = "Truksta lauku",
+            @ApiResponse(responseCode = "200", description = "Logged in"),
+            @ApiResponse(responseCode = "400", description = "Missing fields",
                     content = @Content(schema = @Schema(implementation = ApiError.class))),
-            @ApiResponse(responseCode = "401", description = "Neteisingas vardas arba slaptazodis",
+            @ApiResponse(responseCode = "401", description = "Invalid username or password",
                     content = @Content(schema = @Schema(implementation = ApiError.class))),
-            @ApiResponse(responseCode = "403", description = "Paskyra uzblokuota",
+            @ApiResponse(responseCode = "403", description = "Account is blocked",
                     content = @Content(schema = @Schema(implementation = ApiError.class)))
     })
     public TokenResponse login(@Valid @RequestBody LoginRequest request) {
@@ -75,16 +75,16 @@ public class AuthController {
 
     @PostMapping(path = "/refresh", consumes = MediaType.APPLICATION_JSON_VALUE)
     @SecurityRequirements
-    @Operation(summary = "Atnaujinti zetonus",
+    @Operation(summary = "Refresh tokens",
             description = """
-                    Uz galiojanti refresh zetona isduoda nauja pora, o senasis atsaukiamas (rotacija).
-                    Pakartotinai panaudotas zetonas laikomas pavogtu - atsaukiamos visos naudotojo sesijos.
+                    Exchanges a valid refresh token for a new pair and revokes the old one (rotation).
+                    A reused token is treated as stolen, so all of the user's sessions are revoked.
                     """)
     @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "Isduota nauja zetonu pora"),
-            @ApiResponse(responseCode = "401", description = "Zetonas neteisingas, pasibaiges arba jau panaudotas",
+            @ApiResponse(responseCode = "200", description = "New token pair issued"),
+            @ApiResponse(responseCode = "401", description = "Token is invalid, expired or already used",
                     content = @Content(schema = @Schema(implementation = ApiError.class))),
-            @ApiResponse(responseCode = "403", description = "Paskyra uzblokuota",
+            @ApiResponse(responseCode = "403", description = "Account is blocked",
                     content = @Content(schema = @Schema(implementation = ApiError.class)))
     })
     public TokenResponse refresh(@Valid @RequestBody RefreshRequest request) {
@@ -93,16 +93,16 @@ public class AuthController {
 
     @PostMapping(path = "/logout", consumes = MediaType.APPLICATION_JSON_VALUE)
     @SecurityRequirements
-    @Operation(summary = "Atsijungti", description = "Atsaukia refresh zetona. Access zetonas galioja iki savo exp - todel jis trumpas.")
-    @ApiResponse(responseCode = "204", description = "Atsijungta")
+    @Operation(summary = "Log out", description = "Revokes the refresh token. The access token stays valid until its exp, which is why it is short-lived.")
+    @ApiResponse(responseCode = "204", description = "Logged out")
     public ResponseEntity<Void> logout(@Valid @RequestBody RefreshRequest request) {
         auth.logout(request.refreshToken());
         return ResponseEntity.noContent().build();
     }
 
     @GetMapping("/me")
-    @Operation(summary = "Prisijunges naudotojas", description = "Kartu grazinamos grupes ir naudotojo role kiekvienoje is ju.")
-    @ApiResponse(responseCode = "200", description = "Naudotojo duomenys")
+    @Operation(summary = "Current user", description = "Also returns the user's guilds and their role in each.")
+    @ApiResponse(responseCode = "200", description = "User data")
     public MeResponse me() {
         return auth.me();
     }

@@ -36,7 +36,7 @@ import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 @RestController
 @RequestMapping(path = "/api/guilds/{guildId}/quests", produces = MediaType.APPLICATION_JSON_VALUE)
-@Tag(name = "Quests", description = "Uzduotys - pasiekiamos tik per savo grupe")
+@Tag(name = "Quests", description = "Quests, reachable only through their guild")
 public class QuestController {
 
     private final QuestService quests;
@@ -46,19 +46,19 @@ public class QuestController {
     }
 
     @GetMapping
-    @Operation(summary = "Grupes uzduociu sarasas",
-            description = "Puslapiuotas sarasas su filtrais pagal charakteristika, tipa, sudetinguma ir aktyvuma.")
+    @Operation(summary = "List a guild's quests",
+            description = "Paged list with filters by stat, type, difficulty and active state.")
     @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "Sarasas grazintas"),
-            @ApiResponse(responseCode = "404", description = "Grupe neegzistuoja",
+            @ApiResponse(responseCode = "200", description = "List returned"),
+            @ApiResponse(responseCode = "404", description = "Guild does not exist",
                     content = @Content(schema = @Schema(implementation = ApiError.class)))
     })
     public PagedResponse<QuestResponse> list(
             @PathVariable Long guildId,
-            @Parameter(description = "Filtras pagal auginama charakteristika") @RequestParam(required = false) Stat stat,
-            @Parameter(description = "Filtras pagal uzduoties tipa") @RequestParam(required = false) QuestType type,
-            @Parameter(description = "Filtras pagal sudetinguma") @RequestParam(required = false) Difficulty difficulty,
-            @Parameter(description = "Filtras pagal aktyvuma") @RequestParam(required = false) Boolean active,
+            @Parameter(description = "Filter by the stat the quest improves") @RequestParam(required = false) Stat stat,
+            @Parameter(description = "Filter by quest type") @RequestParam(required = false) QuestType type,
+            @Parameter(description = "Filter by difficulty") @RequestParam(required = false) Difficulty difficulty,
+            @Parameter(description = "Filter by active state") @RequestParam(required = false) Boolean active,
             @ParameterObject @PageableDefault(size = 20, sort = "title") Pageable pageable) {
 
         return PagedResponse.from(quests.list(guildId, stat, type, difficulty, active,
@@ -67,11 +67,11 @@ public class QuestController {
     }
 
     @GetMapping("/{questId}")
-    @Operation(summary = "Viena uzduotis",
-            description = "Grazina 404, jei uzduotis nepriklauso nurodytai grupei.")
+    @Operation(summary = "Get a quest",
+            description = "Returns 404 if the quest does not belong to the given guild.")
     @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "Uzduotis rasta"),
-            @ApiResponse(responseCode = "404", description = "Neteisinga grandine arba uzduoties nera",
+            @ApiResponse(responseCode = "200", description = "Quest found"),
+            @ApiResponse(responseCode = "404", description = "Wrong chain or quest not found",
                     content = @Content(schema = @Schema(implementation = ApiError.class)))
     })
     public QuestResponse get(@PathVariable Long guildId, @PathVariable Long questId) {
@@ -79,16 +79,16 @@ public class QuestController {
     }
 
     @PostMapping(consumes = MediaType.APPLICATION_JSON_VALUE)
-    @Operation(summary = "Sukurti uzduoti")
+    @Operation(summary = "Create a quest")
     @ApiResponses({
-            @ApiResponse(responseCode = "201", description = "Uzduotis sukurta"),
-            @ApiResponse(responseCode = "400", description = "Neteisingas payload",
+            @ApiResponse(responseCode = "201", description = "Quest created"),
+            @ApiResponse(responseCode = "400", description = "Invalid request body",
                     content = @Content(schema = @Schema(implementation = ApiError.class))),
-            @ApiResponse(responseCode = "404", description = "Grupe neegzistuoja",
+            @ApiResponse(responseCode = "404", description = "Guild does not exist",
                     content = @Content(schema = @Schema(implementation = ApiError.class))),
-            @ApiResponse(responseCode = "409", description = "Toks pavadinimas grupeje jau yra",
+            @ApiResponse(responseCode = "409", description = "This title already exists in the guild",
                     content = @Content(schema = @Schema(implementation = ApiError.class))),
-            @ApiResponse(responseCode = "422", description = "Pazeista dalykine taisykle (pvz., GRIND be targetCount)",
+            @ApiResponse(responseCode = "422", description = "Business rule violated (for example, GRIND without targetCount)",
                     content = @Content(schema = @Schema(implementation = ApiError.class)))
     })
     public ResponseEntity<QuestResponse> create(@PathVariable Long guildId,
@@ -102,20 +102,20 @@ public class QuestController {
     }
 
     @PatchMapping(path = "/{questId}", consumes = MediaType.APPLICATION_JSON_VALUE)
-    @Operation(summary = "Atnaujinti uzduoti",
+    @Operation(summary = "Update a quest",
             description = """
-                    Dalinis atnaujinimas: keiciami tik atsiusti laukai. Sudetingumo keitimas veikia tik busimus
-                    irasus - jau patvirtintu irasu XP nekeiciamas.
+                    Partial update: only the fields sent are changed. A difficulty change affects only future
+                    log entries; the XP of already approved log entries stays the same.
                     """)
     @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "Uzduotis atnaujinta"),
-            @ApiResponse(responseCode = "400", description = "Neteisingas payload",
+            @ApiResponse(responseCode = "200", description = "Quest updated"),
+            @ApiResponse(responseCode = "400", description = "Invalid request body",
                     content = @Content(schema = @Schema(implementation = ApiError.class))),
-            @ApiResponse(responseCode = "404", description = "Neteisinga grandine arba uzduoties nera",
+            @ApiResponse(responseCode = "404", description = "Wrong chain or quest not found",
                     content = @Content(schema = @Schema(implementation = ApiError.class))),
-            @ApiResponse(responseCode = "409", description = "Toks pavadinimas grupeje jau yra",
+            @ApiResponse(responseCode = "409", description = "This title already exists in the guild",
                     content = @Content(schema = @Schema(implementation = ApiError.class))),
-            @ApiResponse(responseCode = "422", description = "Pazeista dalykine taisykle",
+            @ApiResponse(responseCode = "422", description = "Business rule violated",
                     content = @Content(schema = @Schema(implementation = ApiError.class)))
     })
     public QuestResponse update(@PathVariable Long guildId, @PathVariable Long questId,
@@ -124,10 +124,10 @@ public class QuestController {
     }
 
     @DeleteMapping("/{questId}")
-    @Operation(summary = "Istrinti uzduoti", description = "Kartu istrinami visi jos progreso irasai.")
+    @Operation(summary = "Delete a quest", description = "Also deletes all of its log entries.")
     @ApiResponses({
-            @ApiResponse(responseCode = "204", description = "Istrinta; atsakymas be turinio"),
-            @ApiResponse(responseCode = "404", description = "Neteisinga grandine arba uzduoties nera",
+            @ApiResponse(responseCode = "204", description = "Deleted; no response body"),
+            @ApiResponse(responseCode = "404", description = "Wrong chain or quest not found",
                     content = @Content(schema = @Schema(implementation = ApiError.class)))
     })
     public ResponseEntity<Void> delete(@PathVariable Long guildId, @PathVariable Long questId) {

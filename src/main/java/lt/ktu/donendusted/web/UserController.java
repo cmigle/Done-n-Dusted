@@ -27,7 +27,7 @@ import org.springframework.web.bind.annotation.RestController;
 /** Visi sio kontrolerio keliai - tik ADMIN (SecurityConfig: /api/users/** -> hasRole ADMIN). */
 @RestController
 @RequestMapping(path = "/api/users", produces = MediaType.APPLICATION_JSON_VALUE)
-@Tag(name = "Users", description = "Naudotoju valdymas (tik ADMIN)")
+@Tag(name = "Users", description = "User management (ADMIN only)")
 public class UserController {
 
     private final UserService users;
@@ -37,10 +37,10 @@ public class UserController {
     }
 
     @GetMapping
-    @Operation(summary = "Naudotoju sarasas")
-    @ApiResponse(responseCode = "200", description = "Sarasas grazintas")
+    @Operation(summary = "List users")
+    @ApiResponse(responseCode = "200", description = "List returned")
     public PagedResponse<UserResponse> list(
-            @Parameter(description = "Filtras pagal vardo dali") @RequestParam(required = false) String username,
+            @Parameter(description = "Filter by part of the username") @RequestParam(required = false) String username,
             @ParameterObject @PageableDefault(size = 20, sort = "username") Pageable pageable) {
 
         return PagedResponse.from(
@@ -49,10 +49,10 @@ public class UserController {
     }
 
     @GetMapping("/{userId}")
-    @Operation(summary = "Vienas naudotojas")
+    @Operation(summary = "Get a user")
     @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "Naudotojas rastas"),
-            @ApiResponse(responseCode = "404", description = "Naudotojo nera",
+            @ApiResponse(responseCode = "200", description = "User found"),
+            @ApiResponse(responseCode = "404", description = "User not found",
                     content = @Content(schema = @Schema(implementation = ApiError.class)))
     })
     public UserResponse get(@PathVariable Long userId) {
@@ -60,13 +60,13 @@ public class UserController {
     }
 
     @PatchMapping(path = "/{userId}", consumes = MediaType.APPLICATION_JSON_VALUE)
-    @Operation(summary = "Keisti role arba uzblokuoti",
-            description = "Uzblokavus atsaukiamos visos naudotojo sesijos. Savo ADMIN teisiu nuimti negalima.")
+    @Operation(summary = "Change role or block",
+            description = "Blocking revokes all of the user's sessions. You cannot remove your own ADMIN role.")
     @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "Naudotojas atnaujintas"),
-            @ApiResponse(responseCode = "404", description = "Naudotojo nera",
+            @ApiResponse(responseCode = "200", description = "User updated"),
+            @ApiResponse(responseCode = "404", description = "User not found",
                     content = @Content(schema = @Schema(implementation = ApiError.class))),
-            @ApiResponse(responseCode = "422", description = "Bandoma nuimti savo ADMIN teises ar uzblokuoti save",
+            @ApiResponse(responseCode = "422", description = "Attempt to remove your own ADMIN role or block yourself",
                     content = @Content(schema = @Schema(implementation = ApiError.class)))
     })
     public UserResponse update(@PathVariable Long userId, @Valid @RequestBody UserUpdateRequest request) {

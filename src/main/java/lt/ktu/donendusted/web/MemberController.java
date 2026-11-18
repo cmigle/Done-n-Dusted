@@ -37,7 +37,7 @@ import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 /** Narys identifikuojamas naudotojo id grupes viduje: /api/guilds/{guildId}/members/{userId}. */
 @RestController
 @RequestMapping(path = "/api/guilds/{guildId}/members", produces = MediaType.APPLICATION_JSON_VALUE)
-@Tag(name = "Members", description = "Grupes nariai ir ju roles (PLAYER / DUNGEON_MASTER)")
+@Tag(name = "Members", description = "Guild members and their roles (PLAYER / DUNGEON_MASTER)")
 public class MemberController {
 
     private final MembershipService members;
@@ -49,11 +49,11 @@ public class MemberController {
     }
 
     @GetMapping
-    @Operation(summary = "Grupes nariu sarasas", description = "Mato visi grupes nariai ir ADMIN.")
-    @ApiResponse(responseCode = "200", description = "Sarasas grazintas")
+    @Operation(summary = "List guild members", description = "Visible to all guild members and ADMIN.")
+    @ApiResponse(responseCode = "200", description = "List returned")
     public PagedResponse<MemberResponse> list(
             @PathVariable Long guildId,
-            @Parameter(description = "Filtras pagal role") @RequestParam(required = false) GuildRole role,
+            @Parameter(description = "Filter by role") @RequestParam(required = false) GuildRole role,
             @ParameterObject @PageableDefault(size = 20, sort = "joinedAt") Pageable pageable) {
 
         return PagedResponse.from(members.list(guildId, role, Sorting.allow(pageable, "joinedAt", "role")),
@@ -61,10 +61,10 @@ public class MemberController {
     }
 
     @GetMapping("/{userId}")
-    @Operation(summary = "Vienas narys")
+    @Operation(summary = "Get a member")
     @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "Narys rastas"),
-            @ApiResponse(responseCode = "404", description = "Grupes nera arba naudotojas nera jos narys",
+            @ApiResponse(responseCode = "200", description = "Member found"),
+            @ApiResponse(responseCode = "404", description = "Guild not found, or the user is not a member",
                     content = @Content(schema = @Schema(implementation = ApiError.class)))
     })
     public MemberResponse get(@PathVariable Long guildId, @PathVariable Long userId) {
@@ -72,15 +72,15 @@ public class MemberController {
     }
 
     @GetMapping("/{userId}/sheet")
-    @Operation(summary = "Nario veikejo kortele",
+    @Operation(summary = "Member's character sheet",
             description = """
-                    Lygis, XP, charakteristikos, inspiration ir serija - tik is patvirtintu (APPROVED) nario irasu
-                    sioje grupeje. FULL pjuvis (su 10 naujausiu irasu ir laukianciu skaiciumi) - pats narys,
-                    grupes DM ir ADMIN; kiti grupes nariai gauna PUBLIC.
+                    Level, XP, stats, inspiration and streak, only from the member's approved (APPROVED) log entries
+                    in this guild. The FULL view (with the 10 latest log entries and the pending count) is for the member,
+                    the guild's game master and ADMIN; other guild members get PUBLIC.
                     """)
     @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "Kortele grazinta"),
-            @ApiResponse(responseCode = "404", description = "Grupes nera arba naudotojas nera jos narys",
+            @ApiResponse(responseCode = "200", description = "Character sheet returned"),
+            @ApiResponse(responseCode = "404", description = "Guild not found, or the user is not a member",
                     content = @Content(schema = @Schema(implementation = ApiError.class)))
     })
     public CharacterSheetResponse sheet(@PathVariable Long guildId, @PathVariable Long userId) {
@@ -88,14 +88,14 @@ public class MemberController {
     }
 
     @PostMapping(consumes = MediaType.APPLICATION_JSON_VALUE)
-    @Operation(summary = "Prideti nari", description = "Tik grupes savininkas arba ADMIN.")
+    @Operation(summary = "Add a member", description = "Guild owner or ADMIN only.")
     @ApiResponses({
-            @ApiResponse(responseCode = "201", description = "Narys pridetas"),
-            @ApiResponse(responseCode = "400", description = "Neteisingas payload",
+            @ApiResponse(responseCode = "201", description = "Member added"),
+            @ApiResponse(responseCode = "400", description = "Invalid request body",
                     content = @Content(schema = @Schema(implementation = ApiError.class))),
-            @ApiResponse(responseCode = "409", description = "Jau narys arba grupe jau turi DM",
+            @ApiResponse(responseCode = "409", description = "Already a member, or the guild already has a game master",
                     content = @Content(schema = @Schema(implementation = ApiError.class))),
-            @ApiResponse(responseCode = "422", description = "Tokio naudotojo nera",
+            @ApiResponse(responseCode = "422", description = "No such user",
                     content = @Content(schema = @Schema(implementation = ApiError.class)))
     })
     public ResponseEntity<MemberResponse> add(@PathVariable Long guildId, @Valid @RequestBody MemberRequest request) {
@@ -108,12 +108,12 @@ public class MemberController {
     }
 
     @PatchMapping(path = "/{userId}", consumes = MediaType.APPLICATION_JSON_VALUE)
-    @Operation(summary = "Pakeisti nario role", description = "Tik grupes savininkas arba ADMIN.")
+    @Operation(summary = "Change a member's role", description = "Guild owner or ADMIN only.")
     @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "Role pakeista"),
-            @ApiResponse(responseCode = "404", description = "Naudotojas nera grupes narys",
+            @ApiResponse(responseCode = "200", description = "Role changed"),
+            @ApiResponse(responseCode = "404", description = "User is not a member of the guild",
                     content = @Content(schema = @Schema(implementation = ApiError.class))),
-            @ApiResponse(responseCode = "409", description = "Grupe jau turi DM",
+            @ApiResponse(responseCode = "409", description = "The guild already has a game master",
                     content = @Content(schema = @Schema(implementation = ApiError.class)))
     })
     public MemberResponse changeRole(@PathVariable Long guildId, @PathVariable Long userId,
@@ -122,13 +122,13 @@ public class MemberController {
     }
 
     @DeleteMapping("/{userId}")
-    @Operation(summary = "Pasalinti nari arba iseiti is grupes",
-            description = "Savininkas ar ADMIN salina bet kuri nari, narys - pats save. Savininko pasalinti negalima.")
+    @Operation(summary = "Remove a member or leave the guild",
+            description = "The owner or ADMIN can remove any member, and a member can remove themselves. The owner cannot be removed.")
     @ApiResponses({
-            @ApiResponse(responseCode = "204", description = "Pasalinta"),
-            @ApiResponse(responseCode = "404", description = "Naudotojas nera grupes narys",
+            @ApiResponse(responseCode = "204", description = "Removed"),
+            @ApiResponse(responseCode = "404", description = "User is not a member of the guild",
                     content = @Content(schema = @Schema(implementation = ApiError.class))),
-            @ApiResponse(responseCode = "422", description = "Bandoma pasalinti savininka",
+            @ApiResponse(responseCode = "422", description = "Attempt to remove the owner",
                     content = @Content(schema = @Schema(implementation = ApiError.class)))
     })
     public ResponseEntity<Void> remove(@PathVariable Long guildId, @PathVariable Long userId) {

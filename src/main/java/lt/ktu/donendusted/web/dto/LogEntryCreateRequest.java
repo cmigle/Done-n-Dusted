@@ -10,19 +10,19 @@ import org.hibernate.validator.constraints.URL;
  * Zaidejo registruojamas progreso irasas. Cia specialiai nera nei XP, nei busenos -
  * naujas irasas visada gimsta PENDING su nuliu tasku.
  */
-@Schema(name = "LogEntryCreateRequest", description = "Naujo progreso iraso duomenys")
+@Schema(name = "LogEntryCreateRequest", description = "Data for a new log entry")
 public record LogEntryCreateRequest(
 
-        @Schema(example = "Begau 8 km palei upe.")
+        @Schema(example = "Ran 8 km along the river.")
         @Size(max = 1000)
         String note,
 
-        @Schema(description = "Nuoroda i irodyma, pvz. nuotrauka",
+        @Schema(description = "Link to evidence, for example a photo",
                 example = "https://example.org/evidence/run-8km.png")
         @URL @Size(max = 500)
         String evidenceUrl,
 
-        @Schema(description = "Kada veiksmas atliktas; negali buti ateityje",
+        @Schema(description = "When the activity happened; cannot be in the future",
                 example = "2026-09-19T15:20:00Z")
         @NotNull
         Instant occurredAt) {

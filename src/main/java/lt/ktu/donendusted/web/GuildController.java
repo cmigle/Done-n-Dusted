@@ -38,7 +38,7 @@ import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
  */
 @RestController
 @RequestMapping(path = "/api/guilds", produces = MediaType.APPLICATION_JSON_VALUE)
-@Tag(name = "Guilds", description = "Grupes - virsutinis hierarchijos lygis")
+@Tag(name = "Guilds", description = "Guilds, the top level of the hierarchy")
 public class GuildController {
 
     private final GuildService guilds;
@@ -48,11 +48,11 @@ public class GuildController {
     }
 
     @GetMapping
-    @Operation(summary = "Grupiu sarasas",
-            description = "Puslapiuotas ir filtruojamas sarasas. Nuorodose islieka visi filtrai.")
-    @ApiResponse(responseCode = "200", description = "Sarasas grazintas")
+    @Operation(summary = "List guilds",
+            description = "Paged, filterable list. Links keep all filters.")
+    @ApiResponse(responseCode = "200", description = "List returned")
     public PagedResponse<GuildResponse> list(
-            @Parameter(description = "Filtras pagal pavadinimo dali, neatsizvelgiant i raidziu dydi")
+            @Parameter(description = "Filter by part of the name, case-insensitive")
             @RequestParam(required = false) String name,
             @ParameterObject @PageableDefault(size = 20, sort = "name") Pageable pageable) {
 
@@ -61,10 +61,10 @@ public class GuildController {
     }
 
     @GetMapping("/{guildId}")
-    @Operation(summary = "Viena grupe")
+    @Operation(summary = "Get a guild")
     @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "Grupe rasta"),
-            @ApiResponse(responseCode = "404", description = "Grupe neegzistuoja",
+            @ApiResponse(responseCode = "200", description = "Guild found"),
+            @ApiResponse(responseCode = "404", description = "Guild does not exist",
                     content = @Content(schema = @Schema(implementation = ApiError.class)))
     })
     public GuildResponse get(@PathVariable Long guildId) {
@@ -72,12 +72,12 @@ public class GuildController {
     }
 
     @PostMapping(consumes = MediaType.APPLICATION_JSON_VALUE)
-    @Operation(summary = "Sukurti grupe")
+    @Operation(summary = "Create a guild")
     @ApiResponses({
-            @ApiResponse(responseCode = "201", description = "Grupe sukurta; Location antraste nurodo nauja resursa"),
-            @ApiResponse(responseCode = "400", description = "Neteisingas payload",
+            @ApiResponse(responseCode = "201", description = "Guild created; the Location header points to the new resource"),
+            @ApiResponse(responseCode = "400", description = "Invalid request body",
                     content = @Content(schema = @Schema(implementation = ApiError.class))),
-            @ApiResponse(responseCode = "409", description = "Toks pavadinimas jau uzimtas",
+            @ApiResponse(responseCode = "409", description = "Name already taken",
                     content = @Content(schema = @Schema(implementation = ApiError.class)))
     })
     // consumes = JSON: kitoks Content-Type -> 415. @Valid paleidzia DTO anotacijas (@NotBlank ir pan.),
@@ -96,15 +96,15 @@ public class GuildController {
     // PATCH, ne PUT: keiciami tik atsiusti laukai. Su PUT neatsiustas aprasymas butu perrasytas null
     // ir dingtu is atsakymo.
     @PatchMapping(path = "/{guildId}", consumes = MediaType.APPLICATION_JSON_VALUE)
-    @Operation(summary = "Atnaujinti grupe",
-            description = "Dalinis atnaujinimas: keiciami tik atsiusti laukai, neatsiusti lieka nepakeisti.")
+    @Operation(summary = "Update a guild",
+            description = "Partial update: only the fields sent are changed, the rest stay as they are.")
     @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "Grupe atnaujinta"),
-            @ApiResponse(responseCode = "400", description = "Neteisingas payload",
+            @ApiResponse(responseCode = "200", description = "Guild updated"),
+            @ApiResponse(responseCode = "400", description = "Invalid request body",
                     content = @Content(schema = @Schema(implementation = ApiError.class))),
-            @ApiResponse(responseCode = "404", description = "Grupe neegzistuoja",
+            @ApiResponse(responseCode = "404", description = "Guild does not exist",
                     content = @Content(schema = @Schema(implementation = ApiError.class))),
-            @ApiResponse(responseCode = "409", description = "Toks pavadinimas jau uzimtas",
+            @ApiResponse(responseCode = "409", description = "Name already taken",
                     content = @Content(schema = @Schema(implementation = ApiError.class)))
     })
     public GuildResponse update(@PathVariable Long guildId, @Valid @RequestBody GuildUpdateRequest request) {
@@ -112,11 +112,11 @@ public class GuildController {
     }
 
     @DeleteMapping("/{guildId}")
-    @Operation(summary = "Istrinti grupe",
-            description = "Kartu istrinamos visos grupes uzduotys ir ju progreso irasai.")
+    @Operation(summary = "Delete a guild",
+            description = "Also deletes all of the guild's quests and their log entries.")
     @ApiResponses({
-            @ApiResponse(responseCode = "204", description = "Istrinta; atsakymas be turinio"),
-            @ApiResponse(responseCode = "404", description = "Grupe neegzistuoja",
+            @ApiResponse(responseCode = "204", description = "Deleted; no response body"),
+            @ApiResponse(responseCode = "404", description = "Guild does not exist",
                     content = @Content(schema = @Schema(implementation = ApiError.class)))
     })
     public ResponseEntity<Void> delete(@PathVariable Long guildId) {

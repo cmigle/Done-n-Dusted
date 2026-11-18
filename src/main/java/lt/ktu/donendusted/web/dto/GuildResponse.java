@@ -4,13 +4,13 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import java.time.Instant;
 import lt.ktu.donendusted.domain.Guild;
 
-@Schema(name = "GuildResponse", description = "Grupe")
+@Schema(name = "GuildResponse", description = "Guild")
 public record GuildResponse(
 
         @Schema(example = "1") Long id,
         @Schema(example = "Thursday Night Crew") String name,
-        @Schema(example = "Ketvirtadieniais renkasi kampanija.") String description,
-        @Schema(description = "Grupes savininko (kurejo) naudotojo id", example = "2") Long ownerId,
+        @Schema(example = "Campaign night every Thursday.") String description,
+        @Schema(description = "User ID of the guild owner (creator)", example = "2") Long ownerId,
         @Schema(example = "2026-09-21T09:15:30.123Z") Instant createdAt) {
 
     // getOwner().getId() - LAZY proxy id zino be papildomos uzklausos i DB.
