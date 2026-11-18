@@ -45,6 +45,17 @@ springdoc:
   api-docs:
     path: /v3/api-docs
 
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health    # tik /actuator/health (debesu sveikatos patikrai); kiti actuator keliai neatidaromi
+  endpoint:
+    health:
+      show-details: never  # atsakyme tik {"status":"UP"} - jokiu DB ar disko detaliu
+      probes:
+        enabled: false     # Kubernetes liveness/readiness grupiu nereikia (ir ju sarasas atsakyme nerodomas)
+
 app:
   jwt:
     issuer: done-n-dusted
@@ -52,3 +63,5 @@ app:
     secret: ${JWT_SECRET:dev-only-jwt-secret-change-me-0123456789}
     access-token-ttl: 15m   # trumpas: atsijungus access zetonas dar galioja iki exp
     refresh-token-ttl: 7d
+  cors:
+    allowed-origins: http://localhost:5173   # React (Vite) kurimo serveris; keli adresai - per kableli

@@ -10,6 +10,7 @@ import org.springframework.boot.context.properties.EnableConfigurationProperties
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
+import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
@@ -31,8 +32,8 @@ import org.springframework.security.web.SecurityFilterChain;
 
 /**
  * Visas API apsaugotas JWT access zetonu (Authorization: Bearer ...), isskyrus registracija,
- * prisijungima, zetono atnaujinima ir Swagger dokumentacija. Serveris busenos nesaugo (STATELESS) -
- * kiekviena uzklausa autentifikuojama is naujo pagal zetona.
+ * prisijungima, zetono atnaujinima, Swagger dokumentacija ir /actuator/health. Serveris busenos
+ * nesaugo (STATELESS) - kiekviena uzklausa autentifikuojama is naujo pagal zetona.
  */
 @Configuration
 @EnableConfigurationProperties(JwtProperties.class)
@@ -48,10 +49,14 @@ public class SecurityConfig {
                 // CSRF reikalingas cookie sesijoms. Cia zetonas siunciamas antrasteje, kurios narsykle
                 // pati neprideda, todel svetima svetaine negali atlikti uzklausos naudotojo vardu.
                 .csrf(csrf -> csrf.disable())
+                // CORS taisykles is CorsConfig bean: preflight OPTIONS atsakomas pries autentifikacija (be zetono).
+                .cors(Customizer.withDefaults())
                 .sessionManagement(s -> s.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(HttpMethod.POST, PUBLIC_AUTH).permitAll()
                         .requestMatchers("/swagger-ui.html", "/swagger-ui/**", "/v3/api-docs/**", "/error").permitAll()
+                        // Debesu platformos (Azure App Service) sveikatos patikra - be zetono, tik UP/DOWN be detaliu.
+                        .requestMatchers(HttpMethod.GET, "/actuator/health").permitAll()
                         .requestMatchers("/api/users/**").hasRole("ADMIN")
                         // Visa kita - tik prisijungus. Grupiu teises (narys, DM, savininkas) tikrina servisai.
                         .anyRequest().authenticated())
