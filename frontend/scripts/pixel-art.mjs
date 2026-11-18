@@ -124,5 +124,5 @@ rect(22, 38, 4, 2, 'O')
 rect(23, 36, 2, 2, 'Y')
 rect(23, 35, 1, 1, 'R')
 
-writeFileSync('public/hero.svg', svg(W, H, r, 'Pilis naktį ir laužas prie kelio'))
+writeFileSync('public/hero.svg', svg(W, H, r, 'A castle at night with a campfire by the road'))
 console.log('public/logo.svg, public/favicon.svg, public/hero.svg')

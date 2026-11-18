@@ -60,7 +60,7 @@ public class TokenService {
             byte[] digest = MessageDigest.getInstance("SHA-256").digest(token.getBytes(StandardCharsets.UTF_8));
             return HexFormat.of().formatHex(digest);
         } catch (NoSuchAlgorithmException e) {
-            throw new IllegalStateException("SHA-256 nepalaikomas", e);
+            throw new IllegalStateException("SHA-256 is not supported", e);
         }
     }
 

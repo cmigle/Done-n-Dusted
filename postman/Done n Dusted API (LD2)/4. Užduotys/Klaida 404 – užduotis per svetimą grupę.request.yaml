@@ -6,7 +6,7 @@ scripts:
   - type: afterResponse
     code: |-
       pm.test('404 Not Found', () => pm.response.to.have.status(404));
-      pm.test('Uzduotis egzistuoja, bet ne sioje grupeje', () => pm.expect(pm.response.json().message).to.include('nerasta grupeje'));
+      pm.test('Uzduotis egzistuoja, bet ne sioje grupeje', () => pm.expect(pm.response.json().message).to.include('not found in guild'));
     language: text/javascript
 examples: ./.resources/Klaida 404 – užduotis per svetimą grupę.resources/examples
 order: 5000

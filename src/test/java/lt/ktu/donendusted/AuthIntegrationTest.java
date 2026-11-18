@@ -29,7 +29,7 @@ class AuthIntegrationTest extends IntegrationTest {
     void wrongPasswordIs401() throws Exception {
         login("rokas", "Blogas123!")
                 .andExpect(status().isUnauthorized())
-                .andExpect(jsonPath("$.message").value("Neteisingas naudotojo vardas arba slaptazodis"));
+                .andExpect(jsonPath("$.message").value("Invalid username or password"));
     }
 
     @Test
@@ -69,7 +69,7 @@ class AuthIntegrationTest extends IntegrationTest {
         // Senasis zetonas jau panaudotas - laikomas pavogtu, atsaukiamos visos sesijos, ir naujoji.
         refresh(first)
                 .andExpect(status().isUnauthorized())
-                .andExpect(jsonPath("$.message").value(containsString("atsauktos visos sesijos")));
+                .andExpect(jsonPath("$.message").value(containsString("All sessions have been revoked")));
         refresh(second).andExpect(status().isUnauthorized());
     }
 

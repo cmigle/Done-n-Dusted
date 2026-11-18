@@ -15,7 +15,7 @@
     <artifactId>done-n-dusted</artifactId>
     <version>0.3.0</version>
     <name>Done n Dusted API</name>
-    <description>T120B165 laboratorinis darbas - REST API su JWT autentifikacija</description>
+    <description>Guild quest log REST API with JWT authentication</description>
 
     <properties>
         <java.version>21</java.version>

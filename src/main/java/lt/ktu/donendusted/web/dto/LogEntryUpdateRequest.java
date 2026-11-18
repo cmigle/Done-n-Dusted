@@ -14,11 +14,11 @@ import org.hibernate.validator.constraints.URL;
  */
 // Swagger pavyzdys - vien DM sprendimas: turinio ir perziuros laukai kartu niekam nepraeitu
 // (turini keicia autorius, perziuri DM, kuris nera autorius).
-@Schema(name = "LogEntryUpdateRequest", description = "Dalinis iraso turinio ir perziuros rezultato atnaujinimas",
-        example = "{\"status\": \"APPROVED\", \"xpAwarded\": 50, \"reviewerNote\": \"Uzskaitau, nors nuotrauka neryski.\"}")
+@Schema(name = "LogEntryUpdateRequest", description = "Partial update of a log entry's content and review result",
+        example = "{\"status\": \"APPROVED\", \"xpAwarded\": 50, \"reviewerNote\": \"Approved, even though the photo is blurry.\"}")
 public record LogEntryUpdateRequest(
 
-        @Schema(example = "Begau 8 km palei upe.")
+        @Schema(example = "Ran 8 km along the river.")
         @Size(max = 1000)
         String note,
 
@@ -26,23 +26,23 @@ public record LogEntryUpdateRequest(
         @URL @Size(max = 500)
         String evidenceUrl,
 
-        @Schema(description = "Negali buti ateityje", example = "2026-09-19T15:20:00Z")
+        @Schema(description = "Cannot be in the future", example = "2026-09-19T15:20:00Z")
         Instant occurredAt,
 
-        @Schema(description = "Nauja iraso busena (DM sprendimas)", example = "APPROVED")
+        @Schema(description = "New log entry status (the game master's decision)", example = "APPROVED")
         LogStatus status,
 
-        @Schema(description = "DM perrasytas XP ivertis; tik kartu su status. Praleidus, tvirtinant "
-                + "naudojama uzduoties verte.", example = "50")
+        @Schema(description = "XP set by the game master; only together with status. When omitted on approval, "
+                + "the quest's XP value is used.", example = "50")
         @PositiveOrZero
         Integer xpAwarded,
 
-        @Schema(description = "Skiriamas heroic inspiration; tik kartu su status, praleidus laikoma 0",
+        @Schema(description = "Heroic inspiration awarded; only together with status, 0 when omitted",
                 example = "1")
         @PositiveOrZero
         Integer inspirationAwarded,
 
-        @Schema(description = "DM komentaras; tik kartu su status", example = "Uzskaitau, nors nuotrauka neryski.")
+        @Schema(description = "Game master's comment; only together with status", example = "Approved, even though the photo is blurry.")
         @Size(max = 500)
         String reviewerNote) {
 }

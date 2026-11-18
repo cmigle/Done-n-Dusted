@@ -14,7 +14,7 @@ response:
         "timestamp": "2026-11-08T14:31:36.152426200Z",
         "status": 422,
         "error": "Unprocessable Entity",
-        "message": "PENDING busenos irasas negali tureti XP ar inspiration",
+        "message": "A PENDING log entry cannot have XP or inspiration.",
         "path": "/api/guilds/4/quests/10/logs/13"
       }
 order: 1000

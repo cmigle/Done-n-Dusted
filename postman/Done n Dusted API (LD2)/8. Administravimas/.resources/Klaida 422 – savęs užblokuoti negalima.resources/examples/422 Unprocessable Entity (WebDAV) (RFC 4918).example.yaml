@@ -14,7 +14,7 @@ response:
         "timestamp": "2026-11-08T14:31:39.203826200Z",
         "status": 422,
         "error": "Unprocessable Entity",
-        "message": "Savo administratoriaus teisiu nuimti ar paskyros uzblokuoti negalima",
+        "message": "You cannot remove your own admin role or block your own account.",
         "path": "/api/users/1"
       }
 order: 1000

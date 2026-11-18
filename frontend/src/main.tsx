@@ -17,7 +17,7 @@ const queryClient = new QueryClient({
     queries: {
       staleTime: 30_000,
       refetchOnWindowFocus: false,
-      // 4xx (teises, nerasta) kartoti nera prasmes.
+      // Retrying a 4xx (forbidden, not found) never helps.
       retry: (count, error) => !(error instanceof ApiError && error.status >= 400 && error.status < 500) && count < 2,
     },
   },

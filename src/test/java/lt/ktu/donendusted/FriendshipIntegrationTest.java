@@ -106,7 +106,7 @@ class FriendshipIntegrationTest extends IntegrationTest {
         invite(alice, alice.username().toUpperCase()).andExpect(status().isUnprocessableEntity());
         invite(alice, unique("nobody_"))
                 .andExpect(status().isUnprocessableEntity())
-                .andExpect(jsonPath("$.message").value(endsWith("nerastas")));
+                .andExpect(jsonPath("$.message").value(endsWith("not found")));
         postAs(alice.token(), "/api/friends", "{\"username\":\" \"}").andExpect(status().isBadRequest());
     }
 

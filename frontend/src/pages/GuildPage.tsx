@@ -24,7 +24,7 @@ import {
 } from '../lib/game'
 import { useTitle } from '../lib/useTitle'
 
-type Tab = 'uzduotys' | 'nariai' | 'perziura'
+type Tab = 'quests' | 'members' | 'review'
 
 export function GuildPage() {
   const guildId = Number(useParams().guildId)
@@ -37,13 +37,13 @@ export function GuildPage() {
   const [deleting, setDeleting] = useState(false)
 
   const guild = useQuery({ queryKey: ['guilds', guildId], queryFn: () => guilds.get(guildId) })
-  useTitle(guild.data?.name ?? 'Grupė')
+  useTitle(guild.data?.name ?? 'Guild')
   const memberList = useQuery({ queryKey: ['members', guildId], queryFn: () => members.list(guildId), enabled: guild.isSuccess })
 
   const role = roleIn(guildId)
   const isDm = role === 'DUNGEON_MASTER'
   const isOwner = guild.data?.ownerId === user?.id
-  const tab = (params.get('skirtukas') as Tab) ?? 'uzduotys'
+  const tab = (params.get('tab') as Tab) ?? 'quests'
   const names = useMemo(
     () => new Map(memberList.data?.content.map((m) => [m.userId, m.username]) ?? []),
     [memberList.data],
@@ -54,8 +54,8 @@ export function GuildPage() {
     onSuccess: async () => {
       await reloadUser()
       queryClient.removeQueries({ queryKey: ['guilds'] })
-      toast('success', 'Grupė ištrinta')
-      navigate('/taverna', { replace: true })
+      toast('success', 'Guild deleted')
+      navigate('/tavern', { replace: true })
     },
     onError: (err) => toast('error', err.message),
   })
@@ -63,9 +63,9 @@ export function GuildPage() {
   if (guild.isPending) return <Loading />
   if (guild.isError) {
     return (
-      <Window title="Grupė nepasiekiama">
+      <Window title="Guild unavailable">
         <ErrorNote error={guild.error} />
-        <Link to="/taverna">Grįžti į taverną</Link>
+        <Link to="/tavern">Back to the tavern</Link>
       </Window>
     )
   }
@@ -73,41 +73,41 @@ export function GuildPage() {
   const g = guild.data
   const owner = memberList.data?.content.find((m) => m.userId === g.ownerId)
   const tabs: { id: Tab; label: string; show: boolean }[] = [
-    { id: 'uzduotys', label: 'Užduotys', show: true },
-    { id: 'nariai', label: 'Nariai', show: true },
-    { id: 'perziura', label: 'Peržiūra', show: isDm },
+    { id: 'quests', label: 'Quests', show: true },
+    { id: 'members', label: 'Members', show: true },
+    { id: 'review', label: 'Review', show: isDm },
   ]
 
   return (
     <>
-      <nav aria-label="Naršymo kelias" className="crumbs">
-        <Link to="/taverna">Taverna</Link> / <span aria-current="page">{g.name}</span>
+      <nav aria-label="Breadcrumb" className="crumbs">
+        <Link to="/tavern">Tavern</Link> / <span aria-current="page">{g.name}</span>
       </nav>
       <div className="page-head row row--between">
         <div>
           <h1>{g.name}</h1>
-          <p>{g.description || 'Grupė be aprašymo.'}</p>
+          <p>{g.description || 'This guild has no description.'}</p>
           <div className="row">
             {role && <span className={`badge ${isDm ? 'badge--plum' : 'badge--info'}`}>{GUILD_ROLE_INFO[role].name}</span>}
-            {!role && isAdmin && <span className="badge badge--plum">Administratoriaus peržiūra</span>}
-            {owner && <span className="muted">Savininkas: {owner.username}</span>}
+            {!role && isAdmin && <span className="badge badge--plum">Admin view</span>}
+            {owner && <span className="muted">Owner: {owner.username}</span>}
           </div>
         </div>
         {(isOwner || isAdmin) && (
           <div className="row">
             {isOwner && (
               <button type="button" className="btn btn--secondary btn--small" onClick={() => setEditing(true)}>
-                <Edit size={18} aria-hidden="true" /> Redaguoti
+                <Edit size={18} aria-hidden="true" /> Edit
               </button>
             )}
             <button type="button" className="btn btn--danger btn--small" onClick={() => setDeleting(true)}>
-              <Trash size={18} aria-hidden="true" /> Ištrinti
+              <Trash size={18} aria-hidden="true" /> Delete
             </button>
           </div>
         )}
       </div>
 
-      <div className="tabs" role="tablist" aria-label="Grupės skiltys">
+      <div className="tabs" role="tablist" aria-label="Guild sections">
         {tabs
           .filter((t) => t.show)
           .map((t) => (
@@ -119,7 +119,7 @@ export function GuildPage() {
               aria-selected={tab === t.id}
               aria-controls={`panel-${t.id}`}
               className="tab"
-              onClick={() => setParams({ skirtukas: t.id }, { replace: true })}
+              onClick={() => setParams({ tab: t.id }, { replace: true })}
             >
               {t.label}
             </button>
@@ -127,24 +127,24 @@ export function GuildPage() {
       </div>
 
       <div role="tabpanel" id={`panel-${tab}`} aria-labelledby={`tab-${tab}`}>
-        {tab === 'uzduotys' && <QuestsTab guildId={guildId} isDm={isDm} canCreate={!!role} />}
-        {tab === 'nariai' && (
+        {tab === 'quests' && <QuestsTab guildId={guildId} isDm={isDm} canCreate={!!role} />}
+        {tab === 'members' && (
           <MembersTab guildId={guildId} ownerId={g.ownerId} canManage={isOwner || isAdmin} list={memberList.data?.content} />
         )}
-        {tab === 'perziura' && isDm && <ReviewTab guildId={guildId} names={names} />}
+        {tab === 'review' && isDm && <ReviewTab guildId={guildId} names={names} />}
       </div>
 
       {editing && <GuildFormModal open guild={g} onClose={() => setEditing(false)} />}
       {deleting && (
         <ConfirmModal
-          title="Ištrinti grupę?"
-          confirmLabel="Ištrinti visam laikui"
+          title="Delete this guild?"
+          confirmLabel="Delete for good"
           busy={remove.isPending}
           onConfirm={() => remove.mutate()}
           onClose={() => setDeleting(false)}
         >
           <p>
-            „{g.name}“ bus ištrinta kartu su visomis užduotimis ir įrašais. Šio veiksmo atšaukti negalima.
+            “{g.name}” will be deleted together with all its quests and log entries. This cannot be undone.
           </p>
         </ConfirmModal>
       )}
@@ -152,7 +152,7 @@ export function GuildPage() {
   )
 }
 
-/* ---------- Uzduotys ---------- */
+/* ---------- Quests ---------- */
 function QuestsTab({ guildId, isDm, canCreate }: { guildId: number; isDm: boolean; canCreate: boolean }) {
   const [filters, setFilters] = useState<QuestFilters>({ stat: '', type: '', difficulty: '', active: false, page: 0 })
   const [creating, setCreating] = useState(false)
@@ -166,11 +166,11 @@ function QuestsTab({ guildId, isDm, canCreate }: { guildId: number; isDm: boolea
   return (
     <div className="stack">
       <Window className="window--compact">
-        <form className="filters" onSubmit={(e) => e.preventDefault()} aria-label="Užduočių filtrai">
-          <Field label="Charakteristika">
+        <form className="filters" onSubmit={(e) => e.preventDefault()} aria-label="Quest filters">
+          <Field label="Stat">
             {(p) => (
               <select {...p} className="select" value={filters.stat} onChange={(e) => update({ stat: e.target.value as Stat | '' })}>
-                <option value="">Visos</option>
+                <option value="">All</option>
                 {STATS.map((s) => (
                   <option key={s} value={s}>
                     {STAT_INFO[s].name}
@@ -179,10 +179,10 @@ function QuestsTab({ guildId, isDm, canCreate }: { guildId: number; isDm: boolea
               </select>
             )}
           </Field>
-          <Field label="Tipas">
+          <Field label="Type">
             {(p) => (
               <select {...p} className="select" value={filters.type} onChange={(e) => update({ type: e.target.value as QuestType | '' })}>
-                <option value="">Visi</option>
+                <option value="">All</option>
                 {QUEST_TYPES.map((t) => (
                   <option key={t} value={t}>
                     {QUEST_TYPE_INFO[t].name}
@@ -191,7 +191,7 @@ function QuestsTab({ guildId, isDm, canCreate }: { guildId: number; isDm: boolea
               </select>
             )}
           </Field>
-          <Field label="Sunkumas">
+          <Field label="Difficulty">
             {(p) => (
               <select
                 {...p}
@@ -199,7 +199,7 @@ function QuestsTab({ guildId, isDm, canCreate }: { guildId: number; isDm: boolea
                 value={filters.difficulty}
                 onChange={(e) => update({ difficulty: e.target.value as Difficulty | '' })}
               >
-                <option value="">Visi</option>
+                <option value="">All</option>
                 {DIFFICULTIES.map((d) => (
                   <option key={d} value={d}>
                     {DIFFICULTY_INFO[d].name}
@@ -210,18 +210,18 @@ function QuestsTab({ guildId, isDm, canCreate }: { guildId: number; isDm: boolea
           </Field>
           <label className="choice filters__check">
             <input type="checkbox" checked={!!filters.active} onChange={(e) => update({ active: e.target.checked })} />
-            Tik aktyvios
+            Active only
           </label>
         </form>
       </Window>
 
       <div className="row row--between">
         <p className="muted" aria-live="polite">
-          {list.data ? `Rasta užduočių: ${list.data.totalElements}` : ' '}
+          {list.data ? `${list.data.totalElements} ${list.data.totalElements === 1 ? 'quest' : 'quests'} found` : ' '}
         </p>
         {canCreate && (
           <button type="button" className="btn" onClick={() => setCreating(true)}>
-            <Plus size={20} aria-hidden="true" /> Nauja užduotis
+            <Plus size={20} aria-hidden="true" /> New quest
           </button>
         )}
       </div>
@@ -232,8 +232,8 @@ function QuestsTab({ guildId, isDm, canCreate }: { guildId: number; isDm: boolea
         <Window>
           <Empty icon={<Script size={48} aria-hidden="true" />}>
             {filters.stat || filters.type || filters.difficulty || filters.active
-              ? 'Pagal šiuos filtrus užduočių nėra – pabandyk kitus.'
-              : 'Užduočių dar nėra. Paskelbk pirmąją!'}
+              ? 'No quests match these filters – try others.'
+              : 'No quests yet. Post the first one!'}
           </Empty>
         </Window>
       )}
@@ -245,14 +245,14 @@ function QuestsTab({ guildId, isDm, canCreate }: { guildId: number; isDm: boolea
         ))}
       </ul>
       {list.data && list.data.page.totalPages > 1 && (
-        <nav className="pager" aria-label="Puslapiai">
+        <nav className="pager" aria-label="Pages">
           <button
             type="button"
             className="btn btn--ghost btn--small"
             disabled={!list.data.links.prev}
             onClick={() => setFilters((f) => ({ ...f, page: (f.page ?? 0) - 1 }))}
           >
-            Atgal
+            Previous
           </button>
           <span>
             {list.data.page.number + 1} / {list.data.page.totalPages}
@@ -263,7 +263,7 @@ function QuestsTab({ guildId, isDm, canCreate }: { guildId: number; isDm: boolea
             disabled={!list.data.links.next}
             onClick={() => setFilters((f) => ({ ...f, page: (f.page ?? 0) + 1 }))}
           >
-            Toliau
+            Next
           </button>
         </nav>
       )}
@@ -273,7 +273,7 @@ function QuestsTab({ guildId, isDm, canCreate }: { guildId: number; isDm: boolea
   )
 }
 
-/* ---------- Nariai ---------- */
+/* ---------- Members ---------- */
 function MembersTab({
   guildId,
   ownerId,
@@ -299,7 +299,7 @@ function MembersTab({
     onSuccess: async (m) => {
       await refresh()
       setUsername('')
-      toast('success', `${m.username} prisijungė prie grupės`)
+      toast('success', `${m.username} joined the guild`)
     },
     onError: (err) => setError(err.message),
   })
@@ -308,7 +308,7 @@ function MembersTab({
     onSuccess: async () => {
       await refresh()
       await reloadUser()
-      toast('success', 'Rolė pakeista')
+      toast('success', 'Role changed')
     },
     onError: (err) => toast('error', err.message),
   })
@@ -317,12 +317,12 @@ function MembersTab({
     onSuccess: async (_, userId) => {
       if (userId === user?.id) {
         await reloadUser()
-        toast('success', 'Išėjai iš grupės')
-        navigate('/taverna')
+        toast('success', 'You left the guild')
+        navigate('/tavern')
         return
       }
       await refresh()
-      toast('success', 'Narys pašalintas')
+      toast('success', 'Member removed')
     },
     onError: (err) => toast('error', err.message),
   })
@@ -338,15 +338,15 @@ function MembersTab({
   return (
     <div className="grid grid--sidebar">
       {canManage ? (
-        <Window title="Pakviesti narį" icon={<UserPlus size={24} aria-hidden="true" />} headingLevel={3}>
+        <Window title="Invite a member" icon={<UserPlus size={24} aria-hidden="true" />} headingLevel={3}>
           <form className="form" onSubmit={submit}>
-            <Field label="Naudotojo vardas" error={error}>
+            <Field label="Username" error={error}>
               {(p) => (
                 <input {...p} className="input" value={username} onChange={(e) => setUsername(e.target.value)} required />
               )}
             </Field>
             <fieldset className="choices">
-              <legend>Rolė</legend>
+              <legend>Role</legend>
               {(['PLAYER', 'DUNGEON_MASTER'] as GuildRole[]).map((r) => (
                 <label key={r} className="choice">
                   <input type="radio" name="member-role" checked={role === r} onChange={() => setRole(r)} />
@@ -356,32 +356,32 @@ function MembersTab({
             </fieldset>
             <div className="form__actions">
               <button className="btn" disabled={add.isPending || !username.trim()}>
-                Pridėti narį
+                Add member
               </button>
             </div>
           </form>
         </Window>
       ) : (
-        <Window title="Nariai" icon={<Users size={24} aria-hidden="true" />} headingLevel={3}>
-          <p className="muted">Narius kviečia grupės savininkas. Kiekvieno nario kortelėje matyti jo lygis ir charakteristikos.</p>
+        <Window title="Members" icon={<Users size={24} aria-hidden="true" />} headingLevel={3}>
+          <p className="muted">The guild owner invites members. Each member's sheet shows their level and stats.</p>
         </Window>
       )}
 
-      <Window title={`Nariai (${list.length})`} headingLevel={3}>
+      <Window title={`Members (${list.length})`} headingLevel={3}>
         <ul className="list">
           {list.map((m) => (
             <li key={m.userId} className="member">
               <PixelAvatar name={m.username} size={44} />
               <div className="member__info">
-                <Link to={`/grupes/${guildId}/nariai/${m.userId}`} className="member__name">
+                <Link to={`/guilds/${guildId}/members/${m.userId}`} className="member__name">
                   {m.username}
                 </Link>
-                <span className="muted">nuo {formatDate(m.joinedAt)}</span>
+                <span className="muted">since {formatDate(m.joinedAt)}</span>
               </div>
               <div className="member__actions">
                 {canManage && m.userId !== ownerId ? (
                   <label className="visually-hidden-label">
-                    <span className="visually-hidden">{m.username} rolė</span>
+                    <span className="visually-hidden">{m.username}'s role</span>
                     <select
                       className="select select--small"
                       value={m.role}
@@ -393,18 +393,18 @@ function MembersTab({
                   </label>
                 ) : (
                   <span className={`badge ${m.role === 'DUNGEON_MASTER' ? 'badge--plum' : 'badge--info'}`}>
-                    {GUILD_ROLE_INFO[m.role].short}
+                    {GUILD_ROLE_INFO[m.role].name}
                   </span>
                 )}
-                {m.userId === ownerId && <span className="badge badge--plum">Savininkas</span>}
+                {m.userId === ownerId && <span className="badge badge--plum">Owner</span>}
                 {m.userId !== ownerId && (canManage || m.userId === user?.id) && (
                   <button
                     type="button"
                     className="btn btn--ghost btn--small"
                     onClick={() => remove.mutate(m.userId)}
-                    aria-label={m.userId === user?.id ? 'Išeiti iš grupės' : `Pašalinti ${m.username}`}
+                    aria-label={m.userId === user?.id ? 'Leave the guild' : `Remove ${m.username}`}
                   >
-                    {m.userId === user?.id ? 'Išeiti' : 'Pašalinti'}
+                    {m.userId === user?.id ? 'Leave' : 'Remove'}
                   </button>
                 )}
               </div>
@@ -416,7 +416,7 @@ function MembersTab({
   )
 }
 
-/* ---------- DM perziuros eile ---------- */
+/* ---------- Game master review queue ---------- */
 function ReviewTab({ guildId, names }: { guildId: number; names: Map<number, string> }) {
   const [reviewing, setReviewing] = useState<{ quest: Quest; entry: LogEntry } | null>(null)
   const questList = useQuery({
@@ -436,9 +436,9 @@ function ReviewTab({ guildId, names }: { guildId: number; names: Map<number, str
   if (loading) return <Loading />
 
   return (
-    <Window title={`Laukia peržiūros (${pending.length})`} headingLevel={3}>
+    <Window title={`Awaiting review (${pending.length})`} headingLevel={3}>
       {pending.length === 0 ? (
-        <Empty icon={<Script size={48} aria-hidden="true" />}>Visi įrašai peržiūrėti. Puikus darbas!</Empty>
+        <Empty icon={<Script size={48} aria-hidden="true" />}>All entries reviewed. Nice work!</Empty>
       ) : (
         <ul className="list">
           {pending
@@ -449,13 +449,13 @@ function ReviewTab({ guildId, names }: { guildId: number; names: Map<number, str
                 <div className="log__body">
                   <p className="log__title">
                     <strong>{names.get(entry.authorId) ?? `#${entry.authorId}`}</strong> –{' '}
-                    <Link to={`/grupes/${guildId}/uzduotys/${quest.id}`}>{quest.title}</Link>
+                    <Link to={`/guilds/${guildId}/quests/${quest.id}`}>{quest.title}</Link>
                   </p>
                   {entry.note && <p className="log__note">{entry.note}</p>}
                   <span className="muted">{formatDateTime(entry.occurredAt)}</span>
                 </div>
                 <button type="button" className="btn btn--small" onClick={() => setReviewing({ quest, entry })}>
-                  Peržiūrėti
+                  Review
                 </button>
               </li>
             ))}

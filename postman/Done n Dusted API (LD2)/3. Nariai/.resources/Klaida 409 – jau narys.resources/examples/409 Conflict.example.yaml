@@ -14,7 +14,7 @@ response:
         "timestamp": "2026-11-08T14:31:33.863217700Z",
         "status": 409,
         "error": "Conflict",
-        "message": "Naudotojas 'jonas' jau yra grupes narys",
+        "message": "User \"jonas\" is already a member of this guild.",
         "path": "/api/guilds/4/members"
       }
 order: 1000

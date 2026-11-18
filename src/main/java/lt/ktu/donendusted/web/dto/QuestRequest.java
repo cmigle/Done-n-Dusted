@@ -9,19 +9,19 @@ import lt.ktu.donendusted.domain.Difficulty;
 import lt.ktu.donendusted.domain.QuestType;
 import lt.ktu.donendusted.domain.Stat;
 
-@Schema(name = "QuestRequest", description = "Uzduoties kurimo duomenys")
+@Schema(name = "QuestRequest", description = "Data for creating a quest")
 public record QuestRequest(
 
         @Schema(example = "Run 50 kilometers")
         @NotBlank @Size(min = 3, max = 120)
         String title,
 
-        @Schema(description = "Nenurodzius issaugomas tuscias \"\"",
-                example = "Kaupiamoji uzduotis - kiekvienas patvirtintas irasas priartina prie tikslo.")
+        @Schema(description = "Saved as \"\" when omitted",
+                example = "A GRIND quest: every approved log entry brings you closer to the goal.")
         @Size(max = 1000)
         String description,
 
-        @Schema(description = "Charakteristika, kuria uzduotis augina", example = "CON")
+        @Schema(description = "Stat that the quest improves", example = "CON")
         @NotNull
         Stat stat,
 
@@ -29,16 +29,16 @@ public record QuestRequest(
         @NotNull
         QuestType type,
 
-        @Schema(description = "Bazinio XP daugiklis", example = "HARD")
+        @Schema(description = "Multiplier of the base XP", example = "HARD")
         @NotNull
         Difficulty difficulty,
 
-        @Schema(description = "Privalomas tik GRIND tipui; kitiems tipams turi buti nenurodytas",
+        @Schema(description = "Required for GRIND quests only; must be omitted for other types",
                 example = "50")
         @Positive
         Integer targetCount,
 
-        @Schema(description = "Ar uzduotis vis dar aktyvi; nenurodzius laikoma true", example = "true")
+        @Schema(description = "Whether the quest is still active; true when omitted", example = "true")
         Boolean active) {
 
     public boolean activeOrDefault() {

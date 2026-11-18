@@ -49,12 +49,12 @@ public class MembershipService {
 
     public GuildMembership add(Long guildId, MemberRequest request) {
         GuildAccess access = guilds.access(guildId);
-        access.require(access.isOwner() || access.isAdmin(), "Narius prideti gali tik grupes savininkas arba administratorius");
+        access.require(access.isOwner() || access.isAdmin(), "Only the guild owner or an admin can add members.");
         // Naudotojas nurodomas body, ne kelyje - jo nebuvimas yra turinio klaida (422), ne 404.
         User user = users.findByUsernameIgnoreCase(request.username())
-                .orElseThrow(() -> new BusinessRuleException("Naudotojas '" + request.username() + "' nerastas"));
+                .orElseThrow(() -> new BusinessRuleException("User \"" + request.username() + "\" not found"));
         if (memberships.existsByGuildIdAndUserId(guildId, user.getId())) {
-            throw new ConflictException("Naudotojas '" + user.getUsername() + "' jau yra grupes narys");
+            throw new ConflictException("User \"" + user.getUsername() + "\" is already a member of this guild.");
         }
         if (request.role() == GuildRole.DUNGEON_MASTER) {
             requireNoDm(guildId);
@@ -64,7 +64,7 @@ public class MembershipService {
 
     public GuildMembership changeRole(Long guildId, Long userId, MemberRoleRequest request) {
         GuildAccess access = guilds.access(guildId);
-        access.require(access.isOwner() || access.isAdmin(), "Roles keisti gali tik grupes savininkas arba administratorius");
+        access.require(access.isOwner() || access.isAdmin(), "Only the guild owner or an admin can change roles.");
         GuildMembership membership = find(guildId, userId);
         if (request.role() == GuildRole.DUNGEON_MASTER && membership.getRole() != GuildRole.DUNGEON_MASTER) {
             requireNoDm(guildId);
@@ -77,22 +77,22 @@ public class MembershipService {
     public void remove(Long guildId, Long userId) {
         GuildAccess access = guilds.access(guildId);
         access.require(access.isOwner() || access.isAdmin() || userId.equals(access.user().id()),
-                "Pasalinti nari gali tik grupes savininkas arba administratorius");
+                "Only the guild owner or an admin can remove members.");
         GuildMembership membership = find(guildId, userId);
         if (userId.equals(access.guild().getOwner().getId())) {
-            throw new BusinessRuleException("Grupes savininko pasalinti negalima");
+            throw new BusinessRuleException("The guild owner cannot be removed.");
         }
         memberships.delete(membership);
     }
 
     private GuildMembership find(Long guildId, Long userId) {
         return memberships.findWithUserByGuildIdAndUserId(guildId, userId)
-                .orElseThrow(() -> new ResourceNotFoundException("Naudotojas " + userId + " nera grupes " + guildId + " narys"));
+                .orElseThrow(() -> new ResourceNotFoundException("User " + userId + " is not a member of guild " + guildId + "."));
     }
 
     private void requireNoDm(Long guildId) {
         if (memberships.existsByGuildIdAndRole(guildId, GuildRole.DUNGEON_MASTER)) {
-            throw new ConflictException("Grupe jau turi DM - pirma pakeiskite esamo DM role i PLAYER");
+            throw new ConflictException("This guild already has a game master. Change the current game master's role to PLAYER first.");
         }
     }
 }

@@ -15,7 +15,7 @@ scripts:
   - type: afterResponse
     code: |-
       pm.test('409 Conflict', () => pm.response.to.have.status(409));
-      pm.test('Pranesimas paaiskina konflikta', () => pm.expect(pm.response.json().message).to.include('jau yra grupes narys'));
+      pm.test('Pranesimas paaiskina konflikta', () => pm.expect(pm.response.json().message).to.include('already a member'));
     language: text/javascript
 examples: ./.resources/Klaida 409 – jau narys.resources/examples
 order: 4000

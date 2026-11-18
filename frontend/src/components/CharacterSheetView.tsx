@@ -1,35 +1,35 @@
 import { Coin, Hidden, Zap } from '@nsmr/pixelart-react'
 import type { CharacterSheet } from '../api/types'
-import { GUILD_ROLE_INFO, STAT_INFO, formatDate, plural, pt } from '../lib/game'
+import { GUILD_ROLE_INFO, STAT_INFO, formatDate, plural, xp } from '../lib/game'
 import { StatIcon } from './StatIcon'
 import { Bar, PixelAvatar } from './ui'
 
-/** Veikejo kortele: lygis, XP, sesios charakteristikos, ikvepimas, serija. */
+/** Character sheet: level, XP, the six stats, inspiration and streak. */
 export function CharacterSheetView({ sheet }: { sheet: CharacterSheet }) {
   return (
-    <article className="sheet" aria-label={`${sheet.username} veikėjo kortelė`}>
+    <article className="sheet" aria-label={`${sheet.username}'s character sheet`}>
       <header className="sheet__head">
         <PixelAvatar name={sheet.username} size={112} />
         <div className="sheet__who">
           <h2 className="sheet__name">{sheet.username}</h2>
           <p className="muted">
             {sheet.guildName
-              ? `${sheet.role ? GUILD_ROLE_INFO[sheet.role].name : 'Narys'} grupėje „${sheet.guildName}“`
-              : 'Visų grupių suvestinė'}
+              ? `${sheet.role ? GUILD_ROLE_INFO[sheet.role].name : 'Member'} in “${sheet.guildName}”`
+              : 'Across all guilds'}
           </p>
           <div className="sheet__level">
-            <span className="level-badge" aria-label={`Lygis ${sheet.level}`}>
-              <span aria-hidden="true">lygis</span> {sheet.level}
+            <span className="level-badge" aria-label={`Level ${sheet.level}`}>
+              <span aria-hidden="true">lv</span> {sheet.level}
             </span>
             <div className="sheet__xp">
               <Bar
                 value={sheet.xpIntoLevel}
                 max={sheet.xpForNextLevel}
-                label={`Patirties taškai iki kito lygio: ${sheet.xpIntoLevel} iš ${sheet.xpForNextLevel}`}
+                label={`Experience to the next level: ${sheet.xpIntoLevel} of ${sheet.xpForNextLevel}`}
                 animate
               />
               <span className="muted">
-                {sheet.xpIntoLevel} / {pt(sheet.xpForNextLevel)} iki {sheet.level + 1} lygio, iš viso {pt(sheet.totalXp)}
+                {sheet.xpIntoLevel} / {xp(sheet.xpForNextLevel)} to level {sheet.level + 1}, {xp(sheet.totalXp)} in total
               </span>
             </div>
           </div>
@@ -40,22 +40,22 @@ export function CharacterSheetView({ sheet }: { sheet: CharacterSheet }) {
         <div className="counter">
           <Coin size={28} aria-hidden="true" color="var(--gold)" />
           <span className="counter__value">{sheet.inspiration}</span>
-          <span className="muted">{plural(sheet.inspiration, 'įkvėpimo taškas', 'įkvėpimo taškai', 'įkvėpimo taškų')}</span>
+          <span className="muted">inspiration</span>
         </div>
         <div className="counter">
           <Zap size={28} aria-hidden="true" color="var(--ember)" />
           <span className="counter__value">{sheet.streakDays}</span>
-          <span className="muted">{plural(sheet.streakDays, 'dienos serija', 'dienų serija', 'dienų serija')}</span>
+          <span className="muted">day streak</span>
         </div>
         {sheet.view === 'FULL' && sheet.pendingCount != null && (
           <div className="counter">
             <span className="counter__value">{sheet.pendingCount}</span>
-            <span className="muted">{plural(sheet.pendingCount, 'įrašas laukia vedėjo', 'įrašai laukia vedėjo', 'įrašų laukia vedėjo')}</span>
+            <span className="muted">{plural(sheet.pendingCount, 'entry awaiting GM', 'entries awaiting GM')}</span>
           </div>
         )}
       </div>
 
-      <h3>Charakteristikos</h3>
+      <h3>Stats</h3>
       <ul className="stats">
         {sheet.stats.map((s) => (
           <li key={s.stat} className="stat">
@@ -68,7 +68,7 @@ export function CharacterSheetView({ sheet }: { sheet: CharacterSheet }) {
               value={s.score - 10}
               max={10}
               color={STAT_INFO[s.stat].color}
-              label={`${STAT_INFO[s.stat].name}: ${s.score} (${pt(s.xp)})`}
+              label={`${STAT_INFO[s.stat].name}: ${s.score} (${xp(s.xp)})`}
               animate
             />
           </li>
@@ -77,9 +77,9 @@ export function CharacterSheetView({ sheet }: { sheet: CharacterSheet }) {
 
       {sheet.view === 'FULL' && sheet.recentLogs && (
         <>
-          <h3>Paskutiniai patvirtinti žygiai</h3>
+          <h3>Recently approved entries</h3>
           {sheet.recentLogs.length === 0 ? (
-            <p className="muted">Dar nėra patvirtintų įrašų.</p>
+            <p className="muted">No approved entries yet.</p>
           ) : (
             <ul className="list">
               {sheet.recentLogs.map((l) => (
@@ -91,7 +91,7 @@ export function CharacterSheetView({ sheet }: { sheet: CharacterSheet }) {
                     {l.questTitle}
                   </span>
                   <span className="muted">
-                    +{pt(l.xpAwarded)}, {formatDate(l.occurredAt)}
+                    +{xp(l.xpAwarded)}, {formatDate(l.occurredAt)}
                   </span>
                 </li>
               ))}
@@ -101,7 +101,7 @@ export function CharacterSheetView({ sheet }: { sheet: CharacterSheet }) {
       )}
       {sheet.view === 'PUBLIC' && (
         <p className="muted sheet__public">
-          <Hidden size={18} aria-hidden="true" /> Viešas vaizdas: užduotys ir įrašai matomi tik pačiam žaidėjui ir jo žaidimo vedėjui.
+          <Hidden size={18} aria-hidden="true" /> Public view: quests and entries are visible only to the player and their game master.
         </p>
       )}
     </article>

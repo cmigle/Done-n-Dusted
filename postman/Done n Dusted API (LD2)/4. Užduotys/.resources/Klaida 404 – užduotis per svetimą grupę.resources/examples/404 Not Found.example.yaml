@@ -14,7 +14,7 @@ response:
         "timestamp": "2026-11-08T14:31:35.129987Z",
         "status": 404,
         "error": "Not Found",
-        "message": "Quest 10 nerasta grupeje 5",
+        "message": "Quest 10 not found in guild 5",
         "path": "/api/guilds/5/quests/10"
       }
 order: 1000

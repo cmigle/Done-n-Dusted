@@ -17,7 +17,7 @@ interface AuthValue {
   status: Status
   user: Me | null
   isAdmin: boolean
-  /** true - naudotojas pats atsijunge (ne pasibaigusi sesija): grizti i pradzia, ne i paskutini puslapi. */
+  /** true when the user logged out on purpose (not an expired session): go home, not back to the last page. */
   signedOut: boolean
   roleIn: (guildId: number) => GuildRole | null
   login: (username: string, password: string) => Promise<void>
@@ -45,7 +45,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setStatus('authenticated')
   }, [])
 
-  // Atidarius puslapi: jei yra issaugotas refresh zetonas - atkuriam sesija.
+  // On page load: restore the session if a refresh token is stored.
   useEffect(() => {
     if (!hasStoredSession()) return
     let cancelled = false

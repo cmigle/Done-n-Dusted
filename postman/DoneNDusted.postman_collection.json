@@ -1,7 +1,7 @@
 {
   "info": {
     "name": "Done n Dusted API (LD2)",
-    "description": "# Done n Dusted API (LD2)\n\nDnD principu veikianti produktyvumo sistema: žaidėjas registruoja realaus gyvenimo progresą, grupės Dungeon Master jį patvirtina, ir tik patvirtinti įrašai suteikia XP.\n\nResursų hierarchija: **Guild (1:N) → Quest (1:N) → LogEntry**. Vaikinis objektas pasiekiamas tik per tėvinį, todėl neteisinga grandinė grąžina `404`.\n\nLD2 prideda **autentifikaciją ir autorizaciją**: JWT access ir refresh žetonai, grupės rolės `PLAYER` / `DUNGEON_MASTER` ir globali rolė `ADMIN`.\n\n## Kaip paleisti\n\n1. Paleiskite API (`./mvnw spring-boot:run`). Ji veikia adresu `http://localhost:8080/api`.\n2. Postman programoje paleiskite visą kolekciją su **Run collection**. Aplankus ir užklausas leiskite iš eilės, nes vėlesnės užklausos naudoja ankstesnių sukurtus ID ir žetonus.\n\nKolekcija kaskart užregistruoja naują naudotoją, pati susikuria duomenis ir po savęs išsivalo, todėl ją galima leisti kiek norima kartų.\n\n## Autorizacija\n\nKolekcijos lygyje nustatyta *Bearer Token* `{{accessToken}}` — ją paveldi visos užklausos. Kai užklausą siunčia kitas naudotojas, jos *Authorization* skiltyje nurodytas kitas žetonas:\n\n| Žetonas | Naudotojas | Kam naudojamas |\n| --- | --- | --- |\n| `accessToken` | `postman_<laikas>`, užregistruotas kolekcijos | Grupių savininkas ir DM |\n| `playerToken` | `jonas` | Grupės žaidėjas (`PLAYER`) |\n| `adminToken` | `admin` | Administratorius (`ADMIN`) |\n\nDemonstracinių naudotojų (`admin`, `rokas`, `ieva`, `jonas`) slaptažodis — `Demo123!`.\n\n## Aplankai\n\n| Aplankas | Kas tikrinama |\n| --- | --- |\n| 0. Autentifikacija | Registracija, prisijungimas, JWT turinys, `/auth/me`, žetonų rotacija, atsijungimas, `401` |\n| 1. Suvestinė | Kiek DB yra grupių, užduočių ir įrašų (su ID), ar vaikų ID rodo į teisingą tėvą |\n| 2. Grupės | Grupių CRUD, puslapiavimas per `links.next`, `400`, `404`, `409`, `415` klaidos |\n| 3. Nariai | Narių pridėjimas, rolės, vienas DM grupėje (`409`), `403`, `422` |\n| 4. Užduotys | Užduočių kūrimas, filtrai, XP skaičiavimas, `422` ir tėvinės grandinės `404` |\n| 5. Progreso įrašai | Žaidėjas registruoja, DM patvirtina, XP taisyklės, užšaldytas turinys |\n| 6. Rolės ir teisės | Kas ką gali: `403` ne nariui, žaidėjui, DM su savo įrašu, ne administratoriui |\n| 7. Išvalymas | Sukurtų duomenų ištrynimas (`204`, taip pat administratoriaus) ir patikra, kad jų nebėra |\n| 8. Administravimas | Naudotojų sąrašas, užblokavimas ir atblokavimas |\n\nAtnaujinimas visur yra `PATCH` (dalinis): keičiami tik atsiųsti laukai, todėl neatsiųstas aprašymas nedingsta. Sukūrus resursą be `description`, jis išsaugomas kaip `\"\"`.\n\n## Kolekcijos kintamieji\n\n| Kintamasis | Reikšmė |\n| --- | --- |\n| `baseUrl` | API adresas, numatytai `http://localhost:8080/api` |\n| `username`, `password`, `userId` | Kolekcijos užregistruotas naudotojas; slaptažodis bendras ir demonstraciniams naudotojams |\n| `accessToken`, `refreshToken`, `oldRefreshToken` | Kolekcijos naudotojo žetonai ir panaudotas refresh žetonas rotacijos testui |\n| `playerToken`, `playerId` | Žaidėjo `jonas` žetonas ir ID |\n| `adminToken`, `adminId` | Administratoriaus žetonas ir ID |\n| `guildName` | Unikalus grupės pavadinimas, generuojamas grupės kūrimo užklausoje |\n| `guildA`, `guildB` | Sukurtų grupių ID |\n| `questId`, `logId` | Sukurtos užduoties ir įrašo ID |\n| `logPlayer`, `logDm` | Žaidėjo ir DM įrašai teisių patikroms |\n| `occurredAt` | Įvykio laikas (prieš valandą), naudojamas įrašams |\n| `nextPage`, `pageIds` | Puslapiavimo demonstracijai: `links.next` nuoroda ir pirmo puslapio ID |\n\n## Klaidų formatas\n\nKiekviena klaida grąžinama vienoda `ApiError` struktūra:\n\n```json\n{\n  \"timestamp\": \"2026-09-21T09:15:30.123Z\",\n  \"status\": 403,\n  \"error\": \"Forbidden\",\n  \"message\": \"Savo iraso tvirtinti negalima\",\n  \"path\": \"/api/guilds/4/quests/10/logs/14\",\n  \"details\": [ { \"field\": \"title\", \"message\": \"must not be blank\" } ]\n}\n```\n\n`details` pateikiamas tik tada, kai klaida susijusi su konkrečiais laukais.\n\n**401 ar 403?** `401` — serveris nežino, kas jūs: nėra žetono, jis sugadintas ar pasibaigęs, blogi prisijungimo duomenys. `403` — žino, bet teisių neužtenka: ne grupės narys, netinkama rolė grupėje, ne `ADMIN`, užblokuota paskyra.\n\n**400 ar 422?** `400` reiškia, kad klaidą matyti vien iš užklausos (blogas JSON, tipas, lauko apribojimas, nežinomas laukas). `422` reiškia, kad užklausa teisinga, bet pažeidžia dalykinės srities taisyklę.\n\nKiekviena užklausa turi išsaugotą pavyzdinį atsakymą (*Examples*), įrašytą iš tikro API paleidimo.",
+    "description": "# Done n Dusted API (LD2)\n\nDnD principu veikianti produktyvumo sistema: žaidėjas registruoja realaus gyvenimo progresą, grupės Dungeon Master jį patvirtina, ir tik patvirtinti įrašai suteikia XP.\n\nResursų hierarchija: **Guild (1:N) → Quest (1:N) → LogEntry**. Vaikinis objektas pasiekiamas tik per tėvinį, todėl neteisinga grandinė grąžina `404`.\n\nLD2 prideda **autentifikaciją ir autorizaciją**: JWT access ir refresh žetonai, grupės rolės `PLAYER` / `DUNGEON_MASTER` ir globali rolė `ADMIN`.\n\n## Kaip paleisti\n\n1. Paleiskite API (`./mvnw spring-boot:run`). Ji veikia adresu `http://localhost:8080/api`.\n2. Postman programoje paleiskite visą kolekciją su **Run collection**. Aplankus ir užklausas leiskite iš eilės, nes vėlesnės užklausos naudoja ankstesnių sukurtus ID ir žetonus.\n\nKolekcija kaskart užregistruoja naują naudotoją, pati susikuria duomenis ir po savęs išsivalo, todėl ją galima leisti kiek norima kartų.\n\n## Autorizacija\n\nKolekcijos lygyje nustatyta *Bearer Token* `{{accessToken}}` — ją paveldi visos užklausos. Kai užklausą siunčia kitas naudotojas, jos *Authorization* skiltyje nurodytas kitas žetonas:\n\n| Žetonas | Naudotojas | Kam naudojamas |\n| --- | --- | --- |\n| `accessToken` | `postman_<laikas>`, užregistruotas kolekcijos | Grupių savininkas ir DM |\n| `playerToken` | `jonas` | Grupės žaidėjas (`PLAYER`) |\n| `adminToken` | `admin` | Administratorius (`ADMIN`) |\n\nDemonstracinių naudotojų (`admin`, `rokas`, `ieva`, `jonas`) slaptažodis — `Demo123!`.\n\n## Aplankai\n\n| Aplankas | Kas tikrinama |\n| --- | --- |\n| 0. Autentifikacija | Registracija, prisijungimas, JWT turinys, `/auth/me`, žetonų rotacija, atsijungimas, `401` |\n| 1. Suvestinė | Kiek DB yra grupių, užduočių ir įrašų (su ID), ar vaikų ID rodo į teisingą tėvą |\n| 2. Grupės | Grupių CRUD, puslapiavimas per `links.next`, `400`, `404`, `409`, `415` klaidos |\n| 3. Nariai | Narių pridėjimas, rolės, vienas DM grupėje (`409`), `403`, `422` |\n| 4. Užduotys | Užduočių kūrimas, filtrai, XP skaičiavimas, `422` ir tėvinės grandinės `404` |\n| 5. Progreso įrašai | Žaidėjas registruoja, DM patvirtina, XP taisyklės, užšaldytas turinys |\n| 6. Rolės ir teisės | Kas ką gali: `403` ne nariui, žaidėjui, DM su savo įrašu, ne administratoriui |\n| 7. Išvalymas | Sukurtų duomenų ištrynimas (`204`, taip pat administratoriaus) ir patikra, kad jų nebėra |\n| 8. Administravimas | Naudotojų sąrašas, užblokavimas ir atblokavimas |\n\nAtnaujinimas visur yra `PATCH` (dalinis): keičiami tik atsiųsti laukai, todėl neatsiųstas aprašymas nedingsta. Sukūrus resursą be `description`, jis išsaugomas kaip `\"\"`.\n\n## Kolekcijos kintamieji\n\n| Kintamasis | Reikšmė |\n| --- | --- |\n| `baseUrl` | API adresas, numatytai `http://localhost:8080/api` |\n| `username`, `password`, `userId` | Kolekcijos užregistruotas naudotojas; slaptažodis bendras ir demonstraciniams naudotojams |\n| `accessToken`, `refreshToken`, `oldRefreshToken` | Kolekcijos naudotojo žetonai ir panaudotas refresh žetonas rotacijos testui |\n| `playerToken`, `playerId` | Žaidėjo `jonas` žetonas ir ID |\n| `adminToken`, `adminId` | Administratoriaus žetonas ir ID |\n| `guildName` | Unikalus grupės pavadinimas, generuojamas grupės kūrimo užklausoje |\n| `guildA`, `guildB` | Sukurtų grupių ID |\n| `questId`, `logId` | Sukurtos užduoties ir įrašo ID |\n| `logPlayer`, `logDm` | Žaidėjo ir DM įrašai teisių patikroms |\n| `occurredAt` | Įvykio laikas (prieš valandą), naudojamas įrašams |\n| `nextPage`, `pageIds` | Puslapiavimo demonstracijai: `links.next` nuoroda ir pirmo puslapio ID |\n\n## Klaidų formatas\n\nKiekviena klaida grąžinama vienoda `ApiError` struktūra:\n\n```json\n{\n  \"timestamp\": \"2026-09-21T09:15:30.123Z\",\n  \"status\": 403,\n  \"error\": \"Forbidden\",\n  \"message\": \"You cannot review your own log entry.\",\n  \"path\": \"/api/guilds/4/quests/10/logs/14\",\n  \"details\": [ { \"field\": \"title\", \"message\": \"Must not be blank\" } ]\n}\n```\n\n`details` pateikiamas tik tada, kai klaida susijusi su konkrečiais laukais.\n\n**401 ar 403?** `401` — serveris nežino, kas jūs: nėra žetono, jis sugadintas ar pasibaigęs, blogi prisijungimo duomenys. `403` — žino, bet teisių neužtenka: ne grupės narys, netinkama rolė grupėje, ne `ADMIN`, užblokuota paskyra.\n\n**400 ar 422?** `400` reiškia, kad klaidą matyti vien iš užklausos (blogas JSON, tipas, lauko apribojimas, nežinomas laukas). `422` reiškia, kad užklausa teisinga, bet pažeidžia dalykinės srities taisyklę.\n\nKiekviena užklausa turi išsaugotą pavyzdinį atsakymą (*Examples*), įrašytą iš tikro API paleidimo.",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "auth": {
@@ -118,7 +118,7 @@
                 "type": "text/javascript",
                 "exec": [
                   "pm.test('409 Conflict', () => pm.response.to.have.status(409));",
-                  "pm.test('Vardas uzimtas, nors parasytas kitokiomis raidemis', () => pm.expect(pm.response.json().message).to.include('uzimtas'));"
+                  "pm.test('Vardas uzimtas, nors parasytas kitokiomis raidemis', () => pm.expect(pm.response.json().message).to.include('already taken'));"
                 ]
               }
             }
@@ -195,7 +195,7 @@
                 "exec": [
                   "pm.test('401 Unauthorized', () => pm.response.to.have.status(401));",
                   "pm.test('WWW-Authenticate antraste', () => pm.expect(pm.response.headers.get('WWW-Authenticate')).to.eql('Bearer'));",
-                  "pm.test('ApiError su pranesimu', () => pm.expect(pm.response.json().message).to.include('Neteisingas'));"
+                  "pm.test('ApiError su pranesimu', () => pm.expect(pm.response.json().message).to.include('Invalid username or password'));"
                 ]
               }
             }
@@ -334,7 +334,7 @@
                 "exec": [
                   "pm.test('401 Unauthorized', () => pm.response.to.have.status(401));",
                   "pm.test('WWW-Authenticate nurodo invalid_token', () => pm.expect(pm.response.headers.get('WWW-Authenticate')).to.include('invalid_token'));",
-                  "pm.test('ApiError pranesimas', () => pm.expect(pm.response.json().message).to.include('neteisingas'));"
+                  "pm.test('ApiError pranesimas', () => pm.expect(pm.response.json().message).to.include('Invalid access token'));"
                 ]
               }
             }
@@ -418,7 +418,7 @@
                 "type": "text/javascript",
                 "exec": [
                   "pm.test('401 Unauthorized', () => pm.response.to.have.status(401));",
-                  "pm.test('Pakartotinis panaudojimas atsaukia visas sesijas', () => pm.expect(pm.response.json().message).to.include('atsauktos visos sesijos'));"
+                  "pm.test('Pakartotinis panaudojimas atsaukia visas sesijas', () => pm.expect(pm.response.json().message).to.include('All sessions have been revoked'));"
                 ]
               }
             }
@@ -456,7 +456,7 @@
                 "type": "text/javascript",
                 "exec": [
                   "pm.test('401 Unauthorized', () => pm.response.to.have.status(401));",
-                  "pm.test('Ir naujausias refresh zetonas atsauktas', () => pm.expect(pm.response.json().message).to.include('atsaukt'));"
+                  "pm.test('Ir naujausias refresh zetonas atsauktas', () => pm.expect(pm.response.json().message).to.include('revoked'));"
                 ]
               }
             }
@@ -1386,7 +1386,7 @@
                 "type": "text/javascript",
                 "exec": [
                   "pm.test('409 Conflict', () => pm.response.to.have.status(409));",
-                  "pm.test('Pranesimas paaiskina konflikta', () => pm.expect(pm.response.json().message).to.include('jau yra grupes narys'));"
+                  "pm.test('Pranesimas paaiskina konflikta', () => pm.expect(pm.response.json().message).to.include('already a member'));"
                 ]
               }
             }
@@ -1421,7 +1421,7 @@
                 "type": "text/javascript",
                 "exec": [
                   "pm.test('409 Conflict', () => pm.response.to.have.status(409));",
-                  "pm.test('Vienas DM grupeje', () => pm.expect(pm.response.json().message).to.include('jau turi DM'));"
+                  "pm.test('Vienas DM grupeje', () => pm.expect(pm.response.json().message).to.include('already has a game master'));"
                 ]
               }
             }
@@ -1456,7 +1456,7 @@
                 "type": "text/javascript",
                 "exec": [
                   "pm.test('422 Unprocessable Entity', () => pm.response.to.have.status(422));",
-                  "pm.test('Pranesimas apie nezinoma naudotoja', () => pm.expect(pm.response.json().message).to.include('nerastas'));"
+                  "pm.test('Pranesimas apie nezinoma naudotoja', () => pm.expect(pm.response.json().message).to.include('not found'));"
                 ]
               }
             }
@@ -1501,7 +1501,7 @@
                 "type": "text/javascript",
                 "exec": [
                   "pm.test('403 Forbidden', () => pm.response.to.have.status(403));",
-                  "pm.test('Paaiskinama, kas turi teise', () => pm.expect(pm.response.json().message).to.include('savininkas'));"
+                  "pm.test('Paaiskinama, kas turi teise', () => pm.expect(pm.response.json().message).to.include('guild owner'));"
                 ]
               }
             }
@@ -1536,7 +1536,7 @@
                 "type": "text/javascript",
                 "exec": [
                   "pm.test('409 Conflict', () => pm.response.to.have.status(409));",
-                  "pm.test('Antras DM neleidziamas', () => pm.expect(pm.response.json().message).to.include('jau turi DM'));"
+                  "pm.test('Antras DM neleidziamas', () => pm.expect(pm.response.json().message).to.include('already has a game master'));"
                 ]
               }
             }
@@ -1721,7 +1721,7 @@
                 "type": "text/javascript",
                 "exec": [
                   "pm.test('404 Not Found', () => pm.response.to.have.status(404));",
-                  "pm.test('Uzduotis egzistuoja, bet ne sioje grupeje', () => pm.expect(pm.response.json().message).to.include('nerasta grupeje'));"
+                  "pm.test('Uzduotis egzistuoja, bet ne sioje grupeje', () => pm.expect(pm.response.json().message).to.include('not found in guild'));"
                 ]
               }
             }
@@ -2046,7 +2046,7 @@
                 "type": "text/javascript",
                 "exec": [
                   "pm.test('422 Unprocessable Entity', () => pm.response.to.have.status(422));",
-                  "pm.test('Perziureto iraso turinys uzsaldytas', () => pm.expect(pm.response.json().message).to.include('Perziureto'));"
+                  "pm.test('Perziureto iraso turinys uzsaldytas', () => pm.expect(pm.response.json().message).to.include('reviewed log entry cannot be edited'));"
                 ]
               }
             }
@@ -2114,7 +2114,7 @@
                 "type": "text/javascript",
                 "exec": [
                   "pm.test('403 Forbidden', () => pm.response.to.have.status(403));",
-                  "pm.test('Paaiskinama, kad naudotojas ne narys', () => pm.expect(pm.response.json().message).to.include('narys'));"
+                  "pm.test('Paaiskinama, kad naudotojas ne narys', () => pm.expect(pm.response.json().message).to.include('not a member'));"
                 ]
               }
             }
@@ -2204,7 +2204,7 @@
                 "type": "text/javascript",
                 "exec": [
                   "pm.test('403 Forbidden', () => pm.response.to.have.status(403));",
-                  "pm.test('Tvirtina tik DM', () => pm.expect(pm.response.json().message).to.include('tik grupes DM'));"
+                  "pm.test('Tvirtina tik DM', () => pm.expect(pm.response.json().message).to.include('Only the game master'));"
                 ]
               }
             }
@@ -2239,7 +2239,7 @@
                 "type": "text/javascript",
                 "exec": [
                   "pm.test('403 Forbidden', () => pm.response.to.have.status(403));",
-                  "pm.test('Turini keicia tik autorius', () => pm.expect(pm.response.json().message).to.include('autorius'));"
+                  "pm.test('Turini keicia tik autorius', () => pm.expect(pm.response.json().message).to.include('Only the author'));"
                 ]
               }
             }
@@ -2309,7 +2309,7 @@
                 "type": "text/javascript",
                 "exec": [
                   "pm.test('403 Forbidden', () => pm.response.to.have.status(403));",
-                  "pm.test('Savo iraso tvirtinti negalima', () => pm.expect(pm.response.json().message).to.include('Savo iraso'));"
+                  "pm.test('Savo iraso tvirtinti negalima', () => pm.expect(pm.response.json().message).to.include('your own log entry'));"
                 ]
               }
             }
@@ -2340,7 +2340,7 @@
                 "type": "text/javascript",
                 "exec": [
                   "pm.test('403 Forbidden', () => pm.response.to.have.status(403));",
-                  "pm.test('Svetimus irasus mato tik DM', () => pm.expect(pm.response.json().message).to.include('tik grupes DM'));"
+                  "pm.test('Svetimus irasus mato tik DM', () => pm.expect(pm.response.json().message).to.include('Only the game master'));"
                 ]
               }
             }
@@ -2492,7 +2492,7 @@
                 "type": "text/javascript",
                 "exec": [
                   "pm.test('403 Forbidden', () => pm.response.to.have.status(403));",
-                  "pm.test('Grupe keicia tik savininkas', () => pm.expect(pm.response.json().message).to.include('savininkas'));"
+                  "pm.test('Grupe keicia tik savininkas', () => pm.expect(pm.response.json().message).to.include('guild owner'));"
                 ]
               }
             }
@@ -2513,7 +2513,7 @@
                 "type": "text/javascript",
                 "exec": [
                   "pm.test('403 Forbidden', () => pm.response.to.have.status(403));",
-                  "pm.test('Ne ADMIN - 403', () => pm.expect(pm.response.json().message).to.include('Neturite teises'));"
+                  "pm.test('Ne ADMIN - 403', () => pm.expect(pm.response.json().message).to.include('permission'));"
                 ]
               }
             }
@@ -2574,7 +2574,7 @@
                 "type": "text/javascript",
                 "exec": [
                   "pm.test('403 Forbidden', () => pm.response.to.have.status(403));",
-                  "pm.test('Nebe narys - 403', () => pm.expect(pm.response.json().message).to.include('narys'));"
+                  "pm.test('Nebe narys - 403', () => pm.expect(pm.response.json().message).to.include('not a member'));"
                 ]
               }
             }
@@ -2769,7 +2769,7 @@
                 "type": "text/javascript",
                 "exec": [
                   "pm.test('422 Unprocessable Entity', () => pm.response.to.have.status(422));",
-                  "pm.test('Saves uzblokuoti negalima', () => pm.expect(pm.response.json().message).to.include('Savo'));"
+                  "pm.test('Saves uzblokuoti negalima', () => pm.expect(pm.response.json().message).to.include('your own'));"
                 ]
               }
             }
@@ -2842,7 +2842,7 @@
                 "type": "text/javascript",
                 "exec": [
                   "pm.test('403 Forbidden', () => pm.response.to.have.status(403));",
-                  "pm.test('Pranesimas apie uzblokuota paskyra', () => pm.expect(pm.response.json().message).to.include('uzblokuota'));"
+                  "pm.test('Pranesimas apie uzblokuota paskyra', () => pm.expect(pm.response.json().message).to.include('blocked'));"
                 ]
               }
             }

@@ -3,27 +3,27 @@
 [![CI](https://github.com/cmigle/Done-n-Dusted/actions/workflows/ci.yml/badge.svg)](https://github.com/cmigle/Done-n-Dusted/actions/workflows/ci.yml)
 
 A pixel-art RPG productivity app for tabletop groups. Between game sessions, players log real-life
-achievements (a run, a book, a call with a friend); the group's Dungeon Master reviews them, and only
+achievements (a run, a book, a call with a friend); the guild's game master reviews them, and only
 approved entries grow the player's character — level, XP and six D&D stats.
 
 Full-stack project: **Spring Boot 4 REST API** with JWT auth and role-based access, and a **React 19 +
-TypeScript** client. Built for the KTU course *Web Application Design* (T120B165) in three labs.
+TypeScript** client, built in three stages that are each kept on their own branch.
 
 **Live demo: <https://done-n-dusted.azurewebsites.net>** · API docs: [Swagger UI](https://done-n-dusted.azurewebsites.net/swagger-ui.html) ·
-demo accounts `rokas` (DM), `jonas` (player), `ieva` (password `Demo123!`); the admin password on the live demo is private
+demo accounts `rokas` (game master), `jonas` (player), `ieva` (password `Demo123!`); the admin password on the live demo is private
 
 ![Character sheet](docs/screenshots/05-sheet-desktop.png)
 
-| Guild with quests | DM review | Mobile |
+| Guild with quests | Game master review | Mobile |
 | --- | --- | --- |
 | ![Guild](docs/screenshots/03-guild-desktop.png) | ![Review modal](docs/screenshots/06-review-modal-desktop.png) | ![Mobile menu](docs/screenshots/06-menu-mobile.png) |
 
 ## Features
 
 - **Guilds → quests → log entries** with strict parent-chain URLs (`/guilds/{id}/quests/{id}/logs/{id}`)
-- **Roles per guild** (player, Dungeon Master, owner) plus a global admin; one DM per guild, enforced in the database
-- **Review flow**: entries start `PENDING`, the DM approves or rejects, XP is derived from difficulty and frozen on approval; nobody approves their own entry
-- **Character sheet**: level, XP progress, six stats, inspiration and streak; full view for the player and DM, public view for others
+- **Roles per guild** (player, game master, owner) plus a global admin; one game master per guild, enforced in the database
+- **Review flow**: entries start `PENDING`, the game master approves or rejects, XP is derived from difficulty and frozen on approval; nobody approves their own entry
+- **Character sheet**: level, XP progress, six stats, inspiration and streak; full view for the player and game master, public view for others
 - **Friendships**: requests, accept, block; friends see each other's public sheet across guilds
 - **Auth**: short-lived JWT access tokens, rotating refresh tokens with reuse detection, BCrypt passwords
 - **Pixel UI**: Sweetie-16 palette with a 60/30/10 rule and one colour per stat, Pixelify Sans headings with IBM Plex Mono text (readable numbers), SVG pixel icons, procedurally generated 8×8 avatars, responsive layout with a 768 px breakpoint and a hamburger menu
@@ -53,7 +53,7 @@ flowchart LR
 
 - One App Service serves both the API (`/api`) and the React build (`classpath:/static`): one URL, no CORS. Static Web Apps was not an option because the student subscription only allows regions where it is not offered.
 - The API is stateless: each request carries a signed access token; group roles are read from the database on every request, so role changes apply immediately.
-- Permission rules live in the service layer (`GuildAccess`), not in annotations, because they depend on data (author, DM, owner).
+- Permission rules live in the service layer (`GuildAccess`), not in annotations, because they depend on data (author, game master, owner).
 - Every error, including 401/403 from security filters, uses one `ApiError` JSON shape.
 - The client keeps the access token in memory and serialises refreshes so concurrent `401`s never trigger refresh-token reuse detection.
 
@@ -70,7 +70,7 @@ npm install
 npm run dev                         # UI on http://localhost:5173 (proxies /api to :8080)
 ```
 
-Demo accounts (password `Demo123!`): `rokas` (DM), `ieva` (DM in another guild), `jonas` (player), `admin`.
+Demo accounts (password `Demo123!`): `rokas` (game master), `ieva` (game master in another guild), `jonas` (player), `admin`.
 
 ## Tests
 

@@ -1,4 +1,4 @@
-// API DTO tipai - atitinka backend atsakymus (docs/openapi.json).
+// API DTO types, matching the backend responses (docs/openapi.json).
 
 export type Stat = 'STR' | 'DEX' | 'CON' | 'INT' | 'WIS' | 'CHA'
 export type QuestType = 'MILESTONE' | 'HABIT' | 'GRIND' | 'SIDE_QUEST'

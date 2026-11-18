@@ -5,7 +5,7 @@ import java.time.Instant;
 import lt.ktu.donendusted.domain.GuildMembership;
 import lt.ktu.donendusted.domain.GuildRole;
 
-@Schema(name = "MemberResponse", description = "Grupes narys")
+@Schema(name = "MemberResponse", description = "Guild member")
 public record MemberResponse(
         @Schema(example = "4") Long userId,
         @Schema(example = "jonas") String username,

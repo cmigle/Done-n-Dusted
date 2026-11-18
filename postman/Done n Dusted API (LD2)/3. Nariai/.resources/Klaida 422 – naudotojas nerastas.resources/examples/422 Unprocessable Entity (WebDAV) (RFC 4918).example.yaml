@@ -14,7 +14,7 @@ response:
         "timestamp": "2026-11-08T14:31:34.134453700Z",
         "status": 422,
         "error": "Unprocessable Entity",
-        "message": "Naudotojas 'nera_tokio_naudotojo' nerastas",
+        "message": "User \"nera_tokio_naudotojo\" not found",
         "path": "/api/guilds/4/members"
       }
 order: 1000

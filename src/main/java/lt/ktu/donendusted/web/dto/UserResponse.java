@@ -6,7 +6,7 @@ import lt.ktu.donendusted.domain.User;
 import lt.ktu.donendusted.domain.UserRole;
 
 /** Slaptazodzio maisa niekada negrazinama. */
-@Schema(name = "UserResponse", description = "Naudotojas")
+@Schema(name = "UserResponse", description = "User")
 public record UserResponse(
         @Schema(example = "4") Long id,
         @Schema(example = "jonas") String username,

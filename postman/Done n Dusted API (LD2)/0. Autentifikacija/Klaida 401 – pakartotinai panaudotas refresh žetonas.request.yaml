@@ -16,7 +16,7 @@ scripts:
   - type: afterResponse
     code: |-
       pm.test('401 Unauthorized', () => pm.response.to.have.status(401));
-      pm.test('Pakartotinis panaudojimas atsaukia visas sesijas', () => pm.expect(pm.response.json().message).to.include('atsauktos visos sesijos'));
+      pm.test('Pakartotinis panaudojimas atsaukia visas sesijas', () => pm.expect(pm.response.json().message).to.include('All sessions have been revoked'));
     language: text/javascript
 examples: ./.resources/Klaida 401 – pakartotinai panaudotas refresh žetonas.resources/examples
 order: 10000

@@ -16,6 +16,6 @@ public record CurrentUser(Long id, String username, boolean admin) {
             return new CurrentUser(Long.valueOf(jwt.getSubject()), jwt.getClaimAsString("username"),
                     "ADMIN".equals(jwt.getClaimAsString("role")));
         }
-        throw new UnauthorizedException("Reikalingas prisijungimas");
+        throw new UnauthorizedException("Authentication required");
     }
 }

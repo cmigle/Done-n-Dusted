@@ -15,7 +15,7 @@ response:
         "timestamp": "2026-11-08T14:31:29.062315100Z",
         "status": 401,
         "error": "Unauthorized",
-        "message": "Reikalingas prisijungimas: Authorization: Bearer <accessToken>",
+        "message": "Authentication required. Send the header Authorization: Bearer <accessToken>.",
         "path": "/api/guilds"
       }
 order: 1000

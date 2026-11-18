@@ -18,7 +18,7 @@ scripts:
   - type: afterResponse
     code: |-
       pm.test('403 Forbidden', () => pm.response.to.have.status(403));
-      pm.test('Tvirtina tik DM', () => pm.expect(pm.response.json().message).to.include('tik grupes DM'));
+      pm.test('Tvirtina tik DM', () => pm.expect(pm.response.json().message).to.include('Only the game master'));
     language: text/javascript
 examples: ./.resources/Klaida 403 – žaidėjas negali tvirtinti.resources/examples
 order: 3000

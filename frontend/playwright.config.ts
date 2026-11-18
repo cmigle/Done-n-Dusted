@@ -1,7 +1,7 @@
 import { defineConfig } from '@playwright/test'
 
-// E2E testai praspaudzia programa narsykleje. Reikia veikianciu API (8080) ir frontend (5173).
-// Lokaliai: E2E_CHANNEL=msedge (idiegta Edge, nieko nesiunciant); CI - Playwright Chromium.
+// E2E tests click through the app in a browser. They need the API (8080) and the frontend (5173) running.
+// Locally: E2E_CHANNEL=msedge (the installed Edge, no download); CI uses Playwright Chromium.
 const channel = process.env.E2E_CHANNEL
 
 export default defineConfig({

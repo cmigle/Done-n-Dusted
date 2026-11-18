@@ -7,11 +7,11 @@ import lt.ktu.donendusted.domain.Quest;
 import lt.ktu.donendusted.domain.QuestType;
 import lt.ktu.donendusted.domain.Stat;
 
-@Schema(name = "QuestResponse", description = "Uzduotis")
+@Schema(name = "QuestResponse", description = "Quest")
 public record QuestResponse(
 
         @Schema(example = "4") Long id,
-        @Schema(description = "Tevine grupe", example = "2") Long guildId,
+        @Schema(description = "Parent guild", example = "2") Long guildId,
         @Schema(example = "Run 50 kilometers") String title,
         String description,
         @Schema(example = "CON") Stat stat,
@@ -20,11 +20,11 @@ public record QuestResponse(
         @Schema(example = "50") Integer targetCount,
         @Schema(example = "true") boolean active,
 
-        @Schema(description = "Serverio isvestas XP uz viena patvirtinta irasa (BASE_XP * daugiklis)",
+        @Schema(description = "XP per approved log entry, computed by the server (BASE_XP * multiplier)",
                 example = "50")
         int xpPerCompletion,
 
-        @Schema(description = "Kas sukure uzduoti (naudotojo id)", example = "4") Long createdBy,
+        @Schema(description = "Quest creator (user ID)", example = "4") Long createdBy,
         Instant createdAt) {
 
     public static QuestResponse from(Quest quest) {

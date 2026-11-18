@@ -76,7 +76,7 @@ public class GuildService {
         CurrentUser me = CurrentUser.get();
         GuildRole role = memberships.findRole(guildId, me.id()).orElse(null);
         GuildAccess access = new GuildAccess(guild, me, role);
-        access.require(access.isMember() || access.isAdmin(), "Nesate grupes " + guildId + " narys");
+        access.require(access.isMember() || access.isAdmin(), "You are not a member of guild " + guildId + ".");
         return access;
     }
 
@@ -87,7 +87,7 @@ public class GuildService {
 
     public Guild create(GuildRequest request) {
         if (guilds.existsByNameIgnoreCase(request.name())) {
-            throw new ConflictException("Grupe pavadinimu '" + request.name() + "' jau egzistuoja");
+            throw new ConflictException("Guild \"" + request.name() + "\" already exists.");
         }
         // Kurejas tampa savininku ir grupes DM.
         User owner = users.getReferenceById(CurrentUser.get().id());
@@ -99,13 +99,13 @@ public class GuildService {
     /** PATCH: null laukas reiskia "neatsiustas" - tokia reiksme paliekama kokia buvo. */
     public Guild update(Long id, GuildUpdateRequest request) {
         GuildAccess access = access(id);
-        access.require(access.isOwner(), "Grupe keisti gali tik jos savininkas");
+        access.require(access.isOwner(), "Only the guild owner can edit the guild.");
         Guild guild = access.guild();
         // save() kviesti nereikia: guild yra "managed" objektas (gautas toje pacioje transakcijoje),
         // todel Hibernate pats pastebi pakeitimus (dirty checking) ir transakcijos pabaigoje daro UPDATE.
         if (request.name() != null) {
             if (guilds.existsByNameIgnoreCaseAndIdNot(request.name(), id)) {
-                throw new ConflictException("Grupe pavadinimu '" + request.name() + "' jau egzistuoja");
+                throw new ConflictException("Guild \"" + request.name() + "\" already exists.");
             }
             guild.setName(request.name());
         }
@@ -117,7 +117,7 @@ public class GuildService {
 
     public void delete(Long id) {
         GuildAccess access = access(id);
-        access.require(access.isOwner() || access.isAdmin(), "Grupe istrinti gali tik jos savininkas arba administratorius");
+        access.require(access.isOwner() || access.isAdmin(), "Only the guild owner or an admin can delete the guild.");
         // Duomenu bazeje FK yra ON DELETE CASCADE, todel kartu dingsta nariai, uzduotys ir ju irasai.
         guilds.delete(access.guild());
     }

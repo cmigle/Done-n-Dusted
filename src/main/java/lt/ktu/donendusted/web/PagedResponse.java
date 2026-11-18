@@ -18,9 +18,9 @@ import org.springframework.web.util.UriUtils;
  * Nuorodos statomos is dabartines uzklausos URI, todel visi filtrai ir rikiavimas islieka.
  * totalElements pirmas, kad bendras kiekis (pvz. kiek is viso grupiu) matytusi atsakymo virsuje.
  */
-@Schema(name = "PagedResponse", description = "Puslapiuotas sarasas su navigacijos nuorodomis")
+@Schema(name = "PagedResponse", description = "Paged list with navigation links")
 public record PagedResponse<T>(
-        @Schema(description = "Kiek is viso elementu atitinka uzklausa (visuose puslapiuose)", example = "42")
+        @Schema(description = "Total number of matching items (across all pages)", example = "42")
         long totalElements,
         List<T> content, PageInfo page, PageLinks links) {
 
@@ -32,7 +32,7 @@ public record PagedResponse<T>(
             @Schema(example = "3") int totalPages) {
     }
 
-    @Schema(name = "PageLinks", description = "prev ir next nera pateikiami, kai tokio puslapio nera")
+    @Schema(name = "PageLinks", description = "prev and next are omitted when there is no such page")
     public record PageLinks(String self, String first, String prev, String next, String last) {
     }
 

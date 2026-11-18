@@ -14,7 +14,7 @@ response:
         "timestamp": "2026-11-08T14:31:37.872118900Z",
         "status": 403,
         "error": "Forbidden",
-        "message": "SIDE_QUEST uzduotis gali kurti tik grupes DM",
+        "message": "Only the game master can create SIDE_QUEST quests.",
         "path": "/api/guilds/4/quests"
       }
 order: 1000

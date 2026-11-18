@@ -28,7 +28,7 @@ public class WebConfig implements WebMvcConfigurer {
                 if (page != null && page.trim().matches("\\d+")
                         && new BigInteger(page.trim()).compareTo(BigInteger.valueOf(MAX_PAGE)) > 0) {
                     throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
-                            "Per didelis puslapio numeris - page negali virsyti " + MAX_PAGE);
+                            "Page number is too large. The page parameter cannot exceed " + MAX_PAGE + ".");
                 }
                 return true;
             }

@@ -69,13 +69,13 @@ public class FriendshipService {
         Long me = CurrentUser.get().id();
         // Kaip ir pridedant nari: naudotojas nurodomas body, todel jo nebuvimas - turinio klaida (422), ne 404.
         User addressee = users.findByUsernameIgnoreCase(request.username())
-                .orElseThrow(() -> new BusinessRuleException("Naudotojas '" + request.username() + "' nerastas"));
+                .orElseThrow(() -> new BusinessRuleException("User \"" + request.username() + "\" not found"));
         if (addressee.getId().equals(me)) {
-            throw new BusinessRuleException("Pakviesti i draugus saves negalima");
+            throw new BusinessRuleException("You cannot send a friend request to yourself.");
         }
         // Bet kokia esama pora, ir BLOCKED, - tas pats 409: neatskleidziame, kad kitas naudotojas uzblokavo.
         if (friendships.existsBetween(me, addressee.getId())) {
-            throw new ConflictException("Draugyste ar kvietimas su naudotoju '" + addressee.getUsername() + "' jau yra");
+            throw new ConflictException("A friendship or friend request with \"" + addressee.getUsername() + "\" already exists.");
         }
         return friendships.save(new Friendship(users.getReferenceById(me), addressee));
     }
@@ -86,23 +86,23 @@ public class FriendshipService {
         switch (request.status()) {
             case ACCEPTED -> {
                 if (friendship.getStatus() != FriendshipStatus.PENDING) {
-                    throw new BusinessRuleException("Priimti galima tik laukianti kvietima - si draugyste jau "
-                            + friendship.getStatus());
+                    throw new BusinessRuleException("Only a pending friend request can be accepted. This one is already "
+                            + friendship.getStatus() + ".");
                 }
                 if (!friendship.isAddressee(me)) {
-                    throw new ForbiddenException("Kvietima priimti gali tik jo gavejas");
+                    throw new ForbiddenException("Only the recipient can accept a friend request.");
                 }
                 friendship.accept(Instant.now());
             }
             case BLOCKED -> {
                 // find() BLOCKED eilute grazina tik uzblokavusiajam - antra karta blokuoti nera ko.
                 if (friendship.getStatus() == FriendshipStatus.BLOCKED) {
-                    throw new BusinessRuleException("Naudotojas jau uzblokuotas");
+                    throw new BusinessRuleException("User is already blocked.");
                 }
                 friendship.block(me, Instant.now());
             }
             case PENDING -> throw new BusinessRuleException(
-                    "Busena keiciama tik i ACCEPTED arba BLOCKED; kvietima atsaukti ar atmesti - DELETE");
+                    "Status can only be changed to ACCEPTED or BLOCKED. Use DELETE to cancel or decline a friend request.");
         }
         return friendship;
     }
@@ -118,7 +118,7 @@ public class FriendshipService {
         Long me = CurrentUser.get().id();
         Friendship friendship = find(id, me);
         if (friendship.getStatus() != FriendshipStatus.ACCEPTED) {
-            throw new ForbiddenException("Veikejo kortele matoma tik patvirtintiems draugams");
+            throw new ForbiddenException("Only accepted friends can see the character sheet.");
         }
         return sheets.publicSheet(friendship.other(me));
     }
@@ -126,6 +126,6 @@ public class FriendshipService {
     private Friendship find(Long id, Long me) {
         return friendships.findWithUsersById(id)
                 .filter(friendship -> friendship.isVisibleTo(me))
-                .orElseThrow(() -> new ResourceNotFoundException("Draugyste " + id + " nerasta"));
+                .orElseThrow(() -> new ResourceNotFoundException("Friendship " + id + " not found"));
     }
 }

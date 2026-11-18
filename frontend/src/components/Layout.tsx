@@ -8,7 +8,7 @@ import { PixelAvatar, Spinner } from './ui'
 function Header() {
   const { status, user, isAdmin, logout } = useAuth()
   const location = useLocation()
-  // Meniu atidarytas tik tame puslapyje, kuriame ji atidare: pasirinkus punkta - uzsidaro savaime.
+  // The menu stays open only on the page where it was opened, so picking a link closes it.
   const [openOn, setOpenOn] = useState<string | null>(null)
   const open = openOn === location.pathname
 
@@ -18,7 +18,7 @@ function Header() {
     <header className="site-header">
       {open && <div className="nav-backdrop" aria-hidden="true" onClick={() => setOpenOn(null)} />}
       <div className="container site-header__bar">
-        <Link to={user ? '/taverna' : '/'} className="brand">
+        <Link to={user ? '/tavern' : '/'} className="brand">
           <img src="/logo.svg" alt="" width={40} height={40} />
           Done n Dusted
         </Link>
@@ -28,49 +28,49 @@ function Header() {
           className="btn btn--ghost btn--icon menu-toggle"
           aria-expanded={open}
           aria-controls="main-nav"
-          aria-label={open ? 'Uždaryti meniu' : 'Atidaryti meniu'}
+          aria-label={open ? 'Close menu' : 'Open menu'}
           onClick={() => setOpenOn(open ? null : location.pathname)}
         >
           {open ? <Close size={24} aria-hidden="true" /> : <Menu size={24} aria-hidden="true" />}
         </button>
 
-        <nav id="main-nav" className={`nav${open ? ' is-open' : ''}`} aria-label="Pagrindinis meniu">
+        <nav id="main-nav" className={`nav${open ? ' is-open' : ''}`} aria-label="Main menu">
           <ul className="nav__list">
             {status === 'authenticated' ? (
               <>
                 <li>
-                  <NavLink to="/taverna" className={link}>
-                    <Home size={20} aria-hidden="true" /> Taverna
+                  <NavLink to="/tavern" className={link}>
+                    <Home size={20} aria-hidden="true" /> Tavern
                   </NavLink>
                 </li>
                 <li>
-                  <NavLink to="/draugai" className={link}>
-                    <Users size={20} aria-hidden="true" /> Draugai
+                  <NavLink to="/friends" className={link}>
+                    <Users size={20} aria-hidden="true" /> Friends
                   </NavLink>
                 </li>
                 {isAdmin && (
                   <li>
-                    <NavLink to="/administravimas" className={link}>
-                      <Shield size={20} aria-hidden="true" /> Administravimas
+                    <NavLink to="/admin" className={link}>
+                      <Shield size={20} aria-hidden="true" /> Admin
                     </NavLink>
                   </li>
                 )}
                 <li>
                   <button type="button" className="nav__link" onClick={() => void logout()}>
-                    <Logout size={20} aria-hidden="true" /> Atsijungti
+                    <Logout size={20} aria-hidden="true" /> Log out
                   </button>
                 </li>
               </>
             ) : (
               <>
                 <li>
-                  <NavLink to="/prisijungti" className={link}>
-                    <Login size={20} aria-hidden="true" /> Prisijungti
+                  <NavLink to="/login" className={link}>
+                    <Login size={20} aria-hidden="true" /> Log in
                   </NavLink>
                 </li>
                 <li>
-                  <NavLink to="/registracija" className={link}>
-                    <UserPlus size={20} aria-hidden="true" /> Registruotis
+                  <NavLink to="/register" className={link}>
+                    <UserPlus size={20} aria-hidden="true" /> Sign up
                   </NavLink>
                 </li>
               </>
@@ -79,7 +79,7 @@ function Header() {
         </nav>
 
         {user && (
-          <div className="header-user" aria-label="Prisijungęs naudotojas">
+          <div className="header-user" aria-label="Signed in as">
             <PixelAvatar name={user.username} size={36} />
             <span>{user.username}</span>
           </div>
@@ -96,7 +96,7 @@ function Footer() {
     <footer className="site-footer">
       <div className="container site-footer__bar">
         <p className="site-footer__legal">
-          KTU T120B165 · <span className="legal-sign">©</span> {YEAR} Miglė Cirtautaitė
+          <span className="legal-sign">©</span> {YEAR} Miglė Cirtautaitė
         </p>
         <ul className="site-footer__links">
           <li>
@@ -106,7 +106,7 @@ function Footer() {
           </li>
           <li>
             <a href={API_DOCS_URL}>
-              <BookOpen size={18} aria-hidden="true" /> API dokumentacija
+              <BookOpen size={18} aria-hidden="true" /> API docs
             </a>
           </li>
         </ul>
@@ -118,11 +118,11 @@ function Footer() {
 export function Layout() {
   return (
     <>
-      <a className="skip-link" href="#turinys">
-        Pereiti prie turinio
+      <a className="skip-link" href="#content">
+        Skip to content
       </a>
       <Header />
-      <main id="turinys" className="site-main" tabIndex={-1}>
+      <main id="content" className="site-main" tabIndex={-1}>
         <div className="container">
           <Outlet />
         </div>
@@ -132,21 +132,21 @@ export function Layout() {
   )
 }
 
-/** Tik prisijungusiems; kol atkuriama sesija - laukiam, kad nebutu "mirksejimo" i prisijungima. */
+/** Signed-in users only. While the session is being restored we wait, so the page never flashes to the login form. */
 export function RequireAuth({ admin = false }: { admin?: boolean }) {
   const { status, isAdmin, signedOut } = useAuth()
   const location = useLocation()
   if (status === 'loading') {
     return (
       <div className="empty">
-        <Spinner label="Atkuriamas prisijungimas" />
+        <Spinner label="Restoring your session" />
       </div>
     )
   }
-  // Pasibaigus sesijai - i prisijungima ir atgal i ta pati puslapi; atsijungus pačiam - i pradzia.
+  // Expired session: to the login form and back to the same page afterwards. Logged out on purpose: to the home page.
   if (status === 'anonymous') {
-    return signedOut ? <Navigate to="/" replace /> : <Navigate to="/prisijungti" replace state={{ from: location.pathname }} />
+    return signedOut ? <Navigate to="/" replace /> : <Navigate to="/login" replace state={{ from: location.pathname }} />
   }
-  if (admin && !isAdmin) return <Navigate to="/taverna" replace />
+  if (admin && !isAdmin) return <Navigate to="/tavern" replace />
   return <Outlet />
 }

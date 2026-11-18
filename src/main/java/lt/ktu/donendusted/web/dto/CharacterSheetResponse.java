@@ -11,65 +11,65 @@ import lt.ktu.donendusted.domain.Stat;
  * Veikejo kortele. Viskas skaiciuojama tik is patvirtintu (APPROVED) irasu. PUBLIC pjuvyje recentLogs ir
  * pendingCount yra null, todel i JSON neirasomi; draugo kortelei (per visas grupes) nera ir grupes lauku.
  */
-@Schema(name = "CharacterSheetResponse", description = "Veikejo kortele: lygis, XP ir charakteristikos is patvirtintu irasu")
+@Schema(name = "CharacterSheetResponse", description = "Character sheet: level, XP and stats from approved log entries")
 public record CharacterSheetResponse(
 
         @Schema(example = "4") Long userId,
         @Schema(example = "jonas") String username,
 
-        @Schema(description = "Grupe; draugo kortelei (visos grupes kartu) nepateikiama", example = "2")
+        @Schema(description = "Guild; omitted on a friend's character sheet (all guilds combined)", example = "2")
         Long guildId,
 
-        @Schema(description = "Draugo kortelei nepateikiama", example = "Iron Vow")
+        @Schema(description = "Omitted on a friend's character sheet", example = "Iron Vow")
         String guildName,
 
-        @Schema(description = "Role grupeje; draugo kortelei nepateikiama", example = "PLAYER")
+        @Schema(description = "Role in the guild; omitted on a friend's character sheet", example = "PLAYER")
         GuildRole role,
 
-        @Schema(description = "FULL - pats naudotojas, grupes DM arba ADMIN; PUBLIC - kiti grupes nariai ir draugai",
+        @Schema(description = "FULL for the user, the guild's game master or ADMIN; PUBLIC for other guild members and friends",
                 example = "FULL")
         View view,
 
         @Schema(description = "totalXp / 100 + 1", example = "2")
         int level,
 
-        @Schema(description = "Visu patvirtintu irasu XP suma", example = "100")
+        @Schema(description = "Total XP of all approved log entries", example = "100")
         long totalXp,
 
-        @Schema(description = "totalXp % 100 - kiek XP jau surinkta dabartiniame lygyje", example = "0")
+        @Schema(description = "totalXp % 100: XP earned in the current level", example = "0")
         int xpIntoLevel,
 
-        @Schema(description = "Kiek XP reikia vienam lygiui (visada 100)", example = "100")
+        @Schema(description = "XP needed per level (always 100)", example = "100")
         int xpForNextLevel,
 
-        @Schema(description = "Patvirtintu irasu inspiration suma", example = "1")
+        @Schema(description = "Total inspiration of approved log entries", example = "1")
         long inspiration,
 
-        @Schema(description = "Kiek UTC dienu is eiles, baigiant siandien arba vakar, turi bent viena patvirtinta "
-                + "irasa (pagal occurredAt); kitaip 0", example = "3")
+        @Schema(description = "Consecutive UTC days, ending today or yesterday, with at least one approved log entry "
+                + "(by occurredAt); otherwise 0", example = "3")
         int streakDays,
 
-        @Schema(description = "Visada 6 charakteristikos tvarka STR, DEX, CON, INT, WIS, CHA")
+        @Schema(description = "Always the 6 stats in the order STR, DEX, CON, INT, WIS, CHA")
         List<StatScore> stats,
 
-        @Schema(description = "Tik FULL: 10 naujausiu patvirtintu irasu, naujausias pirmas")
+        @Schema(description = "FULL only: the 10 latest approved log entries, newest first")
         List<RecentLog> recentLogs,
 
-        @Schema(description = "Tik FULL: kiek siu irasu dar laukia DM perziuros (PENDING)", example = "1")
+        @Schema(description = "FULL only: how many log entries still wait for the game master's review (PENDING)", example = "1")
         Long pendingCount) {
 
     public enum View {
         FULL, PUBLIC
     }
 
-    @Schema(name = "StatScore", description = "Charakteristikos reiksme ir jai skirtas XP")
+    @Schema(name = "StatScore", description = "Stat score and the XP earned for it")
     public record StatScore(
             @Schema(example = "CON") Stat stat,
             @Schema(description = "min(20, 10 + xp / 50)", example = "12") int score,
             @Schema(example = "100") long xp) {
     }
 
-    @Schema(name = "SheetRecentLog", description = "Patvirtintas irasas veikejo korteleje")
+    @Schema(name = "SheetRecentLog", description = "Approved log entry on the character sheet")
     public record RecentLog(
             @Schema(example = "5") Long logId,
             @Schema(example = "4") Long questId,

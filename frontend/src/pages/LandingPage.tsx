@@ -9,65 +9,65 @@ import { useTitle } from '../lib/useTitle'
 export function LandingPage() {
   const { status } = useAuth()
   const [rulesOpen, setRulesOpen] = useState(false)
-  useTitle('Veikėjas auga tarp žaidimų')
+  useTitle('Your character grows between sessions')
 
-  if (status === 'authenticated') return <Navigate to="/taverna" replace />
+  if (status === 'authenticated') return <Navigate to="/tavern" replace />
 
   return (
     <div className="stack">
       <section className="hero">
         <div className="hero__text">
-          <h1>Tavo veikėjas auga tarp žaidimų</h1>
+          <h1>Your character grows between sessions</h1>
           <p>
-            Bėgi, skaitai, susitinki su draugais – užregistruok tai savo grupėje. Kai žaidimo vedėjas (angl. Dungeon
-            Master) patvirtina, veikėjas gauna patirties taškų, o jo charakteristikos kyla.
+            Go for a run, read a book, meet your friends – log it with your guild. Once the game master approves it,
+            your character earns experience points and its stats go up.
           </p>
           <div className="hero__actions">
-            <Link to="/registracija" className="btn">
-              Sukurti veikėją
+            <Link to="/register" className="btn">
+              Create a character
             </Link>
-            <Link to="/prisijungti" className="btn btn--ghost">
-              Jau turiu paskyrą
+            <Link to="/login" className="btn btn--ghost">
+              I have an account
             </Link>
           </div>
         </div>
         <CharacterPreview />
       </section>
 
-      <section aria-labelledby="kaip-veikia">
-        <h2 id="kaip-veikia">Kaip tai veikia</h2>
+      <section aria-labelledby="how-it-works">
+        <h2 id="how-it-works">How it works</h2>
         <ol className="steps grid grid--3">
           <li className="window">
             <h3 className="step__title">
-              <NotePlus size={32} aria-hidden="true" color="var(--sky)" /> 1. Užregistruok žygį
+              <NotePlus size={32} aria-hidden="true" color="var(--sky)" /> 1. Log what you did
             </h3>
-            <p>Prie grupės užduoties pridėk, ką padarei ir kada. Gali įdėti nuorodą į nuotrauką.</p>
+            <p>Add an entry to one of your guild's quests: what you did and when. You can attach a link to a photo.</p>
           </li>
           <li className="window">
             <h3 className="step__title">
-              <CheckDouble size={32} aria-hidden="true" color="var(--leaf)" /> 2. Vedėjas patvirtina
+              <CheckDouble size={32} aria-hidden="true" color="var(--leaf)" /> 2. The game master approves
             </h3>
-            <p>Žaidimo vedėjas (ŽV) peržiūri įrašą, skiria patirties taškų ir, jei nusipelnei, įkvėpimo taškų.</p>
+            <p>The game master (GM) reviews the entry, awards XP and, if you earned it, inspiration.</p>
           </li>
           <li className="window">
             <h3 className="step__title">
-              <TrendingUp size={32} aria-hidden="true" color="var(--ember)" /> 3. Veikėjas auga
+              <TrendingUp size={32} aria-hidden="true" color="var(--ember)" /> 3. Your character grows
             </h3>
-            <p>Patirtis kelia lygį ir tą charakteristiką, kurią užduotis lavina: jėgą, išmintį ar kurią nors kitą.</p>
+            <p>XP raises your level and the stat the quest trains: strength, wisdom or any of the others.</p>
           </li>
         </ol>
         <button type="button" className="link-button" onClick={() => setRulesOpen(true)}>
-          <InfoBox size={20} aria-hidden="true" /> Kaip skaičiuojama patirtis?
+          <InfoBox size={20} aria-hidden="true" /> How does XP work?
         </button>
       </section>
 
-      <section className="banner" aria-labelledby="kitas-zaidimas">
-        <img className="banner__art pixel" src="/hero.svg" alt="Pikselinė pilis naktį su laužu prie kelio" width={960} height={480} />
+      <section className="banner" aria-labelledby="next-session">
+        <img className="banner__art pixel" src="/hero.svg" alt="A pixel castle at night with a campfire by the road" width={960} height={480} />
         <div className="banner__text">
-          <h2 id="kitas-zaidimas">Į kitą žaidimą – stipresnis</h2>
-          <p>Visa grupė mato, kas pasikeitė nuo praėjusio karto. Žaidimo vedėjui nebereikia skaičiuoti iš atminties.</p>
-          <Link to="/registracija" className="btn btn--ghost">
-            Pradėti
+          <h2 id="next-session">Stronger at every session</h2>
+          <p>The whole guild sees what changed since last time. The game master no longer has to keep score from memory.</p>
+          <Link to="/register" className="btn btn--ghost">
+            Get started
           </Link>
         </div>
       </section>

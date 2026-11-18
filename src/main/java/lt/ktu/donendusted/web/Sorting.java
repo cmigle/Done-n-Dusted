@@ -19,8 +19,8 @@ final class Sorting {
         List<String> allowed = List.of(fields);
         for (Sort.Order order : pageable.getSort()) {
             if (!allowed.contains(order.getProperty())) {
-                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Rikiuoti pagal '" + order.getProperty()
-                        + "' negalima - galima pagal: " + String.join(", ", allowed));
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Cannot sort by \"" + order.getProperty()
+                        + "\". Allowed fields: " + String.join(", ", allowed) + ".");
             }
         }
         return pageable;

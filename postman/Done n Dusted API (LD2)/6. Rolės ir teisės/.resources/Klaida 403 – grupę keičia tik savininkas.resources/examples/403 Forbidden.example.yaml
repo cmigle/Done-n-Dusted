@@ -14,7 +14,7 @@ response:
         "timestamp": "2026-11-08T14:31:37.996396500Z",
         "status": 403,
         "error": "Forbidden",
-        "message": "Grupe keisti gali tik jos savininkas",
+        "message": "Only the guild owner can edit the guild.",
         "path": "/api/guilds/4"
       }
 order: 1000

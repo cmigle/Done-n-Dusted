@@ -10,7 +10,7 @@ scripts:
   - type: afterResponse
     code: |-
       pm.test('403 Forbidden', () => pm.response.to.have.status(403));
-      pm.test('Svetimus irasus mato tik DM', () => pm.expect(pm.response.json().message).to.include('tik grupes DM'));
+      pm.test('Svetimus irasus mato tik DM', () => pm.expect(pm.response.json().message).to.include('Only the game master'));
     language: text/javascript
 examples: ./.resources/Klaida 403 – žaidėjas nemato svetimo įrašo.resources/examples
 order: 7000

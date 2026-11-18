@@ -14,7 +14,7 @@ scripts:
   - type: afterResponse
     code: |-
       pm.test('403 Forbidden', () => pm.response.to.have.status(403));
-      pm.test('Turini keicia tik autorius', () => pm.expect(pm.response.json().message).to.include('autorius'));
+      pm.test('Turini keicia tik autorius', () => pm.expect(pm.response.json().message).to.include('Only the author'));
     language: text/javascript
 examples: ./.resources/Klaida 403 – DM nekeičia žaidėjo įrašo turinio.resources/examples
 order: 4000

@@ -15,7 +15,7 @@ export function FriendsPage() {
   const [username, setUsername] = useState('')
   const [error, setError] = useState<string>()
   const [viewing, setViewing] = useState<Friendship | null>(null)
-  useTitle('Draugai')
+  useTitle('Friends')
   const all = useQuery({ queryKey: ['friends', 'all'], queryFn: () => friends.list() })
 
   const refresh = () => queryClient.invalidateQueries({ queryKey: ['friends'] })
@@ -24,7 +24,7 @@ export function FriendsPage() {
     onSuccess: async (f) => {
       await refresh()
       setUsername('')
-      toast('success', `Kvietimas išsiųstas: ${f.username}`)
+      toast('success', `Friend request sent to ${f.username}`)
     },
     onError: (err) => setError(err.message),
   })
@@ -32,7 +32,7 @@ export function FriendsPage() {
     mutationFn: ({ id, status }: { id: number; status: 'ACCEPTED' | 'BLOCKED' }) => friends.respond(id, status),
     onSuccess: async (f) => {
       await refresh()
-      toast('success', f.status === 'ACCEPTED' ? `Dabar tu ir ${f.username} – draugai` : `${f.username} užblokuotas`)
+      toast('success', f.status === 'ACCEPTED' ? `You and ${f.username} are now friends` : `${f.username} blocked`)
     },
     onError: (err) => toast('error', err.message),
   })
@@ -40,7 +40,7 @@ export function FriendsPage() {
     mutationFn: (id: number) => friends.remove(id),
     onSuccess: async () => {
       await refresh()
-      toast('info', 'Atnaujinta')
+      toast('info', 'Updated')
     },
     onError: (err) => toast('error', err.message),
   })
@@ -60,26 +60,26 @@ export function FriendsPage() {
   return (
     <>
       <div className="page-head">
-        <h1>Draugai</h1>
-        <p>Draugai mato tavo viešą veikėjo kortelę – lygį ir charakteristikas, bet ne tavo įrašus.</p>
+        <h1>Friends</h1>
+        <p>Friends see your public character sheet – level and stats, but not your log entries.</p>
       </div>
 
       <div className="grid grid--sidebar">
         <div className="stack">
-          <Window title="Pakviesti draugą" icon={<UserPlus size={24} aria-hidden="true" />} headingLevel={2}>
+          <Window title="Add a friend" icon={<UserPlus size={24} aria-hidden="true" />} headingLevel={2}>
             <form className="form" onSubmit={submit}>
-              <Field label="Naudotojo vardas" error={error}>
+              <Field label="Username" error={error}>
                 {(p) => <input {...p} className="input" value={username} onChange={(e) => setUsername(e.target.value)} required />}
               </Field>
               <div className="form__actions">
                 <button className="btn" disabled={request.isPending || !username.trim()}>
-                  Siųsti kvietimą
+                  Send request
                 </button>
               </div>
             </form>
           </Window>
           {incoming.length > 0 && (
-            <Window title={`Gauti kvietimai (${incoming.length})`} icon={<Mail size={24} aria-hidden="true" />} headingLevel={2}>
+            <Window title={`Friend requests (${incoming.length})`} icon={<Mail size={24} aria-hidden="true" />} headingLevel={2}>
               <ul className="list">
                 {incoming.map((f) => (
                   <li key={f.id} className="friend">
@@ -87,13 +87,13 @@ export function FriendsPage() {
                     <span className="friend__name">{f.username}</span>
                     <div className="row">
                       <button type="button" className="btn btn--success btn--small" onClick={() => respond.mutate({ id: f.id, status: 'ACCEPTED' })}>
-                        Priimti
+                        Accept
                       </button>
                       <button type="button" className="btn btn--ghost btn--small" onClick={() => remove.mutate(f.id)}>
-                        Atmesti
+                        Decline
                       </button>
                       <button type="button" className="btn btn--ghost btn--small" onClick={() => respond.mutate({ id: f.id, status: 'BLOCKED' })}>
-                        Blokuoti
+                        Block
                       </button>
                     </div>
                   </li>
@@ -104,11 +104,11 @@ export function FriendsPage() {
         </div>
 
         <div className="stack">
-          <Window title={`Draugai (${accepted.length})`} icon={<Users size={24} aria-hidden="true" />} headingLevel={2}>
+          <Window title={`Friends (${accepted.length})`} icon={<Users size={24} aria-hidden="true" />} headingLevel={2}>
             {all.isPending && <Loading />}
             {all.isError && <ErrorNote error={all.error} />}
             {all.isSuccess && accepted.length === 0 && (
-              <Empty>Draugų dar nėra. Pakviesk ką nors iš savo grupės!</Empty>
+              <Empty>No friends yet. Add someone from your guild!</Empty>
             )}
             <ul className="list">
               {accepted.map((f) => (
@@ -116,14 +116,14 @@ export function FriendsPage() {
                   <PixelAvatar name={f.username} size={40} />
                   <span className="friend__name">
                     {f.username}
-                    <span className="muted"> nuo {formatDate(f.respondedAt ?? f.createdAt)}</span>
+                    <span className="muted"> since {formatDate(f.respondedAt ?? f.createdAt)}</span>
                   </span>
                   <div className="row">
                     <button type="button" className="btn btn--small" onClick={() => setViewing(f)}>
-                      Kortelė
+                      Sheet
                     </button>
                     <button type="button" className="btn btn--ghost btn--small" onClick={() => remove.mutate(f.id)}>
-                      Pašalinti
+                      Remove
                     </button>
                   </div>
                 </li>
@@ -131,16 +131,16 @@ export function FriendsPage() {
             </ul>
           </Window>
           {(outgoing.length > 0 || blocked.length > 0) && (
-            <Window title="Kiti" headingLevel={2}>
+            <Window title="Other" headingLevel={2}>
               <ul className="list">
                 {outgoing.map((f) => (
                   <li key={f.id} className="friend">
                     <PixelAvatar name={f.username} size={32} />
                     <span className="friend__name">
-                      {f.username} <span className="badge badge--info">Laukia atsakymo</span>
+                      {f.username} <span className="badge badge--info">Awaiting reply</span>
                     </span>
                     <button type="button" className="btn btn--ghost btn--small" onClick={() => remove.mutate(f.id)}>
-                      Atšaukti
+                      Cancel
                     </button>
                   </li>
                 ))}
@@ -148,10 +148,10 @@ export function FriendsPage() {
                   <li key={f.id} className="friend">
                     <PixelAvatar name={f.username} size={32} />
                     <span className="friend__name">
-                      {f.username} <span className="badge badge--danger">Užblokuotas</span>
+                      {f.username} <span className="badge badge--danger">Blocked</span>
                     </span>
                     <button type="button" className="btn btn--ghost btn--small" onClick={() => remove.mutate(f.id)}>
-                      Atblokuoti
+                      Unblock
                     </button>
                   </li>
                 ))}
@@ -169,7 +169,7 @@ export function FriendsPage() {
 function FriendSheetModal({ friendship, onClose }: { friendship: Friendship; onClose: () => void }) {
   const sheet = useQuery({ queryKey: ['friend-sheet', friendship.id], queryFn: () => friends.sheet(friendship.id) })
   return (
-    <Modal open onClose={onClose} title={`${friendship.username} kortelė`}>
+    <Modal open onClose={onClose} title={`${friendship.username}'s sheet`}>
       {sheet.isPending && <Loading />}
       {sheet.isError && <ErrorNote error={sheet.error} />}
       {sheet.data && <CharacterSheetView sheet={sheet.data} />}
