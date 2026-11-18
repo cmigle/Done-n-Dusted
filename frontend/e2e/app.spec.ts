@@ -109,14 +109,16 @@ test('a friend sees the public sheet, not the log entries', async ({ page }) => 
 })
 
 test('only an administrator can open the admin page', async ({ page }) => {
+  // Guild cards can say "Admin view", so look for the link in the main menu only
+  const adminLink = page.getByRole('navigation', { name: 'Main menu' }).getByRole('link', { name: 'Admin' })
   await login(page, 'jonas')
-  await expect(page.getByRole('link', { name: /Admin/ })).toHaveCount(0)
+  await expect(adminLink).toHaveCount(0)
   await page.goto('/admin')
   await expect(page).toHaveURL(/\/tavern$/)
   await logout(page)
 
   await login(page, 'admin')
-  await page.getByRole('link', { name: /Admin/ }).click()
+  await adminLink.click()
   await expect(page.getByRole('cell', { name: 'rokas', exact: true })).toBeVisible()
 })
 
