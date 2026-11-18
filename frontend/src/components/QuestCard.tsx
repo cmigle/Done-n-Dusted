@@ -1,6 +1,6 @@
 import { Link } from 'react-router'
 import type { Quest } from '../api/types'
-import { DIFFICULTY_INFO, QUEST_TYPE_INFO, STAT_INFO } from '../lib/game'
+import { DIFFICULTY_INFO, QUEST_TYPE_INFO, STAT_INFO, pt } from '../lib/game'
 import { StatIcon } from './StatIcon'
 
 export function QuestCard({ quest }: { quest: Quest }) {
@@ -21,7 +21,7 @@ export function QuestCard({ quest }: { quest: Quest }) {
         <span className="badge badge--outline" style={{ borderColor: stat.color }}>
           {stat.name}
         </span>
-        <span className="badge badge--gold">{quest.xpPerCompletion} XP</span>
+        <span className="badge badge--gold">{pt(quest.xpPerCompletion)}</span>
         <span className="muted">
           {QUEST_TYPE_INFO[quest.type].name}, {DIFFICULTY_INFO[quest.difficulty].name.toLowerCase()}
         </span>

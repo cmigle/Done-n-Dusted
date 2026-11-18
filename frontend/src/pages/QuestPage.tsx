@@ -18,8 +18,11 @@ import {
   STAT_INFO,
   formatDateTime,
   localInputToIso,
+  plural,
+  pt,
   toLocalInputValue,
 } from '../lib/game'
+import { useTitle } from '../lib/useTitle'
 
 export function QuestPage() {
   const params = useParams()
@@ -37,6 +40,7 @@ export function QuestPage() {
   const guild = useQuery({ queryKey: ['guilds', guildId], queryFn: () => guilds.get(guildId) })
   const quest = useQuery({ queryKey: ['quests', guildId, 'one', questId], queryFn: () => quests.get(guildId, questId) })
   const memberList = useQuery({ queryKey: ['members', guildId], queryFn: () => members.list(guildId) })
+  useTitle(quest.data?.title ?? 'Užduotis')
   const entries = useQuery({
     queryKey: ['logs', guildId, questId, status],
     queryFn: () => logs.list(guildId, questId, { status }),
@@ -83,7 +87,7 @@ export function QuestPage() {
 
   return (
     <>
-      <nav aria-label="Kelias" className="crumbs">
+      <nav aria-label="Naršymo kelias" className="crumbs">
         <Link to="/taverna">Taverna</Link> / <Link to={`/grupes/${guildId}`}>{guild.data?.name ?? 'Grupė'}</Link> /{' '}
         <span aria-current="page">{q.title}</span>
       </nav>
@@ -111,12 +115,14 @@ export function QuestPage() {
               </div>
               <div>
                 <dt>Atlygis</dt>
-                <dd className="text-gold">{q.xpPerCompletion} XP</dd>
+                <dd className="text-gold">{pt(q.xpPerCompletion)}</dd>
               </div>
               {q.targetCount && (
                 <div>
                   <dt>Tikslas</dt>
-                  <dd>{q.targetCount} kartų</dd>
+                  <dd>
+                    {q.targetCount} {plural(q.targetCount, 'kartas', 'kartai', 'kartų')}
+                  </dd>
                 </div>
               )}
               <div>
@@ -155,7 +161,7 @@ export function QuestPage() {
             </Field>
           }
         >
-          {!isDm && !isAdmin && <p className="muted">Matai tik savo įrašus – kitų žaidėjų įrašus mato DM.</p>}
+          {!isDm && !isAdmin && <p className="muted">Matai tik savo įrašus – kitų žaidėjų įrašus mato žaidimo vedėjas.</p>}
           {entries.isPending && <Loading />}
           {entries.isError && <ErrorNote error={entries.error} />}
           {entries.data?.content.length === 0 && (
@@ -174,7 +180,10 @@ export function QuestPage() {
                       <span className={`badge ${STATUS_INFO[entry.status].badge}`}>{STATUS_INFO[entry.status].name}</span>{' '}
                       {entry.status === 'APPROVED' && (
                         <span className="badge badge--gold">
-                          +{entry.xpAwarded} XP{entry.inspirationAwarded > 0 ? `, +${entry.inspirationAwarded} įkvėpimas` : ''}
+                          +{pt(entry.xpAwarded)}
+                          {entry.inspirationAwarded > 0
+                            ? `, +${entry.inspirationAwarded} ${plural(entry.inspirationAwarded, 'įkvėpimo taškas', 'įkvėpimo taškai', 'įkvėpimo taškų')}`
+                            : ''}
                         </span>
                       )}
                     </p>
@@ -186,7 +195,7 @@ export function QuestPage() {
                     )}
                     {entry.reviewerNote && (
                       <p className="log__review">
-                        DM: <em>{entry.reviewerNote}</em>
+                        Vedėjo pastaba: <em>{entry.reviewerNote}</em>
                       </p>
                     )}
                     <span className="muted">{formatDateTime(entry.occurredAt)}</span>
@@ -260,7 +269,7 @@ function LogForm({ guildId, questId }: { guildId: number; questId: number }) {
       await queryClient.invalidateQueries({ queryKey: ['logs', guildId] })
       setNote('')
       setEvidenceUrl('')
-      toast('success', 'Įrašas užregistruotas – laukia DM')
+      toast('success', 'Įrašas užregistruotas – laukia žaidimo vedėjo patvirtinimo')
     },
     onError: (err) => setError(err instanceof ApiError ? err : undefined),
   })
@@ -279,14 +288,14 @@ function LogForm({ guildId, questId }: { guildId: number; questId: number }) {
             <textarea
               {...p}
               className="textarea"
-              placeholder="Pvz. nubėgau 8 km palei upę"
+              placeholder="Pvz., nubėgau 8 km palei upę"
               value={note}
               maxLength={1000}
               onChange={(e) => setNote(e.target.value)}
             />
           )}
         </Field>
-        <Field label="Įrodymo nuoroda" hint="Neprivaloma, pvz. nuotrauka" error={error?.errorFor('evidenceUrl')}>
+        <Field label="Įrodymo nuoroda" hint="Neprivaloma, pvz., nuotrauka" error={error?.errorFor('evidenceUrl')}>
           {(p) => (
             <input
               {...p}

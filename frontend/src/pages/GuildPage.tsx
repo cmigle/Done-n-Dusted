@@ -22,6 +22,7 @@ import {
   formatDate,
   formatDateTime,
 } from '../lib/game'
+import { useTitle } from '../lib/useTitle'
 
 type Tab = 'uzduotys' | 'nariai' | 'perziura'
 
@@ -36,6 +37,7 @@ export function GuildPage() {
   const [deleting, setDeleting] = useState(false)
 
   const guild = useQuery({ queryKey: ['guilds', guildId], queryFn: () => guilds.get(guildId) })
+  useTitle(guild.data?.name ?? 'Grupė')
   const memberList = useQuery({ queryKey: ['members', guildId], queryFn: () => members.list(guildId), enabled: guild.isSuccess })
 
   const role = roleIn(guildId)
@@ -78,7 +80,7 @@ export function GuildPage() {
 
   return (
     <>
-      <nav aria-label="Kelias" className="crumbs">
+      <nav aria-label="Naršymo kelias" className="crumbs">
         <Link to="/taverna">Taverna</Link> / <span aria-current="page">{g.name}</span>
       </nav>
       <div className="page-head row row--between">
@@ -386,7 +388,7 @@ function MembersTab({
                       onChange={(e) => changeRole.mutate({ userId: m.userId, newRole: e.target.value as GuildRole })}
                     >
                       <option value="PLAYER">{GUILD_ROLE_INFO.PLAYER.name}</option>
-                      <option value="DUNGEON_MASTER">{GUILD_ROLE_INFO.DUNGEON_MASTER.short}</option>
+                      <option value="DUNGEON_MASTER">{GUILD_ROLE_INFO.DUNGEON_MASTER.name}</option>
                     </select>
                   </label>
                 ) : (
@@ -436,7 +438,7 @@ function ReviewTab({ guildId, names }: { guildId: number; names: Map<number, str
   return (
     <Window title={`Laukia peržiūros (${pending.length})`} headingLevel={3}>
       {pending.length === 0 ? (
-        <Empty icon={<Script size={48} aria-hidden="true" />}>Visi įrašai peržiūrėti. Puikus darbas, DM!</Empty>
+        <Empty icon={<Script size={48} aria-hidden="true" />}>Visi įrašai peržiūrėti. Puikus darbas!</Empty>
       ) : (
         <ul className="list">
           {pending

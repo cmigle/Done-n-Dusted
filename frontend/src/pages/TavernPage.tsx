@@ -6,11 +6,13 @@ import { friends, guilds } from '../api/endpoints'
 import { useAuth } from '../auth/AuthContext'
 import { GuildFormModal } from '../components/GuildFormModal'
 import { Empty, ErrorNote, Loading, PixelAvatar, Window } from '../components/ui'
-import { GUILD_ROLE_INFO, USER_ROLE_INFO, formatDate } from '../lib/game'
+import { GUILD_ROLE_INFO, USER_ROLE_INFO, formatDate, plural } from '../lib/game'
+import { useTitle } from '../lib/useTitle'
 
 export function TavernPage() {
   const { user, roleIn } = useAuth()
   const [creating, setCreating] = useState(false)
+  useTitle('Taverna')
   const guildList = useQuery({ queryKey: ['guilds'], queryFn: () => guilds.list() })
   const pending = useQuery({ queryKey: ['friends', 'PENDING'], queryFn: () => friends.list('PENDING'), retry: false })
   const incoming = pending.data?.content.filter((f) => f.direction === 'INCOMING').length ?? 0
@@ -43,7 +45,7 @@ export function TavernPage() {
           {incoming > 0 && (
             <Window title="Pakvietimai" icon={<Mail size={24} aria-hidden="true" />} headingLevel={3}>
               <p>
-                Turi {incoming} {incoming === 1 ? 'naują draugystės kvietimą' : 'naujus draugystės kvietimus'}.
+                Turi {incoming} {plural(incoming, 'naują draugystės kvietimą', 'naujus draugystės kvietimus', 'naujų draugystės kvietimų')}.
               </p>
               <Link to="/draugai" className="btn btn--small">
                 Peržiūrėti
@@ -65,7 +67,7 @@ export function TavernPage() {
           {guildList.data && guildList.data.content.length === 0 && (
             <Window>
               <Empty icon={<Script size={48} aria-hidden="true" />}>
-                Dar nepriklausai jokiai grupei. Įkurk savo arba paprašyk DM tave pridėti.
+                Dar nepriklausai jokiai grupei. Įkurk savo arba paprašyk grupės savininko tave pridėti.
               </Empty>
             </Window>
           )}
