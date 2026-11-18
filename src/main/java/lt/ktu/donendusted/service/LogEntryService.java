@@ -64,17 +64,17 @@ public class LogEntryService {
         GuildAccess access = guilds.access(guildId);
         LogEntry entry = find(access, questId, logId);
         access.require(access.isDm() || access.isAdmin() || access.is(entry.getAuthor()),
-                "Svetimus irasus mato tik grupes DM");
+                "Only the game master can see other players' log entries.");
         return entry;
     }
 
     public LogEntry create(Long guildId, Long questId, LogEntryCreateRequest request) {
         GuildAccess access = guilds.access(guildId);
-        access.require(access.isMember(), "Progresa registruoti gali tik grupes nariai");
+        access.require(access.isMember(), "Only guild members can log progress.");
         Quest quest = quests.get(access, questId);
         requireNotInFuture(request.occurredAt());
         if (!quest.isActive()) {
-            throw new BusinessRuleException("Uzduotis neaktyvi - nauju irasu prie jos registruoti negalima");
+            throw new BusinessRuleException("This quest is inactive, so no new log entries can be added.");
         }
         // XP ir busena cia nenustatomi: konstruktorius palieka PENDING ir 0 tasku.
         User author = users.getReferenceById(access.user().id());
@@ -93,7 +93,7 @@ public class LogEntryService {
         LogEntry entry = find(access, questId, logId);
         // Ta pati matomumo taisykle kaip get(): be jos tuscias PATCH {} grazintu svetima irasa zaidejui.
         access.require(access.isDm() || access.isAdmin() || access.is(entry.getAuthor()),
-                "Svetimus irasus mato tik grupes DM");
+                "Only the game master can see other players' log entries.");
         Quest quest = entry.getQuest(); // reikia sudetingumo XP apskaiciavimui
 
         boolean contentSent = request.note() != null || request.evidenceUrl() != null || request.occurredAt() != null;
@@ -101,14 +101,14 @@ public class LogEntryService {
                 || request.inspirationAwarded() != null || request.reviewerNote() != null;
 
         if (contentSent) {
-            access.require(access.is(entry.getAuthor()), "Iraso turini keisti gali tik jo autorius");
+            access.require(access.is(entry.getAuthor()), "Only the author can edit a log entry's content.");
             if (entry.getStatus() != LogStatus.PENDING) {
-                throw new BusinessRuleException("Perziureto iraso turinio keisti negalima - DM pirma turi grazinti ji i PENDING");
+                throw new BusinessRuleException("A reviewed log entry cannot be edited. The game master must set it back to PENDING first.");
             }
         }
         if (reviewSent) {
-            access.require(access.isDm(), "Irasus perziuri tik grupes DM");
-            access.require(!access.is(entry.getAuthor()), "Savo iraso tvirtinti negalima");
+            access.require(access.isDm(), "Only the game master can review log entries.");
+            access.require(!access.is(entry.getAuthor()), "You cannot review your own log entry.");
         }
 
         if (request.note() != null) {
@@ -124,7 +124,7 @@ public class LogEntryService {
 
         if (request.status() == null) {
             if (reviewSent) {
-                throw new BusinessRuleException("xpAwarded, inspirationAwarded ir reviewerNote keiciami tik kartu su status");
+                throw new BusinessRuleException("Fields xpAwarded, inspirationAwarded and reviewerNote can only be set together with status.");
             }
             return entry;
         }
@@ -154,10 +154,10 @@ public class LogEntryService {
         GuildAccess access = guilds.access(guildId);
         LogEntry entry = find(access, questId, logId);
         access.require(access.is(entry.getAuthor()) || access.isDm() || access.isAdmin(),
-                "Irasa istrinti gali jo autorius, grupes DM arba administratorius");
+                "Only the author, the game master or an admin can delete a log entry.");
         // Kaip ir turinio keitimas: perziuretas irasas - DM patvirtinta istorija, autorius jos nebetrina.
         if (!access.isDm() && !access.isAdmin() && entry.getStatus() != LogStatus.PENDING) {
-            throw new BusinessRuleException("Perziureto iraso istrinti negalima - DM pirma turi grazinti ji i PENDING");
+            throw new BusinessRuleException("A reviewed log entry cannot be deleted. The game master must set it back to PENDING first.");
         }
         logs.delete(entry);
     }
@@ -172,10 +172,10 @@ public class LogEntryService {
     /** Ivykio data - ne ateityje ir ne absurdiskai sena (kitaip DB jos neissaugotu: "timestamp out of range"). */
     private void requireNotInFuture(Instant occurredAt) {
         if (occurredAt.isAfter(Instant.now())) {
-            throw new BusinessRuleException("occurredAt negali buti ateityje");
+            throw new BusinessRuleException("occurredAt cannot be in the future.");
         }
         if (occurredAt.isBefore(EARLIEST_OCCURRED_AT)) {
-            throw new BusinessRuleException("occurredAt negali buti ankstesnis nei 2000-01-01");
+            throw new BusinessRuleException("occurredAt cannot be earlier than 2000-01-01.");
         }
     }
 
@@ -186,7 +186,7 @@ public class LogEntryService {
         boolean hasXp = request.xpAwarded() != null && request.xpAwarded() != 0;
         boolean hasInspiration = request.inspirationAwarded() != null && request.inspirationAwarded() != 0;
         if (hasXp || hasInspiration) {
-            throw new BusinessRuleException(status + " busenos irasas negali tureti XP ar inspiration");
+            throw new BusinessRuleException("A " + status + " log entry cannot have XP or inspiration.");
         }
     }
 }

@@ -13,7 +13,7 @@ import lt.ktu.donendusted.domain.Stat;
 public record QuestUpdateRequest(
 
         @Schema(example = "Run 50 kilometers")
-        @Pattern(regexp = ".*\\S.*", message = "must not be blank")
+        @Pattern(regexp = ".*\\S.*", message = "Must not be blank")
         @Size(min = 3, max = 120)
         String title,
 

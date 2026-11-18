@@ -40,7 +40,7 @@ public class UserService {
 
     @Transactional(readOnly = true)
     public User get(Long id) {
-        return users.findById(id).orElseThrow(() -> new ResourceNotFoundException("User " + id + " nerastas"));
+        return users.findById(id).orElseThrow(() -> new ResourceNotFoundException("User " + id + " not found"));
     }
 
     /**
@@ -53,11 +53,11 @@ public class UserService {
         Long callerId = CurrentUser.get().id();
         users.findById(callerId)
                 .filter(caller -> caller.isEnabled() && caller.getRole() == UserRole.ADMIN)
-                .orElseThrow(() -> new ForbiddenException("Administratoriaus teises atsauktos - prisijunkite is naujo"));
+                .orElseThrow(() -> new ForbiddenException("Your admin rights have been revoked. Please log in again."));
         User user = get(id);
         boolean self = id.equals(callerId);
         if (self && (request.role() == UserRole.USER || Boolean.FALSE.equals(request.enabled()))) {
-            throw new BusinessRuleException("Savo administratoriaus teisiu nuimti ar paskyros uzblokuoti negalima");
+            throw new BusinessRuleException("You cannot remove your own admin role or block your own account.");
         }
         if (request.role() != null) {
             user.setRole(request.role());

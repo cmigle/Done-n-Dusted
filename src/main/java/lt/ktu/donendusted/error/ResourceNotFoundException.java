@@ -8,14 +8,14 @@ public class ResourceNotFoundException extends RuntimeException {
     }
 
     public static ResourceNotFoundException guild(Long id) {
-        return new ResourceNotFoundException("Guild " + id + " nerasta");
+        return new ResourceNotFoundException("Guild " + id + " not found");
     }
 
     public static ResourceNotFoundException quest(Long guildId, Long questId) {
-        return new ResourceNotFoundException("Quest " + questId + " nerasta grupeje " + guildId);
+        return new ResourceNotFoundException("Quest " + questId + " not found in guild " + guildId);
     }
 
     public static ResourceNotFoundException logEntry(Long questId, Long logId) {
-        return new ResourceNotFoundException("LogEntry " + logId + " nerastas uzduotyje " + questId);
+        return new ResourceNotFoundException("Log entry " + logId + " not found in quest " + questId);
     }
 }

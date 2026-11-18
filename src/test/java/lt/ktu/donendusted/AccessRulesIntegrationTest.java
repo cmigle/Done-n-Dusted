@@ -21,14 +21,14 @@ class AccessRulesIntegrationTest extends IntegrationTest {
     void nonMemberCannotSeeGuild() throws Exception {
         getAs(token("jonas"), "/api/guilds/3")
                 .andExpect(status().isForbidden())
-                .andExpect(jsonPath("$.message").value("Nesate grupes 3 narys"));
+                .andExpect(jsonPath("$.message").value("You are not a member of guild 3."));
     }
 
     @Test
     void playerCannotApproveLog() throws Exception {
         patchAs(token("jonas"), logsUrl(2, 4) + "/7", "{\"status\":\"APPROVED\"}")
                 .andExpect(status().isForbidden())
-                .andExpect(jsonPath("$.message").value("Irasus perziuri tik grupes DM"));
+                .andExpect(jsonPath("$.message").value("Only the game master can review log entries."));
     }
 
     @Test
@@ -38,7 +38,7 @@ class AccessRulesIntegrationTest extends IntegrationTest {
 
         patchAs(rokas, logsUrl(2, 5) + "/" + logId, "{\"status\":\"APPROVED\"}")
                 .andExpect(status().isForbidden())
-                .andExpect(jsonPath("$.message").value("Savo iraso tvirtinti negalima"));
+                .andExpect(jsonPath("$.message").value("You cannot review your own log entry."));
 
         deleteAs(rokas, logsUrl(2, 5) + "/" + logId).andExpect(status().isNoContent());
     }
@@ -49,7 +49,7 @@ class AccessRulesIntegrationTest extends IntegrationTest {
                 "{\"title\":\"%s\",\"stat\":\"CHA\",\"type\":\"SIDE_QUEST\",\"difficulty\":\"EASY\"}"
                         .formatted(unique("IT side ")))
                 .andExpect(status().isForbidden())
-                .andExpect(jsonPath("$.message").value("SIDE_QUEST uzduotis gali kurti tik grupes DM"));
+                .andExpect(jsonPath("$.message").value("Only the game master can create SIDE_QUEST quests."));
     }
 
     @Test
@@ -62,7 +62,7 @@ class AccessRulesIntegrationTest extends IntegrationTest {
     void emptyPatchOnSomeoneElsesLogIs403() throws Exception {
         patchAs(token("jonas"), logsUrl(2, 5) + "/8", "{}")
                 .andExpect(status().isForbidden())
-                .andExpect(jsonPath("$.message").value("Svetimus irasus mato tik grupes DM"));
+                .andExpect(jsonPath("$.message").value("Only the game master can see other players' log entries."));
     }
 
     @Test

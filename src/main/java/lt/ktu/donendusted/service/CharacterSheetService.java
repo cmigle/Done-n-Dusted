@@ -55,7 +55,7 @@ public class CharacterSheetService {
         GuildAccess access = guilds.access(guildId);
         GuildMembership member = memberships.findWithUserByGuildIdAndUserId(guildId, userId)
                 .orElseThrow(() -> new ResourceNotFoundException(
-                        "Naudotojas " + userId + " nera grupes " + guildId + " narys"));
+                        "User " + userId + " is not a member of guild " + guildId + "."));
         boolean full = access.is(member.getUser()) || access.isDm() || access.isAdmin();
         return build(member.getUser(), access.guild(), member.getRole(), full);
     }
