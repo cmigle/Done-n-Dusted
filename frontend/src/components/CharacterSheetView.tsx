@@ -1,8 +1,8 @@
 import { Coin, Hidden, Zap } from '@nsmr/pixelart-react'
 import type { CharacterSheet } from '../api/types'
 import { GUILD_ROLE_INFO, STAT_INFO, formatDate, plural, xp } from '../lib/game'
-import { StatIcon } from './StatIcon'
-import { Bar, PixelAvatar } from './ui'
+import { StatTile } from './StatIcon'
+import { Bar, PixelAvatar, WithDigits } from './ui'
 
 /** Character sheet: level, XP, the six stats, inspiration and streak. */
 export function CharacterSheetView({ sheet }: { sheet: CharacterSheet }) {
@@ -11,7 +11,9 @@ export function CharacterSheetView({ sheet }: { sheet: CharacterSheet }) {
       <header className="sheet__head">
         <PixelAvatar name={sheet.username} size={112} />
         <div className="sheet__who">
-          <h2 className="sheet__name">{sheet.username}</h2>
+          <h2 className="sheet__name">
+            <WithDigits text={sheet.username} />
+          </h2>
           <p className="muted">
             {sheet.guildName
               ? `${sheet.role ? GUILD_ROLE_INFO[sheet.role].name : 'Member'} in “${sheet.guildName}”`
@@ -25,11 +27,15 @@ export function CharacterSheetView({ sheet }: { sheet: CharacterSheet }) {
               <Bar
                 value={sheet.xpIntoLevel}
                 max={sheet.xpForNextLevel}
+                segments={10}
                 label={`Experience to the next level: ${sheet.xpIntoLevel} of ${sheet.xpForNextLevel}`}
                 animate
               />
               <span className="muted">
-                {sheet.xpIntoLevel} / {xp(sheet.xpForNextLevel)} to level {sheet.level + 1}, {xp(sheet.totalXp)} in total
+                <span className="xp-chip">
+                  {sheet.xpIntoLevel} / {xp(sheet.xpForNextLevel)}
+                </span>{' '}
+                to level {sheet.level + 1}, {xp(sheet.totalXp)} in total
               </span>
             </div>
           </div>
@@ -38,12 +44,16 @@ export function CharacterSheetView({ sheet }: { sheet: CharacterSheet }) {
 
       <div className="sheet__counters">
         <div className="counter">
-          <Coin size={28} aria-hidden="true" color="var(--gold)" />
+          <span className="tile">
+            <Coin size={20} aria-hidden="true" />
+          </span>
           <span className="counter__value">{sheet.inspiration}</span>
           <span className="muted">inspiration</span>
         </div>
         <div className="counter">
-          <Zap size={28} aria-hidden="true" color="var(--ember)" />
+          <span className="tile">
+            <Zap size={20} aria-hidden="true" />
+          </span>
           <span className="counter__value">{sheet.streakDays}</span>
           <span className="muted">day streak</span>
         </div>
@@ -59,8 +69,8 @@ export function CharacterSheetView({ sheet }: { sheet: CharacterSheet }) {
       <ul className="stats">
         {sheet.stats.map((s) => (
           <li key={s.stat} className="stat">
-            <span className="stat__icon" style={{ color: STAT_INFO[s.stat].color }}>
-              <StatIcon stat={s.stat} size={24} />
+            <span className="stat__icon">
+              <StatTile stat={s.stat} />
             </span>
             <span className="stat__name">{STAT_INFO[s.stat].name}</span>
             <span className="stat__score">{s.score}</span>
@@ -85,13 +95,12 @@ export function CharacterSheetView({ sheet }: { sheet: CharacterSheet }) {
               {sheet.recentLogs.map((l) => (
                 <li key={l.logId} className="row row--between">
                   <span>
-                    <span style={{ color: STAT_INFO[l.stat].color }}>
-                      <StatIcon stat={l.stat} size={18} />
-                    </span>{' '}
-                    {l.questTitle}
+                    <span className="row" style={{ gap: 8 }}>
+                      <StatTile stat={l.stat} size="sm" /> {l.questTitle}
+                    </span>
                   </span>
                   <span className="muted">
-                    +{xp(l.xpAwarded)}, {formatDate(l.occurredAt)}
+                    <span className="xp-chip">+{xp(l.xpAwarded)}</span> {formatDate(l.occurredAt)}
                   </span>
                 </li>
               ))}

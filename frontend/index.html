@@ -3,16 +3,32 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="theme-color" content="#1a1c2c" />
+    <meta name="color-scheme" content="light dark" />
+    <meta name="theme-color" content="#fff4e4" />
     <meta
       name="description"
       content="Done n Dusted – a quest log for tabletop RPG groups: real-life progress turns into experience for your character."
     />
+    <!-- Apply the saved theme before the first paint, so a reload never flashes the other theme. -->
+    <script>
+      ;(function () {
+        var theme = null
+        try {
+          theme = localStorage.getItem('dnd.theme')
+        } catch (e) {}
+        if (theme !== 'light' && theme !== 'dark') {
+          theme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'
+        } else {
+          document.documentElement.dataset.theme = theme
+        }
+        document.querySelector('meta[name="theme-color"]').content = theme === 'dark' ? '#2b2340' : '#fff4e4'
+      })()
+    </script>
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
-      href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=Pixelify+Sans:wght@500..700&display=swap"
+      href="https://fonts.googleapis.com/css2?family=Nunito:wght@500;700;800&family=Pixelify+Sans:wght@500;700&display=swap"
       rel="stylesheet"
     />
     <title>Done n Dusted</title>

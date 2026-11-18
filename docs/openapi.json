@@ -2,19 +2,16 @@
   "openapi": "3.1.0",
   "info": {
     "title": "Done n Dusted API",
-    "description": "DnD principu veikianti produktyvumo sistema.\n\nResursu hierarchija: **Guild (1:N) -> Quest (1:N) -> LogEntry**.\nVaikinis objektas pasiekiamas tik per tevini kelia; neteisinga\ngrandine grazina 404. Visos klaidos grazinamos vienoda `ApiError`\nstruktura, visi sarasai - puslapiuoti `PagedResponse` su\nself/first/prev/next/last nuorodomis.\n\n**Autentifikacija (JWT).** `POST /api/auth/login` grazina access zetona\n(galioja 15 min) ir refresh zetona (7 d.). Access zetonas siunciamas\nantrasteje `Authorization: Bearer <accessToken>`; pasibaigus - nauja pora\ngaunama per `POST /api/auth/refresh`. Swagger UI: mygtukas **Authorize**.\n\n**Roles.** Svecias - tik registracija ir prisijungimas. Grupeje naudotojas\nyra `PLAYER` arba `DUNGEON_MASTER` (vienas grupeje). `ADMIN` - globali role:\nmato visas grupes, salina turini ir valdo naudotojus.\n401 - nera zetono arba jis netinka, 403 - neuztenka teisiu.\n",
+    "description": "A productivity system built on DnD ideas.\n\nResource hierarchy: **Guild (1:N) -> Quest (1:N) -> LogEntry**.\nA child resource is reachable only through its parent path; a wrong\nchain returns 404. All errors use the same `ApiError`\nstructure, and all lists are paged `PagedResponse` objects with\nself/first/prev/next/last links.\n\n**Authentication (JWT).** `POST /api/auth/login` returns an access token\n(valid for 15 min) and a refresh token (7 days). Send the access token\nin the `Authorization: Bearer <accessToken>` header; when it expires, get a new pair\nfrom `POST /api/auth/refresh`. In Swagger UI, use the **Authorize** button.\n\n**Roles.** A guest can only register and log in. In a guild, a user\nis a `PLAYER` or the `DUNGEON_MASTER` (the game master, one per guild). `ADMIN` is a global role:\nsees all guilds, removes content and manages users.\n401: no token or an invalid one; 403: not enough permissions.\n",
     "contact": {
       "name": "Migle Cirtautaite"
     },
-    "license": {
-      "name": "KTU T120B165"
-    },
-    "version": "0.2.0"
+    "version": "0.3.0"
   },
   "servers": [
     {
       "url": "/",
-      "description": "Dabartinis serveris"
+      "description": "Current server"
     }
   ],
   "security": [
@@ -24,32 +21,32 @@
   ],
   "tags": [
     {
-      "name": "Quests",
-      "description": "Uzduotys - pasiekiamos tik per savo grupe"
-    },
-    {
-      "name": "Guilds",
-      "description": "Grupes - virsutinis hierarchijos lygis"
+      "name": "Users",
+      "description": "User management (ADMIN only)"
     },
     {
       "name": "Log entries",
-      "description": "Progreso irasai - pasiekiami tik per grupe ir uzduoti"
+      "description": "Log entries, reachable only through their guild and quest"
     },
     {
-      "name": "Auth",
-      "description": "Registracija, prisijungimas ir JWT zetonai"
+      "name": "Guilds",
+      "description": "Guilds, the top level of the hierarchy"
+    },
+    {
+      "name": "Quests",
+      "description": "Quests, reachable only through their guild"
     },
     {
       "name": "Members",
-      "description": "Grupes nariai ir ju roles (PLAYER / DUNGEON_MASTER)"
+      "description": "Guild members and their roles (PLAYER / DUNGEON_MASTER)"
     },
     {
-      "name": "Users",
-      "description": "Naudotoju valdymas (tik ADMIN)"
+      "name": "Auth",
+      "description": "Registration, login and JWT tokens"
     },
     {
       "name": "Friends",
-      "description": "Draugystes kvietimai ir draugu veikejo korteles"
+      "description": "Friend requests and friends' character sheets"
     }
   ],
   "paths": {
@@ -58,14 +55,14 @@
         "tags": [
           "Guilds"
         ],
-        "summary": "Grupiu sarasas",
-        "description": "Puslapiuotas ir filtruojamas sarasas. Nuorodose islieka visi filtrai.",
+        "summary": "List guilds",
+        "description": "Paged, filterable list. Links keep all filters.",
         "operationId": "list",
         "parameters": [
           {
             "name": "name",
             "in": "query",
-            "description": "Filtras pagal pavadinimo dali, neatsizvelgiant i raidziu dydi",
+            "description": "Filter by part of the name, case-insensitive",
             "required": false,
             "schema": {
               "type": "string"
@@ -111,7 +108,7 @@
         ],
         "responses": {
           "200": {
-            "description": "Sarasas grazintas",
+            "description": "List returned",
             "content": {
               "application/json": {
                 "schema": {
@@ -121,7 +118,7 @@
             }
           },
           "400": {
-            "description": "Neteisingi parametrai ar turinys (pvz. ne skaicius vietoje ID, netinkamas sort ar JSON)",
+            "description": "Invalid parameters or body (for example, a non-numeric ID, an invalid sort or malformed JSON)",
             "content": {
               "application/json": {
                 "schema": {
@@ -131,7 +128,7 @@
             }
           },
           "401": {
-            "description": "Nera access zetono arba jis neteisingas / pasibaiges",
+            "description": "Access token missing, invalid or expired",
             "content": {
               "application/json": {
                 "schema": {
@@ -146,7 +143,7 @@
         "tags": [
           "Guilds"
         ],
-        "summary": "Sukurti grupe",
+        "summary": "Create a guild",
         "operationId": "create",
         "requestBody": {
           "content": {
@@ -160,7 +157,7 @@
         },
         "responses": {
           "201": {
-            "description": "Grupe sukurta; Location antraste nurodo nauja resursa",
+            "description": "Guild created; the Location header points to the new resource",
             "content": {
               "application/json": {
                 "schema": {
@@ -170,7 +167,7 @@
             }
           },
           "400": {
-            "description": "Neteisingas payload",
+            "description": "Invalid request body",
             "content": {
               "application/json": {
                 "schema": {
@@ -180,7 +177,7 @@
             }
           },
           "401": {
-            "description": "Nera access zetono arba jis neteisingas / pasibaiges",
+            "description": "Access token missing, invalid or expired",
             "content": {
               "application/json": {
                 "schema": {
@@ -190,7 +187,7 @@
             }
           },
           "409": {
-            "description": "Toks pavadinimas jau uzimtas",
+            "description": "Name already taken",
             "content": {
               "application/json": {
                 "schema": {
@@ -207,8 +204,8 @@
         "tags": [
           "Quests"
         ],
-        "summary": "Grupes uzduociu sarasas",
-        "description": "Puslapiuotas sarasas su filtrais pagal charakteristika, tipa, sudetinguma ir aktyvuma.",
+        "summary": "List a guild's quests",
+        "description": "Paged list with filters by stat, type, difficulty and active state.",
         "operationId": "list_1",
         "parameters": [
           {
@@ -223,7 +220,7 @@
           {
             "name": "stat",
             "in": "query",
-            "description": "Filtras pagal auginama charakteristika",
+            "description": "Filter by the stat the quest improves",
             "required": false,
             "schema": {
               "type": "string",
@@ -240,7 +237,7 @@
           {
             "name": "type",
             "in": "query",
-            "description": "Filtras pagal uzduoties tipa",
+            "description": "Filter by quest type",
             "required": false,
             "schema": {
               "type": "string",
@@ -255,7 +252,7 @@
           {
             "name": "difficulty",
             "in": "query",
-            "description": "Filtras pagal sudetinguma",
+            "description": "Filter by difficulty",
             "required": false,
             "schema": {
               "type": "string",
@@ -271,7 +268,7 @@
           {
             "name": "active",
             "in": "query",
-            "description": "Filtras pagal aktyvuma",
+            "description": "Filter by active state",
             "required": false,
             "schema": {
               "type": "boolean"
@@ -317,7 +314,7 @@
         ],
         "responses": {
           "200": {
-            "description": "Sarasas grazintas",
+            "description": "List returned",
             "content": {
               "application/json": {
                 "schema": {
@@ -327,7 +324,7 @@
             }
           },
           "400": {
-            "description": "Neteisingi parametrai ar turinys (pvz. ne skaicius vietoje ID, netinkamas sort ar JSON)",
+            "description": "Invalid parameters or body (for example, a non-numeric ID, an invalid sort or malformed JSON)",
             "content": {
               "application/json": {
                 "schema": {
@@ -337,7 +334,7 @@
             }
           },
           "401": {
-            "description": "Nera access zetono arba jis neteisingas / pasibaiges",
+            "description": "Access token missing, invalid or expired",
             "content": {
               "application/json": {
                 "schema": {
@@ -347,7 +344,7 @@
             }
           },
           "403": {
-            "description": "Neuztenka teisiu: ne grupes narys, netinkama role grupeje arba ne ADMIN",
+            "description": "Not enough permissions: not a guild member, wrong guild role or not ADMIN",
             "content": {
               "application/json": {
                 "schema": {
@@ -357,7 +354,7 @@
             }
           },
           "404": {
-            "description": "Grupe neegzistuoja",
+            "description": "Guild does not exist",
             "content": {
               "application/json": {
                 "schema": {
@@ -372,7 +369,7 @@
         "tags": [
           "Quests"
         ],
-        "summary": "Sukurti uzduoti",
+        "summary": "Create a quest",
         "operationId": "create_1",
         "parameters": [
           {
@@ -397,7 +394,7 @@
         },
         "responses": {
           "201": {
-            "description": "Uzduotis sukurta",
+            "description": "Quest created",
             "content": {
               "application/json": {
                 "schema": {
@@ -407,7 +404,7 @@
             }
           },
           "400": {
-            "description": "Neteisingas payload",
+            "description": "Invalid request body",
             "content": {
               "application/json": {
                 "schema": {
@@ -417,7 +414,7 @@
             }
           },
           "401": {
-            "description": "Nera access zetono arba jis neteisingas / pasibaiges",
+            "description": "Access token missing, invalid or expired",
             "content": {
               "application/json": {
                 "schema": {
@@ -427,7 +424,7 @@
             }
           },
           "403": {
-            "description": "Neuztenka teisiu: ne grupes narys, netinkama role grupeje arba ne ADMIN",
+            "description": "Not enough permissions: not a guild member, wrong guild role or not ADMIN",
             "content": {
               "application/json": {
                 "schema": {
@@ -437,7 +434,7 @@
             }
           },
           "404": {
-            "description": "Grupe neegzistuoja",
+            "description": "Guild does not exist",
             "content": {
               "application/json": {
                 "schema": {
@@ -447,7 +444,7 @@
             }
           },
           "409": {
-            "description": "Toks pavadinimas grupeje jau yra",
+            "description": "This title already exists in the guild",
             "content": {
               "application/json": {
                 "schema": {
@@ -457,7 +454,7 @@
             }
           },
           "422": {
-            "description": "Pazeista dalykine taisykle (pvz., GRIND be targetCount)",
+            "description": "Business rule violated (for example, GRIND without targetCount)",
             "content": {
               "application/json": {
                 "schema": {
@@ -474,8 +471,8 @@
         "tags": [
           "Log entries"
         ],
-        "summary": "Uzduoties irasu sarasas",
-        "description": "Puslapiuotas sarasas; filtruojamas pagal busena. Rikiuojama nuo naujausio ivykio.",
+        "summary": "List a quest's log entries",
+        "description": "Paged list, filterable by status. Sorted from the most recent activity.",
         "operationId": "list_2",
         "parameters": [
           {
@@ -499,7 +496,7 @@
           {
             "name": "status",
             "in": "query",
-            "description": "Filtras pagal iraso busena",
+            "description": "Filter by log entry status",
             "required": false,
             "schema": {
               "type": "string",
@@ -550,7 +547,7 @@
         ],
         "responses": {
           "200": {
-            "description": "Sarasas grazintas",
+            "description": "List returned",
             "content": {
               "application/json": {
                 "schema": {
@@ -560,7 +557,7 @@
             }
           },
           "400": {
-            "description": "Neteisingi parametrai ar turinys (pvz. ne skaicius vietoje ID, netinkamas sort ar JSON)",
+            "description": "Invalid parameters or body (for example, a non-numeric ID, an invalid sort or malformed JSON)",
             "content": {
               "application/json": {
                 "schema": {
@@ -570,7 +567,7 @@
             }
           },
           "401": {
-            "description": "Nera access zetono arba jis neteisingas / pasibaiges",
+            "description": "Access token missing, invalid or expired",
             "content": {
               "application/json": {
                 "schema": {
@@ -580,7 +577,7 @@
             }
           },
           "403": {
-            "description": "Neuztenka teisiu: ne grupes narys, netinkama role grupeje arba ne ADMIN",
+            "description": "Not enough permissions: not a guild member, wrong guild role or not ADMIN",
             "content": {
               "application/json": {
                 "schema": {
@@ -590,7 +587,7 @@
             }
           },
           "404": {
-            "description": "Neteisinga grupes/uzduoties grandine",
+            "description": "Wrong guild/quest chain",
             "content": {
               "application/json": {
                 "schema": {
@@ -605,8 +602,8 @@
         "tags": [
           "Log entries"
         ],
-        "summary": "Registruoti progresa",
-        "description": "Irasas visada sukuriamas PENDING busenoje su 0 XP - taskus skiria tik DM tvirtindamas.",
+        "summary": "Log progress",
+        "description": "A log entry is always created as PENDING with 0 XP; only the game master awards XP when approving it.",
         "operationId": "create_2",
         "parameters": [
           {
@@ -640,7 +637,7 @@
         },
         "responses": {
           "201": {
-            "description": "Irasas sukurtas",
+            "description": "Log entry created",
             "content": {
               "application/json": {
                 "schema": {
@@ -650,7 +647,7 @@
             }
           },
           "400": {
-            "description": "Neteisingas payload",
+            "description": "Invalid request body",
             "content": {
               "application/json": {
                 "schema": {
@@ -660,7 +657,7 @@
             }
           },
           "401": {
-            "description": "Nera access zetono arba jis neteisingas / pasibaiges",
+            "description": "Access token missing, invalid or expired",
             "content": {
               "application/json": {
                 "schema": {
@@ -670,7 +667,7 @@
             }
           },
           "403": {
-            "description": "Neuztenka teisiu: ne grupes narys, netinkama role grupeje arba ne ADMIN",
+            "description": "Not enough permissions: not a guild member, wrong guild role or not ADMIN",
             "content": {
               "application/json": {
                 "schema": {
@@ -680,7 +677,7 @@
             }
           },
           "404": {
-            "description": "Neteisinga grandine",
+            "description": "Wrong chain",
             "content": {
               "application/json": {
                 "schema": {
@@ -690,7 +687,7 @@
             }
           },
           "422": {
-            "description": "Neaktyvi uzduotis arba data ateityje",
+            "description": "Inactive quest or a date in the future",
             "content": {
               "application/json": {
                 "schema": {
@@ -707,8 +704,8 @@
         "tags": [
           "Members"
         ],
-        "summary": "Grupes nariu sarasas",
-        "description": "Mato visi grupes nariai ir ADMIN.",
+        "summary": "List guild members",
+        "description": "Visible to all guild members and ADMIN.",
         "operationId": "list_3",
         "parameters": [
           {
@@ -723,7 +720,7 @@
           {
             "name": "role",
             "in": "query",
-            "description": "Filtras pagal role",
+            "description": "Filter by role",
             "required": false,
             "schema": {
               "type": "string",
@@ -773,7 +770,7 @@
         ],
         "responses": {
           "200": {
-            "description": "Sarasas grazintas",
+            "description": "List returned",
             "content": {
               "application/json": {
                 "schema": {
@@ -783,7 +780,7 @@
             }
           },
           "400": {
-            "description": "Neteisingi parametrai ar turinys (pvz. ne skaicius vietoje ID, netinkamas sort ar JSON)",
+            "description": "Invalid parameters or body (for example, a non-numeric ID, an invalid sort or malformed JSON)",
             "content": {
               "application/json": {
                 "schema": {
@@ -793,7 +790,7 @@
             }
           },
           "401": {
-            "description": "Nera access zetono arba jis neteisingas / pasibaiges",
+            "description": "Access token missing, invalid or expired",
             "content": {
               "application/json": {
                 "schema": {
@@ -803,7 +800,7 @@
             }
           },
           "403": {
-            "description": "Neuztenka teisiu: ne grupes narys, netinkama role grupeje arba ne ADMIN",
+            "description": "Not enough permissions: not a guild member, wrong guild role or not ADMIN",
             "content": {
               "application/json": {
                 "schema": {
@@ -813,7 +810,7 @@
             }
           },
           "404": {
-            "description": "Resursas nerastas arba neteisinga tevine grandine",
+            "description": "Resource not found or wrong parent chain",
             "content": {
               "application/json": {
                 "schema": {
@@ -828,8 +825,8 @@
         "tags": [
           "Members"
         ],
-        "summary": "Prideti nari",
-        "description": "Tik grupes savininkas arba ADMIN.",
+        "summary": "Add a member",
+        "description": "Guild owner or ADMIN only.",
         "operationId": "add",
         "parameters": [
           {
@@ -854,7 +851,7 @@
         },
         "responses": {
           "201": {
-            "description": "Narys pridetas",
+            "description": "Member added",
             "content": {
               "application/json": {
                 "schema": {
@@ -864,7 +861,7 @@
             }
           },
           "400": {
-            "description": "Neteisingas payload",
+            "description": "Invalid request body",
             "content": {
               "application/json": {
                 "schema": {
@@ -874,7 +871,7 @@
             }
           },
           "401": {
-            "description": "Nera access zetono arba jis neteisingas / pasibaiges",
+            "description": "Access token missing, invalid or expired",
             "content": {
               "application/json": {
                 "schema": {
@@ -884,7 +881,7 @@
             }
           },
           "403": {
-            "description": "Neuztenka teisiu: ne grupes narys, netinkama role grupeje arba ne ADMIN",
+            "description": "Not enough permissions: not a guild member, wrong guild role or not ADMIN",
             "content": {
               "application/json": {
                 "schema": {
@@ -894,7 +891,7 @@
             }
           },
           "404": {
-            "description": "Resursas nerastas arba neteisinga tevine grandine",
+            "description": "Resource not found or wrong parent chain",
             "content": {
               "application/json": {
                 "schema": {
@@ -904,7 +901,7 @@
             }
           },
           "409": {
-            "description": "Jau narys arba grupe jau turi DM",
+            "description": "Already a member, or the guild already has a game master",
             "content": {
               "application/json": {
                 "schema": {
@@ -914,7 +911,7 @@
             }
           },
           "422": {
-            "description": "Tokio naudotojo nera",
+            "description": "No such user",
             "content": {
               "application/json": {
                 "schema": {
@@ -931,14 +928,14 @@
         "tags": [
           "Friends"
         ],
-        "summary": "Mano draugystes ir kvietimai",
-        "description": "Abiem kryptimis (OUTGOING ir INCOMING). Rikiuojama nuo naujausio kvietimo.",
+        "summary": "My friendships and friend requests",
+        "description": "Both directions (OUTGOING and INCOMING). Sorted from the newest friend request.",
         "operationId": "list_4",
         "parameters": [
           {
             "name": "status",
             "in": "query",
-            "description": "Filtras pagal busena",
+            "description": "Filter by status",
             "required": false,
             "schema": {
               "type": "string",
@@ -989,7 +986,7 @@
         ],
         "responses": {
           "200": {
-            "description": "Sarasas grazintas",
+            "description": "List returned",
             "content": {
               "application/json": {
                 "schema": {
@@ -999,7 +996,7 @@
             }
           },
           "400": {
-            "description": "Neteisingi parametrai ar turinys (pvz. ne skaicius vietoje ID, netinkamas sort ar JSON)",
+            "description": "Invalid parameters or body (for example, a non-numeric ID, an invalid sort or malformed JSON)",
             "content": {
               "application/json": {
                 "schema": {
@@ -1009,7 +1006,7 @@
             }
           },
           "401": {
-            "description": "Nera access zetono arba jis neteisingas / pasibaiges",
+            "description": "Access token missing, invalid or expired",
             "content": {
               "application/json": {
                 "schema": {
@@ -1024,8 +1021,8 @@
         "tags": [
           "Friends"
         ],
-        "summary": "Pakviesti i draugus",
-        "description": "Kvietimas sukuriamas PENDING busenoje.",
+        "summary": "Send a friend request",
+        "description": "The friend request is created with status PENDING.",
         "operationId": "request",
         "requestBody": {
           "content": {
@@ -1039,7 +1036,7 @@
         },
         "responses": {
           "201": {
-            "description": "Kvietimas issiustas",
+            "description": "Friend request sent",
             "content": {
               "application/json": {
                 "schema": {
@@ -1049,7 +1046,7 @@
             }
           },
           "400": {
-            "description": "Neteisingas payload",
+            "description": "Invalid request body",
             "content": {
               "application/json": {
                 "schema": {
@@ -1059,7 +1056,7 @@
             }
           },
           "401": {
-            "description": "Nera access zetono arba jis neteisingas / pasibaiges",
+            "description": "Access token missing, invalid or expired",
             "content": {
               "application/json": {
                 "schema": {
@@ -1069,7 +1066,7 @@
             }
           },
           "409": {
-            "description": "Su siuo naudotoju draugyste ar kvietimas jau yra",
+            "description": "A friendship or friend request with this user already exists",
             "content": {
               "application/json": {
                 "schema": {
@@ -1079,7 +1076,7 @@
             }
           },
           "422": {
-            "description": "Tokio naudotojo nera arba kvieciamas pats save",
+            "description": "No such user, or the user invited themselves",
             "content": {
               "application/json": {
                 "schema": {
@@ -1096,8 +1093,8 @@
         "tags": [
           "Auth"
         ],
-        "summary": "Registruotis",
-        "description": "Sukuria naudotoja su role USER. Zetonu negrazina - po to reikia prisijungti.",
+        "summary": "Register",
+        "description": "Creates a user with the USER role. Returns no tokens, so log in afterwards.",
         "operationId": "register",
         "requestBody": {
           "content": {
@@ -1111,7 +1108,7 @@
         },
         "responses": {
           "201": {
-            "description": "Naudotojas sukurtas",
+            "description": "User created",
             "content": {
               "application/json": {
                 "schema": {
@@ -1121,7 +1118,7 @@
             }
           },
           "400": {
-            "description": "Neteisingas vardas ar slaptazodis",
+            "description": "Invalid username or password format",
             "content": {
               "application/json": {
                 "schema": {
@@ -1131,7 +1128,7 @@
             }
           },
           "409": {
-            "description": "Vardas jau uzimtas",
+            "description": "Username already taken",
             "content": {
               "application/json": {
                 "schema": {
@@ -1149,8 +1146,8 @@
         "tags": [
           "Auth"
         ],
-        "summary": "Atnaujinti zetonus",
-        "description": "Uz galiojanti refresh zetona isduoda nauja pora, o senasis atsaukiamas (rotacija).\nPakartotinai panaudotas zetonas laikomas pavogtu - atsaukiamos visos naudotojo sesijos.\n",
+        "summary": "Refresh tokens",
+        "description": "Exchanges a valid refresh token for a new pair and revokes the old one (rotation).\nA reused token is treated as stolen, so all of the user's sessions are revoked.\n",
         "operationId": "refresh",
         "requestBody": {
           "content": {
@@ -1164,7 +1161,7 @@
         },
         "responses": {
           "200": {
-            "description": "Isduota nauja zetonu pora",
+            "description": "New token pair issued",
             "content": {
               "application/json": {
                 "schema": {
@@ -1174,7 +1171,7 @@
             }
           },
           "400": {
-            "description": "Neteisingi parametrai ar turinys (pvz. ne skaicius vietoje ID, netinkamas sort ar JSON)",
+            "description": "Invalid parameters or body (for example, a non-numeric ID, an invalid sort or malformed JSON)",
             "content": {
               "application/json": {
                 "schema": {
@@ -1184,7 +1181,7 @@
             }
           },
           "401": {
-            "description": "Zetonas neteisingas, pasibaiges arba jau panaudotas",
+            "description": "Token is invalid, expired or already used",
             "content": {
               "application/json": {
                 "schema": {
@@ -1194,7 +1191,7 @@
             }
           },
           "403": {
-            "description": "Paskyra uzblokuota",
+            "description": "Account is blocked",
             "content": {
               "application/json": {
                 "schema": {
@@ -1212,8 +1209,8 @@
         "tags": [
           "Auth"
         ],
-        "summary": "Atsijungti",
-        "description": "Atsaukia refresh zetona. Access zetonas galioja iki savo exp - todel jis trumpas.",
+        "summary": "Log out",
+        "description": "Revokes the refresh token. The access token stays valid until its exp, which is why it is short-lived.",
         "operationId": "logout",
         "requestBody": {
           "content": {
@@ -1227,10 +1224,10 @@
         },
         "responses": {
           "204": {
-            "description": "Atsijungta"
+            "description": "Logged out"
           },
           "400": {
-            "description": "Neteisingi parametrai ar turinys (pvz. ne skaicius vietoje ID, netinkamas sort ar JSON)",
+            "description": "Invalid parameters or body (for example, a non-numeric ID, an invalid sort or malformed JSON)",
             "content": {
               "application/json": {
                 "schema": {
@@ -1248,8 +1245,8 @@
         "tags": [
           "Auth"
         ],
-        "summary": "Prisijungti",
-        "description": "Grazina trumpalaiki access zetona (JWT) ir refresh zetona.",
+        "summary": "Log in",
+        "description": "Returns a short-lived access token (JWT) and a refresh token.",
         "operationId": "login",
         "requestBody": {
           "content": {
@@ -1263,7 +1260,7 @@
         },
         "responses": {
           "200": {
-            "description": "Prisijungta",
+            "description": "Logged in",
             "content": {
               "application/json": {
                 "schema": {
@@ -1273,7 +1270,7 @@
             }
           },
           "400": {
-            "description": "Truksta lauku",
+            "description": "Missing fields",
             "content": {
               "application/json": {
                 "schema": {
@@ -1283,7 +1280,7 @@
             }
           },
           "401": {
-            "description": "Neteisingas vardas arba slaptazodis",
+            "description": "Invalid username or password",
             "content": {
               "application/json": {
                 "schema": {
@@ -1293,7 +1290,7 @@
             }
           },
           "403": {
-            "description": "Paskyra uzblokuota",
+            "description": "Account is blocked",
             "content": {
               "application/json": {
                 "schema": {
@@ -1311,7 +1308,7 @@
         "tags": [
           "Users"
         ],
-        "summary": "Vienas naudotojas",
+        "summary": "Get a user",
         "operationId": "get",
         "parameters": [
           {
@@ -1326,7 +1323,7 @@
         ],
         "responses": {
           "200": {
-            "description": "Naudotojas rastas",
+            "description": "User found",
             "content": {
               "application/json": {
                 "schema": {
@@ -1336,7 +1333,7 @@
             }
           },
           "400": {
-            "description": "Neteisingi parametrai ar turinys (pvz. ne skaicius vietoje ID, netinkamas sort ar JSON)",
+            "description": "Invalid parameters or body (for example, a non-numeric ID, an invalid sort or malformed JSON)",
             "content": {
               "application/json": {
                 "schema": {
@@ -1346,7 +1343,7 @@
             }
           },
           "401": {
-            "description": "Nera access zetono arba jis neteisingas / pasibaiges",
+            "description": "Access token missing, invalid or expired",
             "content": {
               "application/json": {
                 "schema": {
@@ -1356,7 +1353,7 @@
             }
           },
           "403": {
-            "description": "Neuztenka teisiu: ne grupes narys, netinkama role grupeje arba ne ADMIN",
+            "description": "Not enough permissions: not a guild member, wrong guild role or not ADMIN",
             "content": {
               "application/json": {
                 "schema": {
@@ -1366,7 +1363,7 @@
             }
           },
           "404": {
-            "description": "Naudotojo nera",
+            "description": "User not found",
             "content": {
               "application/json": {
                 "schema": {
@@ -1381,8 +1378,8 @@
         "tags": [
           "Users"
         ],
-        "summary": "Keisti role arba uzblokuoti",
-        "description": "Uzblokavus atsaukiamos visos naudotojo sesijos. Savo ADMIN teisiu nuimti negalima.",
+        "summary": "Change role or block",
+        "description": "Blocking revokes all of the user's sessions. You cannot remove your own ADMIN role.",
         "operationId": "update",
         "parameters": [
           {
@@ -1407,7 +1404,7 @@
         },
         "responses": {
           "200": {
-            "description": "Naudotojas atnaujintas",
+            "description": "User updated",
             "content": {
               "application/json": {
                 "schema": {
@@ -1417,7 +1414,7 @@
             }
           },
           "400": {
-            "description": "Neteisingi parametrai ar turinys (pvz. ne skaicius vietoje ID, netinkamas sort ar JSON)",
+            "description": "Invalid parameters or body (for example, a non-numeric ID, an invalid sort or malformed JSON)",
             "content": {
               "application/json": {
                 "schema": {
@@ -1427,7 +1424,7 @@
             }
           },
           "401": {
-            "description": "Nera access zetono arba jis neteisingas / pasibaiges",
+            "description": "Access token missing, invalid or expired",
             "content": {
               "application/json": {
                 "schema": {
@@ -1437,7 +1434,7 @@
             }
           },
           "403": {
-            "description": "Neuztenka teisiu: ne grupes narys, netinkama role grupeje arba ne ADMIN",
+            "description": "Not enough permissions: not a guild member, wrong guild role or not ADMIN",
             "content": {
               "application/json": {
                 "schema": {
@@ -1447,7 +1444,7 @@
             }
           },
           "404": {
-            "description": "Naudotojo nera",
+            "description": "User not found",
             "content": {
               "application/json": {
                 "schema": {
@@ -1457,7 +1454,7 @@
             }
           },
           "422": {
-            "description": "Bandoma nuimti savo ADMIN teises ar uzblokuoti save",
+            "description": "Attempt to remove your own ADMIN role or block yourself",
             "content": {
               "application/json": {
                 "schema": {
@@ -1474,7 +1471,7 @@
         "tags": [
           "Guilds"
         ],
-        "summary": "Viena grupe",
+        "summary": "Get a guild",
         "operationId": "get_1",
         "parameters": [
           {
@@ -1489,7 +1486,7 @@
         ],
         "responses": {
           "200": {
-            "description": "Grupe rasta",
+            "description": "Guild found",
             "content": {
               "application/json": {
                 "schema": {
@@ -1499,7 +1496,7 @@
             }
           },
           "400": {
-            "description": "Neteisingi parametrai ar turinys (pvz. ne skaicius vietoje ID, netinkamas sort ar JSON)",
+            "description": "Invalid parameters or body (for example, a non-numeric ID, an invalid sort or malformed JSON)",
             "content": {
               "application/json": {
                 "schema": {
@@ -1509,7 +1506,7 @@
             }
           },
           "401": {
-            "description": "Nera access zetono arba jis neteisingas / pasibaiges",
+            "description": "Access token missing, invalid or expired",
             "content": {
               "application/json": {
                 "schema": {
@@ -1519,7 +1516,7 @@
             }
           },
           "403": {
-            "description": "Neuztenka teisiu: ne grupes narys, netinkama role grupeje arba ne ADMIN",
+            "description": "Not enough permissions: not a guild member, wrong guild role or not ADMIN",
             "content": {
               "application/json": {
                 "schema": {
@@ -1529,7 +1526,7 @@
             }
           },
           "404": {
-            "description": "Grupe neegzistuoja",
+            "description": "Guild does not exist",
             "content": {
               "application/json": {
                 "schema": {
@@ -1544,8 +1541,8 @@
         "tags": [
           "Guilds"
         ],
-        "summary": "Istrinti grupe",
-        "description": "Kartu istrinamos visos grupes uzduotys ir ju progreso irasai.",
+        "summary": "Delete a guild",
+        "description": "Also deletes all of the guild's quests and their log entries.",
         "operationId": "delete",
         "parameters": [
           {
@@ -1560,10 +1557,10 @@
         ],
         "responses": {
           "204": {
-            "description": "Istrinta; atsakymas be turinio"
+            "description": "Deleted; no response body"
           },
           "400": {
-            "description": "Neteisingi parametrai ar turinys (pvz. ne skaicius vietoje ID, netinkamas sort ar JSON)",
+            "description": "Invalid parameters or body (for example, a non-numeric ID, an invalid sort or malformed JSON)",
             "content": {
               "application/json": {
                 "schema": {
@@ -1573,7 +1570,7 @@
             }
           },
           "401": {
-            "description": "Nera access zetono arba jis neteisingas / pasibaiges",
+            "description": "Access token missing, invalid or expired",
             "content": {
               "application/json": {
                 "schema": {
@@ -1583,7 +1580,7 @@
             }
           },
           "403": {
-            "description": "Neuztenka teisiu: ne grupes narys, netinkama role grupeje arba ne ADMIN",
+            "description": "Not enough permissions: not a guild member, wrong guild role or not ADMIN",
             "content": {
               "application/json": {
                 "schema": {
@@ -1593,7 +1590,7 @@
             }
           },
           "404": {
-            "description": "Grupe neegzistuoja",
+            "description": "Guild does not exist",
             "content": {
               "application/json": {
                 "schema": {
@@ -1608,8 +1605,8 @@
         "tags": [
           "Guilds"
         ],
-        "summary": "Atnaujinti grupe",
-        "description": "Dalinis atnaujinimas: keiciami tik atsiusti laukai, neatsiusti lieka nepakeisti.",
+        "summary": "Update a guild",
+        "description": "Partial update: only the fields sent are changed, the rest stay as they are.",
         "operationId": "update_1",
         "parameters": [
           {
@@ -1634,7 +1631,7 @@
         },
         "responses": {
           "200": {
-            "description": "Grupe atnaujinta",
+            "description": "Guild updated",
             "content": {
               "application/json": {
                 "schema": {
@@ -1644,7 +1641,7 @@
             }
           },
           "400": {
-            "description": "Neteisingas payload",
+            "description": "Invalid request body",
             "content": {
               "application/json": {
                 "schema": {
@@ -1654,7 +1651,7 @@
             }
           },
           "401": {
-            "description": "Nera access zetono arba jis neteisingas / pasibaiges",
+            "description": "Access token missing, invalid or expired",
             "content": {
               "application/json": {
                 "schema": {
@@ -1664,7 +1661,7 @@
             }
           },
           "403": {
-            "description": "Neuztenka teisiu: ne grupes narys, netinkama role grupeje arba ne ADMIN",
+            "description": "Not enough permissions: not a guild member, wrong guild role or not ADMIN",
             "content": {
               "application/json": {
                 "schema": {
@@ -1674,7 +1671,7 @@
             }
           },
           "404": {
-            "description": "Grupe neegzistuoja",
+            "description": "Guild does not exist",
             "content": {
               "application/json": {
                 "schema": {
@@ -1684,7 +1681,7 @@
             }
           },
           "409": {
-            "description": "Toks pavadinimas jau uzimtas",
+            "description": "Name already taken",
             "content": {
               "application/json": {
                 "schema": {
@@ -1701,8 +1698,8 @@
         "tags": [
           "Quests"
         ],
-        "summary": "Viena uzduotis",
-        "description": "Grazina 404, jei uzduotis nepriklauso nurodytai grupei.",
+        "summary": "Get a quest",
+        "description": "Returns 404 if the quest does not belong to the given guild.",
         "operationId": "get_2",
         "parameters": [
           {
@@ -1726,7 +1723,7 @@
         ],
         "responses": {
           "200": {
-            "description": "Uzduotis rasta",
+            "description": "Quest found",
             "content": {
               "application/json": {
                 "schema": {
@@ -1736,7 +1733,7 @@
             }
           },
           "400": {
-            "description": "Neteisingi parametrai ar turinys (pvz. ne skaicius vietoje ID, netinkamas sort ar JSON)",
+            "description": "Invalid parameters or body (for example, a non-numeric ID, an invalid sort or malformed JSON)",
             "content": {
               "application/json": {
                 "schema": {
@@ -1746,7 +1743,7 @@
             }
           },
           "401": {
-            "description": "Nera access zetono arba jis neteisingas / pasibaiges",
+            "description": "Access token missing, invalid or expired",
             "content": {
               "application/json": {
                 "schema": {
@@ -1756,7 +1753,7 @@
             }
           },
           "403": {
-            "description": "Neuztenka teisiu: ne grupes narys, netinkama role grupeje arba ne ADMIN",
+            "description": "Not enough permissions: not a guild member, wrong guild role or not ADMIN",
             "content": {
               "application/json": {
                 "schema": {
@@ -1766,7 +1763,7 @@
             }
           },
           "404": {
-            "description": "Neteisinga grandine arba uzduoties nera",
+            "description": "Wrong chain or quest not found",
             "content": {
               "application/json": {
                 "schema": {
@@ -1781,8 +1778,8 @@
         "tags": [
           "Quests"
         ],
-        "summary": "Istrinti uzduoti",
-        "description": "Kartu istrinami visi jos progreso irasai.",
+        "summary": "Delete a quest",
+        "description": "Also deletes all of its log entries.",
         "operationId": "delete_1",
         "parameters": [
           {
@@ -1806,10 +1803,10 @@
         ],
         "responses": {
           "204": {
-            "description": "Istrinta; atsakymas be turinio"
+            "description": "Deleted; no response body"
           },
           "400": {
-            "description": "Neteisingi parametrai ar turinys (pvz. ne skaicius vietoje ID, netinkamas sort ar JSON)",
+            "description": "Invalid parameters or body (for example, a non-numeric ID, an invalid sort or malformed JSON)",
             "content": {
               "application/json": {
                 "schema": {
@@ -1819,7 +1816,7 @@
             }
           },
           "401": {
-            "description": "Nera access zetono arba jis neteisingas / pasibaiges",
+            "description": "Access token missing, invalid or expired",
             "content": {
               "application/json": {
                 "schema": {
@@ -1829,7 +1826,7 @@
             }
           },
           "403": {
-            "description": "Neuztenka teisiu: ne grupes narys, netinkama role grupeje arba ne ADMIN",
+            "description": "Not enough permissions: not a guild member, wrong guild role or not ADMIN",
             "content": {
               "application/json": {
                 "schema": {
@@ -1839,7 +1836,7 @@
             }
           },
           "404": {
-            "description": "Neteisinga grandine arba uzduoties nera",
+            "description": "Wrong chain or quest not found",
             "content": {
               "application/json": {
                 "schema": {
@@ -1854,8 +1851,8 @@
         "tags": [
           "Quests"
         ],
-        "summary": "Atnaujinti uzduoti",
-        "description": "Dalinis atnaujinimas: keiciami tik atsiusti laukai. Sudetingumo keitimas veikia tik busimus\nirasus - jau patvirtintu irasu XP nekeiciamas.\n",
+        "summary": "Update a quest",
+        "description": "Partial update: only the fields sent are changed. A difficulty change affects only future\nlog entries; the XP of already approved log entries stays the same.\n",
         "operationId": "update_2",
         "parameters": [
           {
@@ -1889,7 +1886,7 @@
         },
         "responses": {
           "200": {
-            "description": "Uzduotis atnaujinta",
+            "description": "Quest updated",
             "content": {
               "application/json": {
                 "schema": {
@@ -1899,7 +1896,7 @@
             }
           },
           "400": {
-            "description": "Neteisingas payload",
+            "description": "Invalid request body",
             "content": {
               "application/json": {
                 "schema": {
@@ -1909,7 +1906,7 @@
             }
           },
           "401": {
-            "description": "Nera access zetono arba jis neteisingas / pasibaiges",
+            "description": "Access token missing, invalid or expired",
             "content": {
               "application/json": {
                 "schema": {
@@ -1919,7 +1916,7 @@
             }
           },
           "403": {
-            "description": "Neuztenka teisiu: ne grupes narys, netinkama role grupeje arba ne ADMIN",
+            "description": "Not enough permissions: not a guild member, wrong guild role or not ADMIN",
             "content": {
               "application/json": {
                 "schema": {
@@ -1929,7 +1926,7 @@
             }
           },
           "404": {
-            "description": "Neteisinga grandine arba uzduoties nera",
+            "description": "Wrong chain or quest not found",
             "content": {
               "application/json": {
                 "schema": {
@@ -1939,7 +1936,7 @@
             }
           },
           "409": {
-            "description": "Toks pavadinimas grupeje jau yra",
+            "description": "This title already exists in the guild",
             "content": {
               "application/json": {
                 "schema": {
@@ -1949,7 +1946,7 @@
             }
           },
           "422": {
-            "description": "Pazeista dalykine taisykle",
+            "description": "Business rule violated",
             "content": {
               "application/json": {
                 "schema": {
@@ -1966,7 +1963,7 @@
         "tags": [
           "Log entries"
         ],
-        "summary": "Vienas irasas",
+        "summary": "Get a log entry",
         "operationId": "get_3",
         "parameters": [
           {
@@ -1999,7 +1996,7 @@
         ],
         "responses": {
           "200": {
-            "description": "Irasas rastas",
+            "description": "Log entry found",
             "content": {
               "application/json": {
                 "schema": {
@@ -2009,7 +2006,7 @@
             }
           },
           "400": {
-            "description": "Neteisingi parametrai ar turinys (pvz. ne skaicius vietoje ID, netinkamas sort ar JSON)",
+            "description": "Invalid parameters or body (for example, a non-numeric ID, an invalid sort or malformed JSON)",
             "content": {
               "application/json": {
                 "schema": {
@@ -2019,7 +2016,7 @@
             }
           },
           "401": {
-            "description": "Nera access zetono arba jis neteisingas / pasibaiges",
+            "description": "Access token missing, invalid or expired",
             "content": {
               "application/json": {
                 "schema": {
@@ -2029,7 +2026,7 @@
             }
           },
           "403": {
-            "description": "Neuztenka teisiu: ne grupes narys, netinkama role grupeje arba ne ADMIN",
+            "description": "Not enough permissions: not a guild member, wrong guild role or not ADMIN",
             "content": {
               "application/json": {
                 "schema": {
@@ -2039,7 +2036,7 @@
             }
           },
           "404": {
-            "description": "Neteisinga grandine arba iraso nera",
+            "description": "Wrong chain or log entry not found",
             "content": {
               "application/json": {
                 "schema": {
@@ -2054,7 +2051,7 @@
         "tags": [
           "Log entries"
         ],
-        "summary": "Istrinti irasa",
+        "summary": "Delete a log entry",
         "operationId": "delete_2",
         "parameters": [
           {
@@ -2087,10 +2084,10 @@
         ],
         "responses": {
           "204": {
-            "description": "Istrinta; atsakymas be turinio"
+            "description": "Deleted; no response body"
           },
           "400": {
-            "description": "Neteisingi parametrai ar turinys (pvz. ne skaicius vietoje ID, netinkamas sort ar JSON)",
+            "description": "Invalid parameters or body (for example, a non-numeric ID, an invalid sort or malformed JSON)",
             "content": {
               "application/json": {
                 "schema": {
@@ -2100,7 +2097,7 @@
             }
           },
           "401": {
-            "description": "Nera access zetono arba jis neteisingas / pasibaiges",
+            "description": "Access token missing, invalid or expired",
             "content": {
               "application/json": {
                 "schema": {
@@ -2110,7 +2107,7 @@
             }
           },
           "403": {
-            "description": "Neuztenka teisiu: ne grupes narys, netinkama role grupeje arba ne ADMIN",
+            "description": "Not enough permissions: not a guild member, wrong guild role or not ADMIN",
             "content": {
               "application/json": {
                 "schema": {
@@ -2120,7 +2117,7 @@
             }
           },
           "404": {
-            "description": "Neteisinga grandine arba iraso nera",
+            "description": "Wrong chain or log entry not found",
             "content": {
               "application/json": {
                 "schema": {
@@ -2135,8 +2132,8 @@
         "tags": [
           "Log entries"
         ],
-        "summary": "Atnaujinti irasa ir jo perziuros rezultata",
-        "description": "Dalinis atnaujinimas: keiciami tik atsiusti laukai. xpAwarded, inspirationAwarded ir\nreviewerNote priimami tik kartu su status. Tvirtinant (APPROVED) praleistas xpAwarded\nreiskia, kad XP imamas is uzduoties sudetingumo. PENDING ir REJECTED irasai privalo\nlikti be XP ir inspiration.\n",
+        "summary": "Update a log entry and its review result",
+        "description": "Partial update: only the fields sent are changed. xpAwarded, inspirationAwarded and\nreviewerNote are accepted only together with status. On approval (APPROVED) an omitted xpAwarded\nmeans the XP comes from the quest difficulty. PENDING and REJECTED log entries must\nhave no XP or inspiration.\n",
         "operationId": "update_3",
         "parameters": [
           {
@@ -2179,7 +2176,7 @@
         },
         "responses": {
           "200": {
-            "description": "Irasas atnaujintas",
+            "description": "Log entry updated",
             "content": {
               "application/json": {
                 "schema": {
@@ -2189,7 +2186,7 @@
             }
           },
           "400": {
-            "description": "Neteisingas payload",
+            "description": "Invalid request body",
             "content": {
               "application/json": {
                 "schema": {
@@ -2199,7 +2196,7 @@
             }
           },
           "401": {
-            "description": "Nera access zetono arba jis neteisingas / pasibaiges",
+            "description": "Access token missing, invalid or expired",
             "content": {
               "application/json": {
                 "schema": {
@@ -2209,7 +2206,7 @@
             }
           },
           "403": {
-            "description": "Neuztenka teisiu: ne grupes narys, netinkama role grupeje arba ne ADMIN",
+            "description": "Not enough permissions: not a guild member, wrong guild role or not ADMIN",
             "content": {
               "application/json": {
                 "schema": {
@@ -2219,7 +2216,7 @@
             }
           },
           "404": {
-            "description": "Neteisinga grandine arba iraso nera",
+            "description": "Wrong chain or log entry not found",
             "content": {
               "application/json": {
                 "schema": {
@@ -2229,7 +2226,7 @@
             }
           },
           "422": {
-            "description": "Pazeista dalykine taisykle",
+            "description": "Business rule violated",
             "content": {
               "application/json": {
                 "schema": {
@@ -2246,7 +2243,7 @@
         "tags": [
           "Members"
         ],
-        "summary": "Vienas narys",
+        "summary": "Get a member",
         "operationId": "get_4",
         "parameters": [
           {
@@ -2270,7 +2267,7 @@
         ],
         "responses": {
           "200": {
-            "description": "Narys rastas",
+            "description": "Member found",
             "content": {
               "application/json": {
                 "schema": {
@@ -2280,7 +2277,7 @@
             }
           },
           "400": {
-            "description": "Neteisingi parametrai ar turinys (pvz. ne skaicius vietoje ID, netinkamas sort ar JSON)",
+            "description": "Invalid parameters or body (for example, a non-numeric ID, an invalid sort or malformed JSON)",
             "content": {
               "application/json": {
                 "schema": {
@@ -2290,7 +2287,7 @@
             }
           },
           "401": {
-            "description": "Nera access zetono arba jis neteisingas / pasibaiges",
+            "description": "Access token missing, invalid or expired",
             "content": {
               "application/json": {
                 "schema": {
@@ -2300,7 +2297,7 @@
             }
           },
           "403": {
-            "description": "Neuztenka teisiu: ne grupes narys, netinkama role grupeje arba ne ADMIN",
+            "description": "Not enough permissions: not a guild member, wrong guild role or not ADMIN",
             "content": {
               "application/json": {
                 "schema": {
@@ -2310,7 +2307,7 @@
             }
           },
           "404": {
-            "description": "Grupes nera arba naudotojas nera jos narys",
+            "description": "Guild not found, or the user is not a member",
             "content": {
               "application/json": {
                 "schema": {
@@ -2325,8 +2322,8 @@
         "tags": [
           "Members"
         ],
-        "summary": "Pasalinti nari arba iseiti is grupes",
-        "description": "Savininkas ar ADMIN salina bet kuri nari, narys - pats save. Savininko pasalinti negalima.",
+        "summary": "Remove a member or leave the guild",
+        "description": "The owner or ADMIN can remove any member, and a member can remove themselves. The owner cannot be removed.",
         "operationId": "remove",
         "parameters": [
           {
@@ -2350,10 +2347,10 @@
         ],
         "responses": {
           "204": {
-            "description": "Pasalinta"
+            "description": "Removed"
           },
           "400": {
-            "description": "Neteisingi parametrai ar turinys (pvz. ne skaicius vietoje ID, netinkamas sort ar JSON)",
+            "description": "Invalid parameters or body (for example, a non-numeric ID, an invalid sort or malformed JSON)",
             "content": {
               "application/json": {
                 "schema": {
@@ -2363,7 +2360,7 @@
             }
           },
           "401": {
-            "description": "Nera access zetono arba jis neteisingas / pasibaiges",
+            "description": "Access token missing, invalid or expired",
             "content": {
               "application/json": {
                 "schema": {
@@ -2373,7 +2370,7 @@
             }
           },
           "403": {
-            "description": "Neuztenka teisiu: ne grupes narys, netinkama role grupeje arba ne ADMIN",
+            "description": "Not enough permissions: not a guild member, wrong guild role or not ADMIN",
             "content": {
               "application/json": {
                 "schema": {
@@ -2383,7 +2380,7 @@
             }
           },
           "404": {
-            "description": "Naudotojas nera grupes narys",
+            "description": "User is not a member of the guild",
             "content": {
               "application/json": {
                 "schema": {
@@ -2393,7 +2390,7 @@
             }
           },
           "422": {
-            "description": "Bandoma pasalinti savininka",
+            "description": "Attempt to remove the owner",
             "content": {
               "application/json": {
                 "schema": {
@@ -2408,8 +2405,8 @@
         "tags": [
           "Members"
         ],
-        "summary": "Pakeisti nario role",
-        "description": "Tik grupes savininkas arba ADMIN.",
+        "summary": "Change a member's role",
+        "description": "Guild owner or ADMIN only.",
         "operationId": "changeRole",
         "parameters": [
           {
@@ -2443,7 +2440,7 @@
         },
         "responses": {
           "200": {
-            "description": "Role pakeista",
+            "description": "Role changed",
             "content": {
               "application/json": {
                 "schema": {
@@ -2453,7 +2450,7 @@
             }
           },
           "400": {
-            "description": "Neteisingi parametrai ar turinys (pvz. ne skaicius vietoje ID, netinkamas sort ar JSON)",
+            "description": "Invalid parameters or body (for example, a non-numeric ID, an invalid sort or malformed JSON)",
             "content": {
               "application/json": {
                 "schema": {
@@ -2463,7 +2460,7 @@
             }
           },
           "401": {
-            "description": "Nera access zetono arba jis neteisingas / pasibaiges",
+            "description": "Access token missing, invalid or expired",
             "content": {
               "application/json": {
                 "schema": {
@@ -2473,7 +2470,7 @@
             }
           },
           "403": {
-            "description": "Neuztenka teisiu: ne grupes narys, netinkama role grupeje arba ne ADMIN",
+            "description": "Not enough permissions: not a guild member, wrong guild role or not ADMIN",
             "content": {
               "application/json": {
                 "schema": {
@@ -2483,7 +2480,7 @@
             }
           },
           "404": {
-            "description": "Naudotojas nera grupes narys",
+            "description": "User is not a member of the guild",
             "content": {
               "application/json": {
                 "schema": {
@@ -2493,7 +2490,7 @@
             }
           },
           "409": {
-            "description": "Grupe jau turi DM",
+            "description": "The guild already has a game master",
             "content": {
               "application/json": {
                 "schema": {
@@ -2510,7 +2507,7 @@
         "tags": [
           "Friends"
         ],
-        "summary": "Viena draugyste",
+        "summary": "Get a friendship",
         "operationId": "get_5",
         "parameters": [
           {
@@ -2525,7 +2522,7 @@
         ],
         "responses": {
           "200": {
-            "description": "Draugyste rasta",
+            "description": "Friendship found",
             "content": {
               "application/json": {
                 "schema": {
@@ -2535,7 +2532,7 @@
             }
           },
           "400": {
-            "description": "Neteisingi parametrai ar turinys (pvz. ne skaicius vietoje ID, netinkamas sort ar JSON)",
+            "description": "Invalid parameters or body (for example, a non-numeric ID, an invalid sort or malformed JSON)",
             "content": {
               "application/json": {
                 "schema": {
@@ -2545,7 +2542,7 @@
             }
           },
           "401": {
-            "description": "Nera access zetono arba jis neteisingas / pasibaiges",
+            "description": "Access token missing, invalid or expired",
             "content": {
               "application/json": {
                 "schema": {
@@ -2555,7 +2552,7 @@
             }
           },
           "404": {
-            "description": "Draugystes nera arba ji ne jusu",
+            "description": "Friendship not found or not yours",
             "content": {
               "application/json": {
                 "schema": {
@@ -2570,8 +2567,8 @@
         "tags": [
           "Friends"
         ],
-        "summary": "Atsaukti, atmesti, nutraukti arba atblokuoti",
-        "description": "Bet kuri puse; uzblokuota draugyste istrina (atblokuoja) tik uzblokaves naudotojas.",
+        "summary": "Cancel, decline, unfriend or unblock",
+        "description": "Either side; a blocked friendship can only be deleted (unblocked) by the user who blocked it.",
         "operationId": "delete_3",
         "parameters": [
           {
@@ -2586,10 +2583,10 @@
         ],
         "responses": {
           "204": {
-            "description": "Istrinta; atsakymas be turinio"
+            "description": "Deleted; no response body"
           },
           "400": {
-            "description": "Neteisingi parametrai ar turinys (pvz. ne skaicius vietoje ID, netinkamas sort ar JSON)",
+            "description": "Invalid parameters or body (for example, a non-numeric ID, an invalid sort or malformed JSON)",
             "content": {
               "application/json": {
                 "schema": {
@@ -2599,7 +2596,7 @@
             }
           },
           "401": {
-            "description": "Nera access zetono arba jis neteisingas / pasibaiges",
+            "description": "Access token missing, invalid or expired",
             "content": {
               "application/json": {
                 "schema": {
@@ -2609,7 +2606,7 @@
             }
           },
           "404": {
-            "description": "Draugystes nera arba ji ne jusu",
+            "description": "Friendship not found or not yours",
             "content": {
               "application/json": {
                 "schema": {
@@ -2624,8 +2621,8 @@
         "tags": [
           "Friends"
         ],
-        "summary": "Priimti kvietima arba uzblokuoti",
-        "description": "ACCEPTED - laukianti kvietima priima tik jo gavejas. BLOCKED - uzblokuoti gali bet kuri puse;\nuzblokuotasis sios draugystes nebemato. Atmesti, atsaukti ar atblokuoti - DELETE.\n",
+        "summary": "Accept a friend request or block",
+        "description": "ACCEPTED: only the recipient can accept a pending friend request. BLOCKED: either side can block;\nthe blocked user no longer sees this friendship. To decline, cancel or unblock, use DELETE.\n",
         "operationId": "update_4",
         "parameters": [
           {
@@ -2650,7 +2647,7 @@
         },
         "responses": {
           "200": {
-            "description": "Busena pakeista",
+            "description": "Status changed",
             "content": {
               "application/json": {
                 "schema": {
@@ -2660,7 +2657,7 @@
             }
           },
           "400": {
-            "description": "Neteisingas payload",
+            "description": "Invalid request body",
             "content": {
               "application/json": {
                 "schema": {
@@ -2670,7 +2667,7 @@
             }
           },
           "401": {
-            "description": "Nera access zetono arba jis neteisingas / pasibaiges",
+            "description": "Access token missing, invalid or expired",
             "content": {
               "application/json": {
                 "schema": {
@@ -2680,7 +2677,7 @@
             }
           },
           "403": {
-            "description": "Savo issiusta kvietima priima ne siuntejas",
+            "description": "The sender cannot accept their own friend request",
             "content": {
               "application/json": {
                 "schema": {
@@ -2690,7 +2687,7 @@
             }
           },
           "404": {
-            "description": "Draugystes nera arba ji ne jusu",
+            "description": "Friendship not found or not yours",
             "content": {
               "application/json": {
                 "schema": {
@@ -2700,7 +2697,7 @@
             }
           },
           "422": {
-            "description": "Negalimas busenos perejimas",
+            "description": "Status transition not allowed",
             "content": {
               "application/json": {
                 "schema": {
@@ -2717,13 +2714,13 @@
         "tags": [
           "Users"
         ],
-        "summary": "Naudotoju sarasas",
+        "summary": "List users",
         "operationId": "list_5",
         "parameters": [
           {
             "name": "username",
             "in": "query",
-            "description": "Filtras pagal vardo dali",
+            "description": "Filter by part of the username",
             "required": false,
             "schema": {
               "type": "string"
@@ -2769,7 +2766,7 @@
         ],
         "responses": {
           "200": {
-            "description": "Sarasas grazintas",
+            "description": "List returned",
             "content": {
               "application/json": {
                 "schema": {
@@ -2779,7 +2776,7 @@
             }
           },
           "400": {
-            "description": "Neteisingi parametrai ar turinys (pvz. ne skaicius vietoje ID, netinkamas sort ar JSON)",
+            "description": "Invalid parameters or body (for example, a non-numeric ID, an invalid sort or malformed JSON)",
             "content": {
               "application/json": {
                 "schema": {
@@ -2789,7 +2786,7 @@
             }
           },
           "401": {
-            "description": "Nera access zetono arba jis neteisingas / pasibaiges",
+            "description": "Access token missing, invalid or expired",
             "content": {
               "application/json": {
                 "schema": {
@@ -2799,7 +2796,7 @@
             }
           },
           "403": {
-            "description": "Neuztenka teisiu: ne grupes narys, netinkama role grupeje arba ne ADMIN",
+            "description": "Not enough permissions: not a guild member, wrong guild role or not ADMIN",
             "content": {
               "application/json": {
                 "schema": {
@@ -2816,8 +2813,8 @@
         "tags": [
           "Members"
         ],
-        "summary": "Nario veikejo kortele",
-        "description": "Lygis, XP, charakteristikos, inspiration ir serija - tik is patvirtintu (APPROVED) nario irasu\nsioje grupeje. FULL pjuvis (su 10 naujausiu irasu ir laukianciu skaiciumi) - pats narys,\ngrupes DM ir ADMIN; kiti grupes nariai gauna PUBLIC.\n",
+        "summary": "Member's character sheet",
+        "description": "Level, XP, stats, inspiration and streak, only from the member's approved (APPROVED) log entries\nin this guild. The FULL view (with the 10 latest log entries and the pending count) is for the member,\nthe guild's game master and ADMIN; other guild members get PUBLIC.\n",
         "operationId": "sheet",
         "parameters": [
           {
@@ -2841,7 +2838,7 @@
         ],
         "responses": {
           "200": {
-            "description": "Kortele grazinta",
+            "description": "Character sheet returned",
             "content": {
               "application/json": {
                 "schema": {
@@ -2851,7 +2848,7 @@
             }
           },
           "400": {
-            "description": "Neteisingi parametrai ar turinys (pvz. ne skaicius vietoje ID, netinkamas sort ar JSON)",
+            "description": "Invalid parameters or body (for example, a non-numeric ID, an invalid sort or malformed JSON)",
             "content": {
               "application/json": {
                 "schema": {
@@ -2861,7 +2858,7 @@
             }
           },
           "401": {
-            "description": "Nera access zetono arba jis neteisingas / pasibaiges",
+            "description": "Access token missing, invalid or expired",
             "content": {
               "application/json": {
                 "schema": {
@@ -2871,7 +2868,7 @@
             }
           },
           "403": {
-            "description": "Neuztenka teisiu: ne grupes narys, netinkama role grupeje arba ne ADMIN",
+            "description": "Not enough permissions: not a guild member, wrong guild role or not ADMIN",
             "content": {
               "application/json": {
                 "schema": {
@@ -2881,7 +2878,7 @@
             }
           },
           "404": {
-            "description": "Grupes nera arba naudotojas nera jos narys",
+            "description": "Guild not found, or the user is not a member",
             "content": {
               "application/json": {
                 "schema": {
@@ -2898,8 +2895,8 @@
         "tags": [
           "Friends"
         ],
-        "summary": "Draugo veikejo kortele",
-        "description": "Tik patvirtintai draugystei: PUBLIC pjuvis, sujungtas per visas draugo grupes.",
+        "summary": "Friend's character sheet",
+        "description": "Accepted friendships only: the PUBLIC view, combined across all of the friend's guilds.",
         "operationId": "sheet_1",
         "parameters": [
           {
@@ -2914,7 +2911,7 @@
         ],
         "responses": {
           "200": {
-            "description": "Kortele grazinta",
+            "description": "Character sheet returned",
             "content": {
               "application/json": {
                 "schema": {
@@ -2924,7 +2921,7 @@
             }
           },
           "400": {
-            "description": "Neteisingi parametrai ar turinys (pvz. ne skaicius vietoje ID, netinkamas sort ar JSON)",
+            "description": "Invalid parameters or body (for example, a non-numeric ID, an invalid sort or malformed JSON)",
             "content": {
               "application/json": {
                 "schema": {
@@ -2934,7 +2931,7 @@
             }
           },
           "401": {
-            "description": "Nera access zetono arba jis neteisingas / pasibaiges",
+            "description": "Access token missing, invalid or expired",
             "content": {
               "application/json": {
                 "schema": {
@@ -2944,7 +2941,7 @@
             }
           },
           "403": {
-            "description": "Draugyste dar nepatvirtinta arba uzblokuota",
+            "description": "Friendship not accepted yet, or blocked",
             "content": {
               "application/json": {
                 "schema": {
@@ -2954,7 +2951,7 @@
             }
           },
           "404": {
-            "description": "Draugystes nera arba ji ne jusu",
+            "description": "Friendship not found or not yours",
             "content": {
               "application/json": {
                 "schema": {
@@ -2971,12 +2968,12 @@
         "tags": [
           "Auth"
         ],
-        "summary": "Prisijunges naudotojas",
-        "description": "Kartu grazinamos grupes ir naudotojo role kiekvienoje is ju.",
+        "summary": "Current user",
+        "description": "Also returns the user's guilds and their role in each.",
         "operationId": "me",
         "responses": {
           "200": {
-            "description": "Naudotojo duomenys",
+            "description": "User data",
             "content": {
               "application/json": {
                 "schema": {
@@ -2986,7 +2983,7 @@
             }
           },
           "401": {
-            "description": "Nera access zetono arba jis neteisingas / pasibaiges",
+            "description": "Access token missing, invalid or expired",
             "content": {
               "application/json": {
                 "schema": {
@@ -3003,19 +3000,19 @@
     "schemas": {
       "GuildRequest": {
         "type": "object",
-        "description": "Grupes kurimo duomenys",
+        "description": "Data for creating a guild",
         "properties": {
           "name": {
             "type": "string",
-            "description": "Unikalus grupes pavadinimas",
+            "description": "Unique guild name",
             "example": "Thursday Night Crew",
             "maxLength": 60,
             "minLength": 3
           },
           "description": {
             "type": "string",
-            "description": "Laisvas grupes aprasymas; nenurodzius issaugomas tuscias \"\"",
-            "example": "Ketvirtadieniais renkasi kampanija.",
+            "description": "Free-form guild description; saved as \"\" when omitted",
+            "example": "Campaign night every Thursday.",
             "maxLength": 500,
             "minLength": 0
           }
@@ -3026,7 +3023,7 @@
       },
       "ApiError": {
         "type": "object",
-        "description": "Vieninga klaidos atsako struktura",
+        "description": "Common error response structure",
         "properties": {
           "timestamp": {
             "type": "string",
@@ -3044,7 +3041,7 @@
           },
           "message": {
             "type": "string",
-            "example": "Guild 99 nerasta"
+            "example": "Guild 99 not found"
           },
           "path": {
             "type": "string",
@@ -3052,7 +3049,7 @@
           },
           "details": {
             "type": "array",
-            "description": "Uzpildoma tik kai klaida susijusi su konkreciais laukais",
+            "description": "Present only when the error concerns specific fields",
             "items": {
               "$ref": "#/components/schemas/FieldViolation"
             }
@@ -3068,13 +3065,13 @@
           },
           "message": {
             "type": "string",
-            "example": "must not be blank"
+            "example": "Must not be blank"
           }
         }
       },
       "GuildResponse": {
         "type": "object",
-        "description": "Grupe",
+        "description": "Guild",
         "properties": {
           "id": {
             "type": "integer",
@@ -3087,12 +3084,12 @@
           },
           "description": {
             "type": "string",
-            "example": "Ketvirtadieniais renkasi kampanija."
+            "example": "Campaign night every Thursday."
           },
           "ownerId": {
             "type": "integer",
             "format": "int64",
-            "description": "Grupes savininko (kurejo) naudotojo id",
+            "description": "User ID of the guild owner (creator)",
             "example": 2
           },
           "createdAt": {
@@ -3104,7 +3101,7 @@
       },
       "QuestRequest": {
         "type": "object",
-        "description": "Uzduoties kurimo duomenys",
+        "description": "Data for creating a quest",
         "properties": {
           "title": {
             "type": "string",
@@ -3114,14 +3111,14 @@
           },
           "description": {
             "type": "string",
-            "description": "Nenurodzius issaugomas tuscias \"\"",
-            "example": "Kaupiamoji uzduotis - kiekvienas patvirtintas irasas priartina prie tikslo.",
+            "description": "Saved as \"\" when omitted",
+            "example": "A GRIND quest: every approved log entry brings you closer to the goal.",
             "maxLength": 1000,
             "minLength": 0
           },
           "stat": {
             "type": "string",
-            "description": "Charakteristika, kuria uzduotis augina",
+            "description": "Stat that the quest improves",
             "enum": [
               "STR",
               "DEX",
@@ -3144,7 +3141,7 @@
           },
           "difficulty": {
             "type": "string",
-            "description": "Bazinio XP daugiklis",
+            "description": "Multiplier of the base XP",
             "enum": [
               "TRIVIAL",
               "EASY",
@@ -3157,13 +3154,13 @@
           "targetCount": {
             "type": "integer",
             "format": "int32",
-            "description": "Privalomas tik GRIND tipui; kitiems tipams turi buti nenurodytas",
+            "description": "Required for GRIND quests only; must be omitted for other types",
             "example": 50,
             "exclusiveMinimum": 0
           },
           "active": {
             "type": "boolean",
-            "description": "Ar uzduotis vis dar aktyvi; nenurodzius laikoma true",
+            "description": "Whether the quest is still active; true when omitted",
             "example": true
           }
         },
@@ -3176,7 +3173,7 @@
       },
       "QuestResponse": {
         "type": "object",
-        "description": "Uzduotis",
+        "description": "Quest",
         "properties": {
           "id": {
             "type": "integer",
@@ -3186,7 +3183,7 @@
           "guildId": {
             "type": "integer",
             "format": "int64",
-            "description": "Tevine grupe",
+            "description": "Parent guild",
             "example": 2
           },
           "title": {
@@ -3241,13 +3238,13 @@
           "xpPerCompletion": {
             "type": "integer",
             "format": "int32",
-            "description": "Serverio isvestas XP uz viena patvirtinta irasa (BASE_XP * daugiklis)",
+            "description": "XP per approved log entry, computed by the server (BASE_XP * multiplier)",
             "example": 50
           },
           "createdBy": {
             "type": "integer",
             "format": "int64",
-            "description": "Kas sukure uzduoti (naudotojo id)",
+            "description": "Quest creator (user ID)",
             "example": 4
           },
           "createdAt": {
@@ -3258,17 +3255,17 @@
       },
       "LogEntryCreateRequest": {
         "type": "object",
-        "description": "Naujo progreso iraso duomenys",
+        "description": "Data for a new log entry",
         "properties": {
           "note": {
             "type": "string",
-            "example": "Begau 8 km palei upe.",
+            "example": "Ran 8 km along the river.",
             "maxLength": 1000,
             "minLength": 0
           },
           "evidenceUrl": {
             "type": "string",
-            "description": "Nuoroda i irodyma, pvz. nuotrauka",
+            "description": "Link to evidence, for example a photo",
             "example": "https://example.org/evidence/run-8km.png",
             "maxLength": 500,
             "minLength": 0
@@ -3276,7 +3273,7 @@
           "occurredAt": {
             "type": "string",
             "format": "date-time",
-            "description": "Kada veiksmas atliktas; negali buti ateityje",
+            "description": "When the activity happened; cannot be in the future",
             "example": "2026-09-19T15:20:00Z"
           }
         },
@@ -3286,7 +3283,7 @@
       },
       "LogEntryResponse": {
         "type": "object",
-        "description": "Progreso irasas",
+        "description": "Log entry",
         "properties": {
           "id": {
             "type": "integer",
@@ -3296,13 +3293,13 @@
           "questId": {
             "type": "integer",
             "format": "int64",
-            "description": "Tevine uzduotis",
+            "description": "Parent quest",
             "example": 4
           },
           "authorId": {
             "type": "integer",
             "format": "int64",
-            "description": "Iraso autorius (naudotojo id)",
+            "description": "Author of the log entry (user ID)",
             "example": 4
           },
           "note": {
@@ -3323,7 +3320,7 @@
           "xpAwarded": {
             "type": "integer",
             "format": "int32",
-            "description": "Patvirtinimo metu uzsaldytas XP; PENDING ir REJECTED visada 0",
+            "description": "XP frozen at approval; always 0 for PENDING and REJECTED",
             "example": 50
           },
           "inspirationAwarded": {
@@ -3337,7 +3334,7 @@
           "reviewerId": {
             "type": "integer",
             "format": "int64",
-            "description": "Perziurejes DM (naudotojo id); nera, kol irasas neperziuretas",
+            "description": "Game master who reviewed the log entry (user ID); absent until reviewed",
             "example": 2
           },
           "occurredAt": {
@@ -3347,7 +3344,7 @@
           "reviewedAt": {
             "type": "string",
             "format": "date-time",
-            "description": "Nera, kol irasas neperziuretas"
+            "description": "Absent until the log entry is reviewed"
           },
           "createdAt": {
             "type": "string",
@@ -3357,11 +3354,11 @@
       },
       "MemberRequest": {
         "type": "object",
-        "description": "Naujas grupes narys",
+        "description": "New guild member",
         "properties": {
           "username": {
             "type": "string",
-            "description": "Esamo naudotojo vardas",
+            "description": "Username of an existing user",
             "example": "jonas",
             "minLength": 1
           },
@@ -3381,7 +3378,7 @@
       },
       "MemberResponse": {
         "type": "object",
-        "description": "Grupes narys",
+        "description": "Guild member",
         "properties": {
           "userId": {
             "type": "integer",
@@ -3408,11 +3405,11 @@
       },
       "FriendRequest": {
         "type": "object",
-        "description": "Draugystes kvietimas",
+        "description": "Friend request",
         "properties": {
           "username": {
             "type": "string",
-            "description": "Esamo naudotojo vardas",
+            "description": "Username of an existing user",
             "example": "jonas",
             "minLength": 1
           }
@@ -3423,7 +3420,7 @@
       },
       "FriendshipResponse": {
         "type": "object",
-        "description": "Draugyste arba kvietimas",
+        "description": "Friendship or friend request",
         "properties": {
           "id": {
             "type": "integer",
@@ -3433,12 +3430,12 @@
           "userId": {
             "type": "integer",
             "format": "int64",
-            "description": "Kito naudotojo id",
+            "description": "ID of the other user",
             "example": 4
           },
           "username": {
             "type": "string",
-            "description": "Kito naudotojo vardas",
+            "description": "Username of the other user",
             "example": "jonas"
           },
           "status": {
@@ -3452,7 +3449,7 @@
           },
           "direction": {
             "type": "string",
-            "description": "OUTGOING - kvietima siunte (BLOCKED - uzblokavo) prisijunges naudotojas; INCOMING - kitas naudotojas",
+            "description": "OUTGOING if the current user sent the friend request (for BLOCKED, did the blocking); INCOMING if the other user did",
             "enum": [
               "OUTGOING",
               "INCOMING"
@@ -3466,24 +3463,24 @@
           "respondedAt": {
             "type": "string",
             "format": "date-time",
-            "description": "Kada kvietimas priimtas ar uzblokuotas; nera, kol PENDING"
+            "description": "When the friend request was accepted or blocked; absent while PENDING"
           }
         }
       },
       "RegisterRequest": {
         "type": "object",
-        "description": "Naujo naudotojo registracija",
+        "description": "New user registration",
         "properties": {
           "username": {
             "type": "string",
-            "description": "Unikalus vardas (raidziu dydis nesvarbus)",
+            "description": "Unique username (case-insensitive)",
             "example": "naujokas",
             "minLength": 1,
             "pattern": "[A-Za-z0-9_.-]{3,30}"
           },
           "password": {
             "type": "string",
-            "description": "8-72 simboliai (daugiausia 72 baitai UTF-8)",
+            "description": "8-72 characters (at most 72 bytes in UTF-8)",
             "example": "Demo123!",
             "maxLength": 72,
             "minLength": 8
@@ -3496,7 +3493,7 @@
       },
       "UserResponse": {
         "type": "object",
-        "description": "Naudotojas",
+        "description": "User",
         "properties": {
           "id": {
             "type": "integer",
@@ -3527,7 +3524,7 @@
       },
       "RefreshRequest": {
         "type": "object",
-        "description": "Refresh zetonas, gautas prisijungiant arba ankstesnio atnaujinimo metu",
+        "description": "Refresh token from login or from the previous refresh",
         "properties": {
           "refreshToken": {
             "type": "string",
@@ -3541,11 +3538,11 @@
       },
       "TokenResponse": {
         "type": "object",
-        "description": "Zetonu pora",
+        "description": "Token pair",
         "properties": {
           "accessToken": {
             "type": "string",
-            "description": "JWT; siunciamas antrasteje Authorization: Bearer <accessToken>",
+            "description": "JWT; send it in the header Authorization: Bearer <accessToken>",
             "example": "eyJhbGciOiJIUzI1NiJ9.eyJpc3MiOi..."
           },
           "tokenType": {
@@ -3555,19 +3552,19 @@
           "expiresIn": {
             "type": "integer",
             "format": "int64",
-            "description": "Po kiek sekundziu access zetonas nustos galioti",
+            "description": "Seconds until the access token expires",
             "example": 900
           },
           "refreshToken": {
             "type": "string",
-            "description": "Vienkartinis zetonas naujai porai gauti per /api/auth/refresh",
+            "description": "Single-use token for getting a new pair from /api/auth/refresh",
             "example": "q3Vd0n9mJk0E8dX1w6Zl8rTzW2a5bH7cYf4uN1sP0eI"
           }
         }
       },
       "LoginRequest": {
         "type": "object",
-        "description": "Prisijungimo duomenys",
+        "description": "Login credentials",
         "properties": {
           "username": {
             "type": "string",
@@ -3587,14 +3584,14 @@
       },
       "UserUpdateRequest": {
         "type": "object",
-        "description": "Administratoriaus atliekamas naudotojo roles ar busenos keitimas",
+        "description": "Role or status change made by an admin",
         "example": {
           "enabled": true
         },
         "properties": {
           "role": {
             "type": "string",
-            "description": "Nauja globali role",
+            "description": "New global role",
             "enum": [
               "USER",
               "ADMIN"
@@ -3603,18 +3600,18 @@
           },
           "enabled": {
             "type": "boolean",
-            "description": "false - uzblokuoti paskyra (atsaukiamos visos sesijos)",
+            "description": "false blocks the account (all sessions are revoked)",
             "example": false
           }
         }
       },
       "GuildUpdateRequest": {
         "type": "object",
-        "description": "Dalinis grupes atnaujinimas - keiciami tik atsiusti laukai",
+        "description": "Partial guild update: only the fields sent are changed",
         "properties": {
           "name": {
             "type": "string",
-            "description": "Naujas unikalus pavadinimas; nenurodzius nekeiciamas",
+            "description": "New unique name; unchanged when omitted",
             "example": "Thursday Night Crew",
             "maxLength": 60,
             "minLength": 3,
@@ -3622,8 +3619,8 @@
           },
           "description": {
             "type": "string",
-            "description": "Naujas aprasymas; nenurodzius nekeiciamas, \"\" isvalo",
-            "example": "Ketvirtadieniais renkasi kampanija.",
+            "description": "New description; unchanged when omitted, \"\" clears it",
+            "example": "Campaign night every Thursday.",
             "maxLength": 500,
             "minLength": 0
           }
@@ -3631,7 +3628,7 @@
       },
       "QuestUpdateRequest": {
         "type": "object",
-        "description": "Dalinis uzduoties atnaujinimas - keiciami tik atsiusti laukai",
+        "description": "Partial quest update: only the fields sent are changed",
         "properties": {
           "title": {
             "type": "string",
@@ -3642,8 +3639,8 @@
           },
           "description": {
             "type": "string",
-            "description": "Naujas aprasymas; nenurodzius nekeiciamas, \"\" isvalo",
-            "example": "Kaupiamoji uzduotis - kiekvienas patvirtintas irasas priartina prie tikslo.",
+            "description": "New description; unchanged when omitted, \"\" clears it",
+            "example": "A GRIND quest: every approved log entry brings you closer to the goal.",
             "maxLength": 1000,
             "minLength": 0
           },
@@ -3661,7 +3658,7 @@
           },
           "type": {
             "type": "string",
-            "description": "Pakeitus i ne GRIND tipa, targetCount isvalomas",
+            "description": "Changing to a non-GRIND type clears targetCount",
             "enum": [
               "MILESTONE",
               "HABIT",
@@ -3684,7 +3681,7 @@
           "targetCount": {
             "type": "integer",
             "format": "int32",
-            "description": "Leidziamas tik GRIND tipo uzduociai",
+            "description": "Allowed for GRIND quests only",
             "example": 50,
             "exclusiveMinimum": 0
           },
@@ -3696,16 +3693,16 @@
       },
       "LogEntryUpdateRequest": {
         "type": "object",
-        "description": "Dalinis iraso turinio ir perziuros rezultato atnaujinimas",
+        "description": "Partial update of a log entry's content and review result",
         "example": {
           "status": "APPROVED",
           "xpAwarded": 50,
-          "reviewerNote": "Uzskaitau, nors nuotrauka neryski."
+          "reviewerNote": "Approved, even though the photo is blurry."
         },
         "properties": {
           "note": {
             "type": "string",
-            "example": "Begau 8 km palei upe.",
+            "example": "Ran 8 km along the river.",
             "maxLength": 1000,
             "minLength": 0
           },
@@ -3718,12 +3715,12 @@
           "occurredAt": {
             "type": "string",
             "format": "date-time",
-            "description": "Negali buti ateityje",
+            "description": "Cannot be in the future",
             "example": "2026-09-19T15:20:00Z"
           },
           "status": {
             "type": "string",
-            "description": "Nauja iraso busena (DM sprendimas)",
+            "description": "New log entry status (the game master's decision)",
             "enum": [
               "PENDING",
               "APPROVED",
@@ -3734,21 +3731,21 @@
           "xpAwarded": {
             "type": "integer",
             "format": "int32",
-            "description": "DM perrasytas XP ivertis; tik kartu su status. Praleidus, tvirtinant naudojama uzduoties verte.",
+            "description": "XP set by the game master; only together with status. When omitted on approval, the quest's XP value is used.",
             "example": 50,
             "minimum": 0
           },
           "inspirationAwarded": {
             "type": "integer",
             "format": "int32",
-            "description": "Skiriamas heroic inspiration; tik kartu su status, praleidus laikoma 0",
+            "description": "Heroic inspiration awarded; only together with status, 0 when omitted",
             "example": 1,
             "minimum": 0
           },
           "reviewerNote": {
             "type": "string",
-            "description": "DM komentaras; tik kartu su status",
-            "example": "Uzskaitau, nors nuotrauka neryski.",
+            "description": "Game master's comment; only together with status",
+            "example": "Approved, even though the photo is blurry.",
             "maxLength": 500,
             "minLength": 0
           }
@@ -3756,7 +3753,7 @@
       },
       "MemberRoleRequest": {
         "type": "object",
-        "description": "Nario roles keitimas",
+        "description": "Member role change",
         "properties": {
           "role": {
             "type": "string",
@@ -3773,11 +3770,11 @@
       },
       "FriendshipUpdateRequest": {
         "type": "object",
-        "description": "Atsakymas i kvietima arba uzblokavimas",
+        "description": "Reply to a friend request, or a block",
         "properties": {
           "status": {
             "type": "string",
-            "description": "ACCEPTED - priimti kvietima (tik gavejas); BLOCKED - uzblokuoti (bet kuri puse)",
+            "description": "ACCEPTED accepts the friend request (recipient only); BLOCKED blocks the other user (either side)",
             "enum": [
               "PENDING",
               "ACCEPTED",
@@ -3817,7 +3814,7 @@
       },
       "PageLinks": {
         "type": "object",
-        "description": "prev ir next nera pateikiami, kai tokio puslapio nera",
+        "description": "prev and next are omitted when there is no such page",
         "properties": {
           "self": {
             "type": "string"
@@ -3838,12 +3835,12 @@
       },
       "PagedResponse": {
         "type": "object",
-        "description": "Puslapiuotas sarasas su navigacijos nuorodomis",
+        "description": "Paged list with navigation links",
         "properties": {
           "totalElements": {
             "type": "integer",
             "format": "int64",
-            "description": "Kiek is viso elementu atitinka uzklausa (visuose puslapiuose)",
+            "description": "Total number of matching items (across all pages)",
             "example": 42
           },
           "content": {
@@ -3862,7 +3859,7 @@
       },
       "CharacterSheetResponse": {
         "type": "object",
-        "description": "Veikejo kortele: lygis, XP ir charakteristikos is patvirtintu irasu",
+        "description": "Character sheet: level, XP and stats from approved log entries",
         "properties": {
           "userId": {
             "type": "integer",
@@ -3876,17 +3873,17 @@
           "guildId": {
             "type": "integer",
             "format": "int64",
-            "description": "Grupe; draugo kortelei (visos grupes kartu) nepateikiama",
+            "description": "Guild; omitted on a friend's character sheet (all guilds combined)",
             "example": 2
           },
           "guildName": {
             "type": "string",
-            "description": "Draugo kortelei nepateikiama",
+            "description": "Omitted on a friend's character sheet",
             "example": "Iron Vow"
           },
           "role": {
             "type": "string",
-            "description": "Role grupeje; draugo kortelei nepateikiama",
+            "description": "Role in the guild; omitted on a friend's character sheet",
             "enum": [
               "PLAYER",
               "DUNGEON_MASTER"
@@ -3895,7 +3892,7 @@
           },
           "view": {
             "type": "string",
-            "description": "FULL - pats naudotojas, grupes DM arba ADMIN; PUBLIC - kiti grupes nariai ir draugai",
+            "description": "FULL for the user, the guild's game master or ADMIN; PUBLIC for other guild members and friends",
             "enum": [
               "FULL",
               "PUBLIC"
@@ -3911,43 +3908,43 @@
           "totalXp": {
             "type": "integer",
             "format": "int64",
-            "description": "Visu patvirtintu irasu XP suma",
+            "description": "Total XP of all approved log entries",
             "example": 100
           },
           "xpIntoLevel": {
             "type": "integer",
             "format": "int32",
-            "description": "totalXp % 100 - kiek XP jau surinkta dabartiniame lygyje",
+            "description": "totalXp % 100: XP earned in the current level",
             "example": 0
           },
           "xpForNextLevel": {
             "type": "integer",
             "format": "int32",
-            "description": "Kiek XP reikia vienam lygiui (visada 100)",
+            "description": "XP needed per level (always 100)",
             "example": 100
           },
           "inspiration": {
             "type": "integer",
             "format": "int64",
-            "description": "Patvirtintu irasu inspiration suma",
+            "description": "Total inspiration of approved log entries",
             "example": 1
           },
           "streakDays": {
             "type": "integer",
             "format": "int32",
-            "description": "Kiek UTC dienu is eiles, baigiant siandien arba vakar, turi bent viena patvirtinta irasa (pagal occurredAt); kitaip 0",
+            "description": "Consecutive UTC days, ending today or yesterday, with at least one approved log entry (by occurredAt); otherwise 0",
             "example": 3
           },
           "stats": {
             "type": "array",
-            "description": "Visada 6 charakteristikos tvarka STR, DEX, CON, INT, WIS, CHA",
+            "description": "Always the 6 stats in the order STR, DEX, CON, INT, WIS, CHA",
             "items": {
               "$ref": "#/components/schemas/StatScore"
             }
           },
           "recentLogs": {
             "type": "array",
-            "description": "Tik FULL: 10 naujausiu patvirtintu irasu, naujausias pirmas",
+            "description": "FULL only: the 10 latest approved log entries, newest first",
             "items": {
               "$ref": "#/components/schemas/SheetRecentLog"
             }
@@ -3955,14 +3952,14 @@
           "pendingCount": {
             "type": "integer",
             "format": "int64",
-            "description": "Tik FULL: kiek siu irasu dar laukia DM perziuros (PENDING)",
+            "description": "FULL only: how many log entries still wait for the game master's review (PENDING)",
             "example": 1
           }
         }
       },
       "SheetRecentLog": {
         "type": "object",
-        "description": "Patvirtintas irasas veikejo korteleje",
+        "description": "Approved log entry on the character sheet",
         "properties": {
           "logId": {
             "type": "integer",
@@ -4014,7 +4011,7 @@
       },
       "StatScore": {
         "type": "object",
-        "description": "Charakteristikos reiksme ir jai skirtas XP",
+        "description": "Stat score and the XP earned for it",
         "properties": {
           "stat": {
             "type": "string",
@@ -4065,7 +4062,7 @@
       },
       "MeResponse": {
         "type": "object",
-        "description": "Prisijunges naudotojas su narystemis",
+        "description": "Current user with guild memberships",
         "properties": {
           "id": {
             "type": "integer",
@@ -4104,7 +4101,7 @@
     "securitySchemes": {
       "bearerAuth": {
         "type": "http",
-        "description": "Access zetonas is POST /api/auth/login",
+        "description": "Access token from POST /api/auth/login",
         "scheme": "bearer",
         "bearerFormat": "JWT"
       }

@@ -1,7 +1,7 @@
 import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { describe, expect, it } from 'vitest'
-import { Bar, Field } from './ui'
+import { Bar, Field, WithDigits } from './ui'
 
 describe('Bar', () => {
   it('reports progress to screen readers and never fills past 100%', () => {
@@ -25,5 +25,17 @@ describe('Field', () => {
     expect(input).toHaveAccessibleDescription('3–60 characters Too short')
     await userEvent.type(input, 'abc')
     expect(input).toHaveValue('abc')
+  })
+})
+
+describe('WithDigits', () => {
+  it('wraps only the digits, so the pixel font keeps the letters', () => {
+    const { container } = render(
+      <h1>
+        <WithDigits text="Run 50 kilometers in 2026" />
+      </h1>,
+    )
+    expect(container.querySelector('h1')).toHaveTextContent('Run 50 kilometers in 2026')
+    expect([...container.querySelectorAll('.digits')].map((s) => s.textContent)).toEqual(['50', '2026'])
   })
 })

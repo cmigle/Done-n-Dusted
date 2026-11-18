@@ -79,7 +79,7 @@ export function FriendsPage() {
             </form>
           </Window>
           {incoming.length > 0 && (
-            <Window title={`Friend requests (${incoming.length})`} icon={<Mail size={24} aria-hidden="true" />} headingLevel={2}>
+            <Window title={<>Friend requests <span className="digits">({incoming.length})</span></>} icon={<Mail size={24} aria-hidden="true" />} headingLevel={2}>
               <ul className="list">
                 {incoming.map((f) => (
                   <li key={f.id} className="friend">
@@ -104,7 +104,7 @@ export function FriendsPage() {
         </div>
 
         <div className="stack">
-          <Window title={`Friends (${accepted.length})`} icon={<Users size={24} aria-hidden="true" />} headingLevel={2}>
+          <Window title={<>Friends <span className="digits">({accepted.length})</span></>} icon={<Users size={24} aria-hidden="true" />} headingLevel={2}>
             {all.isPending && <Loading />}
             {all.isError && <ErrorNote error={all.error} />}
             {all.isSuccess && accepted.length === 0 && (
@@ -119,7 +119,7 @@ export function FriendsPage() {
                     <span className="muted"> since {formatDate(f.respondedAt ?? f.createdAt)}</span>
                   </span>
                   <div className="row">
-                    <button type="button" className="btn btn--small" onClick={() => setViewing(f)}>
+                    <button type="button" className="btn btn--secondary btn--small" onClick={() => setViewing(f)}>
                       Sheet
                     </button>
                     <button type="button" className="btn btn--ghost btn--small" onClick={() => remove.mutate(f.id)}>

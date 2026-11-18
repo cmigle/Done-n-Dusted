@@ -96,17 +96,19 @@ export function Modal({
   )
 }
 
-/* ---------- Bar (XP, stat) ---------- */
+/* ---------- Segmented bar (XP, stat) ---------- */
 export function Bar({
   value,
   max,
-  color = 'var(--gold)',
+  color = 'var(--xp)',
+  segments = 10,
   label,
   animate = false,
 }: {
   value: number
   max: number
   color?: string
+  segments?: number
   label: string
   animate?: boolean
 }) {
@@ -119,7 +121,7 @@ export function Bar({
       aria-valuemin={0}
       aria-valuemax={max}
       aria-valuenow={value}
-      style={{ '--value': `${percent}%`, '--fill': color } as CSSProperties}
+      style={{ '--value': `${percent}%`, '--fill': color, '--segments': segments } as CSSProperties}
     >
       <div className="bar__fill" />
     </div>
@@ -158,6 +160,12 @@ export function Field({
       )}
     </div>
   )
+}
+
+/* ---------- Digits in pixel-font text ---------- */
+/** User-written titles in the pixel font: letters stay pixelated, digits switch to Nunito (Pixelify's 5 looks like S). */
+export function WithDigits({ text }: { text: string }) {
+  return <>{text.split(/(\d+)/).map((part, i) => (i % 2 ? <span key={i} className="digits">{part}</span> : part))}</>
 }
 
 /* ---------- States ---------- */

@@ -1,7 +1,8 @@
 import { Link } from 'react-router'
 import type { Quest } from '../api/types'
 import { DIFFICULTY_INFO, QUEST_TYPE_INFO, STAT_INFO, xp } from '../lib/game'
-import { StatIcon } from './StatIcon'
+import type { CSSProperties } from 'react'
+import { StatTile } from './StatIcon'
 
 export function QuestCard({ quest }: { quest: Quest }) {
   const stat = STAT_INFO[quest.stat]
@@ -9,16 +10,14 @@ export function QuestCard({ quest }: { quest: Quest }) {
     <Link
       to={`/guilds/${quest.guildId}/quests/${quest.id}`}
       className={`window window--link quest-card${quest.active ? '' : ' quest-card--inactive'}`}
-      style={{ borderColor: stat.color }}
+      style={{ '--accent': stat.color } as CSSProperties}
     >
       <div className="quest-card__head">
-        <span className="quest-card__stat" style={{ color: stat.color }}>
-          <StatIcon stat={quest.stat} size={28} />
-        </span>
+        <StatTile stat={quest.stat} />
         <h3>{quest.title}</h3>
       </div>
       <div className="row quest-card__meta">
-        <span className="badge badge--outline" style={{ borderColor: stat.color }}>
+        <span className="badge badge--stat">
           {stat.name}
         </span>
         <span className="badge badge--gold">{xp(quest.xpPerCompletion)}</span>
