@@ -18,7 +18,7 @@ scripts:
     code: |-
       pm.test('401 Unauthorized', () => pm.response.to.have.status(401));
       pm.test('WWW-Authenticate antraste', () => pm.expect(pm.response.headers.get('WWW-Authenticate')).to.eql('Bearer'));
-      pm.test('ApiError su pranesimu', () => pm.expect(pm.response.json().message).to.include('Neteisingas'));
+      pm.test('ApiError su pranesimu', () => pm.expect(pm.response.json().message).to.include('Invalid username or password'));
     language: text/javascript
 examples: ./.resources/Klaida 401 – neteisingas slaptažodis.resources/examples
 order: 4000

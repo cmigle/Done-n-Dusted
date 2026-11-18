@@ -18,7 +18,7 @@ scripts:
   - type: afterResponse
     code: |-
       pm.test('403 Forbidden', () => pm.response.to.have.status(403));
-      pm.test('Grupe keicia tik savininkas', () => pm.expect(pm.response.json().message).to.include('savininkas'));
+      pm.test('Grupe keicia tik savininkas', () => pm.expect(pm.response.json().message).to.include('guild owner'));
     language: text/javascript
 examples: ./.resources/Klaida 403 – grupę keičia tik savininkas.resources/examples
 order: 11000

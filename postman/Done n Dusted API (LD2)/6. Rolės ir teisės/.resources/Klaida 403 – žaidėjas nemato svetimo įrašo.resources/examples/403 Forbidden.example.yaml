@@ -14,7 +14,7 @@ response:
         "timestamp": "2026-11-08T14:31:37.499435600Z",
         "status": 403,
         "error": "Forbidden",
-        "message": "Svetimus irasus mato tik grupes DM",
+        "message": "Only the game master can see other players' log entries.",
         "path": "/api/guilds/4/quests/10/logs/15"
       }
 order: 1000

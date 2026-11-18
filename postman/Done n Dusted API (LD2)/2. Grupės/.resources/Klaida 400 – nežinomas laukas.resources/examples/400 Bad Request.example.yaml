@@ -14,7 +14,7 @@ response:
         "timestamp": "2026-11-08T14:31:33.220001Z",
         "status": 400,
         "error": "Bad Request",
-        "message": "Uzklausos turinio nepavyko perskaityti: Unrecognized property \"xpAwarded\" (class lt.ktu.donendusted.web.dto.GuildRequest), not marked as ignorable (2 known properties: \"name\", \"description\")",
+        "message": "Unknown field \"xpAwarded\"",
         "path": "/api/guilds"
       }
 order: 1000

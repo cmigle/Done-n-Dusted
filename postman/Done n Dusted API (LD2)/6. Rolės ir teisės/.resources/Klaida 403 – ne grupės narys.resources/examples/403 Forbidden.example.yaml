@@ -14,7 +14,7 @@ response:
         "timestamp": "2026-11-08T14:31:36.721195500Z",
         "status": 403,
         "error": "Forbidden",
-        "message": "Nesate grupes 2 narys",
+        "message": "You are not a member of guild 2.",
         "path": "/api/guilds/2"
       }
 order: 1000

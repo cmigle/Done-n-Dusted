@@ -14,7 +14,7 @@ response:
         "timestamp": "2026-11-08T14:31:33.146433200Z",
         "status": 415,
         "error": "Unsupported Media Type",
-        "message": "Palaikomas tik application/json; gauta: text/plain",
+        "message": "Only application/json is supported, got text/plain.",
         "path": "/api/guilds"
       }
 order: 1000

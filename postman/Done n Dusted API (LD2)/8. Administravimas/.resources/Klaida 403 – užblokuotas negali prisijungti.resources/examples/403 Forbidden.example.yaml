@@ -14,7 +14,7 @@ response:
         "timestamp": "2026-11-08T14:31:39.522086500Z",
         "status": 403,
         "error": "Forbidden",
-        "message": "Paskyra uzblokuota",
+        "message": "Account is blocked.",
         "path": "/api/auth/login"
       }
 order: 1000

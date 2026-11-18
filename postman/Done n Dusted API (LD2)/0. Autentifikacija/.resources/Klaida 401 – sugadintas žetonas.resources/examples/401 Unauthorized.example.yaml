@@ -15,7 +15,7 @@ response:
         "timestamp": "2026-11-08T14:31:29.139324300Z",
         "status": 401,
         "error": "Unauthorized",
-        "message": "Access zetonas neteisingas",
+        "message": "Invalid access token",
         "path": "/api/guilds"
       }
 order: 1000

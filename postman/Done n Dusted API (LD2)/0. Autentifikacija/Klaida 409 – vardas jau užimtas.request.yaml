@@ -20,7 +20,7 @@ scripts:
   - type: afterResponse
     code: |-
       pm.test('409 Conflict', () => pm.response.to.have.status(409));
-      pm.test('Vardas uzimtas, nors parasytas kitokiomis raidemis', () => pm.expect(pm.response.json().message).to.include('uzimtas'));
+      pm.test('Vardas uzimtas, nors parasytas kitokiomis raidemis', () => pm.expect(pm.response.json().message).to.include('already taken'));
     language: text/javascript
 examples: ./.resources/Klaida 409 – vardas jau užimtas.resources/examples
 order: 2000

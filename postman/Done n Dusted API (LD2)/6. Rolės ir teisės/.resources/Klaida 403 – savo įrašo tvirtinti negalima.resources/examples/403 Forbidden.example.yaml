@@ -14,7 +14,7 @@ response:
         "timestamp": "2026-11-08T14:31:37.381265Z",
         "status": 403,
         "error": "Forbidden",
-        "message": "Savo iraso tvirtinti negalima",
+        "message": "You cannot review your own log entry.",
         "path": "/api/guilds/4/quests/10/logs/15"
       }
 order: 1000

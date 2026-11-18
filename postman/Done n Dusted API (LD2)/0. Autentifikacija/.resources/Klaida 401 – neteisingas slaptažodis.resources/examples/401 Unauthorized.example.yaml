@@ -15,7 +15,7 @@ response:
         "timestamp": "2026-11-08T14:31:28.539994600Z",
         "status": 401,
         "error": "Unauthorized",
-        "message": "Neteisingas naudotojo vardas arba slaptazodis",
+        "message": "Invalid username or password",
         "path": "/api/auth/login"
       }
 order: 1000

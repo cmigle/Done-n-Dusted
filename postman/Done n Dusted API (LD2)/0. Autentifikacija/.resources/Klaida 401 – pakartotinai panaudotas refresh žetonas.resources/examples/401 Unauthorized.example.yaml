@@ -15,7 +15,7 @@ response:
         "timestamp": "2026-11-08T14:31:29.439290600Z",
         "status": 401,
         "error": "Unauthorized",
-        "message": "Refresh zetonas jau panaudotas arba atsauktas - del saugumo atsauktos visos sesijos",
+        "message": "Refresh token was already used or revoked. All sessions have been revoked for security.",
         "path": "/api/auth/refresh"
       }
 order: 1000

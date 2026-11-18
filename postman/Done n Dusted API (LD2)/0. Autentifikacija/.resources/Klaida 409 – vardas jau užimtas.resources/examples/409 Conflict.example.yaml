@@ -14,7 +14,7 @@ response:
         "timestamp": "2026-11-08T14:31:28.139303800Z",
         "status": 409,
         "error": "Conflict",
-        "message": "Naudotojo vardas 'POSTMAN_1794148287327' jau uzimtas",
+        "message": "Username \"POSTMAN_1794148287327\" is already taken.",
         "path": "/api/auth/register"
       }
 order: 1000

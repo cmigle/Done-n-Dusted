@@ -261,7 +261,7 @@ Spring Security filtrai dar prieš kontrolerį:
   "timestamp": "2026-09-21T09:15:30.123Z",
   "status": 403,
   "error": "Forbidden",
-  "message": "Savo iraso tvirtinti negalima",
+  "message": "You cannot review your own log entry.",
   "path": "/api/guilds/2/quests/5/logs/13"
 }
 ```

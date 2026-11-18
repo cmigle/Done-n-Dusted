@@ -14,7 +14,7 @@ response:
         "timestamp": "2026-11-08T14:31:37.088797200Z",
         "status": 403,
         "error": "Forbidden",
-        "message": "Iraso turini keisti gali tik jo autorius",
+        "message": "Only the author can edit a log entry's content.",
         "path": "/api/guilds/4/quests/10/logs/14"
       }
 order: 1000

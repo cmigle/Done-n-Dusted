@@ -16,7 +16,7 @@ scripts:
   - type: afterResponse
     code: |-
       pm.test('401 Unauthorized', () => pm.response.to.have.status(401));
-      pm.test('Ir naujausias refresh zetonas atsauktas', () => pm.expect(pm.response.json().message).to.include('atsaukt'));
+      pm.test('Ir naujausias refresh zetonas atsauktas', () => pm.expect(pm.response.json().message).to.include('revoked'));
     language: text/javascript
 examples: ./.resources/Klaida 401 – atšauktas ir naujasis žetonas.resources/examples
 order: 11000

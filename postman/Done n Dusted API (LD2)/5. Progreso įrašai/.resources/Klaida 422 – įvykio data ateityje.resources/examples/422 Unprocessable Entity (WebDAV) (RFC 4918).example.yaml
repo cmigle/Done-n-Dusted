@@ -14,7 +14,7 @@ response:
         "timestamp": "2026-11-08T14:31:35.587001900Z",
         "status": 422,
         "error": "Unprocessable Entity",
-        "message": "occurredAt negali buti ateityje",
+        "message": "occurredAt cannot be in the future.",
         "path": "/api/guilds/4/quests/10/logs"
       }
 order: 1000

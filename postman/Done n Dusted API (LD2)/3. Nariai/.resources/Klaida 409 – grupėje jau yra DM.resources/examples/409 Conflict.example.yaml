@@ -14,7 +14,7 @@ response:
         "timestamp": "2026-11-08T14:31:34.003095900Z",
         "status": 409,
         "error": "Conflict",
-        "message": "Grupe jau turi DM - pirma pakeiskite esamo DM role i PLAYER",
+        "message": "This guild already has a game master. Change the current game master's role to PLAYER first.",
         "path": "/api/guilds/4/members"
       }
 order: 1000

@@ -17,7 +17,7 @@ scripts:
   - type: afterResponse
     code: |-
       pm.test('409 Conflict', () => pm.response.to.have.status(409));
-      pm.test('Antras DM neleidziamas', () => pm.expect(pm.response.json().message).to.include('jau turi DM'));
+      pm.test('Antras DM neleidziamas', () => pm.expect(pm.response.json().message).to.include('already has a game master'));
     language: text/javascript
 examples: ./.resources/Klaida 409 – antras DM keičiant rolę.resources/examples
 order: 8000

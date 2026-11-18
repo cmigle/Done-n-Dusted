@@ -14,7 +14,7 @@ response:
         "timestamp": "2026-11-08T14:31:34.230938200Z",
         "status": 403,
         "error": "Forbidden",
-        "message": "Narius prideti gali tik grupes savininkas arba administratorius",
+        "message": "Only the guild owner or an admin can add members.",
         "path": "/api/guilds/4/members"
       }
 order: 1000

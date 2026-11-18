@@ -14,7 +14,7 @@ response:
         "timestamp": "2026-11-08T14:31:38.069817900Z",
         "status": 403,
         "error": "Forbidden",
-        "message": "Neturite teises atlikti sio veiksmo",
+        "message": "You do not have permission to perform this action.",
         "path": "/api/users"
       }
 order: 1000

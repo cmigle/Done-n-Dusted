@@ -14,12 +14,12 @@ response:
         "timestamp": "2026-11-08T14:31:28.306010500Z",
         "status": 400,
         "error": "Bad Request",
-        "message": "Neteisingas uzklausos turinys",
+        "message": "Invalid request body",
         "path": "/api/auth/register",
         "details": [
           {
             "field": "password",
-            "message": "size must be between 8 and 72"
+            "message": "Must be between 8 and 72 characters"
           }
         ]
       }

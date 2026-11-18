@@ -14,7 +14,7 @@ response:
         "timestamp": "2026-11-08T14:31:33.031481200Z",
         "status": 409,
         "error": "Conflict",
-        "message": "Grupe pavadinimu 'Postman Guild 1794148292021' jau egzistuoja",
+        "message": "Guild \"Postman Guild 1794148292021\" already exists.",
         "path": "/api/guilds"
       }
 order: 1000

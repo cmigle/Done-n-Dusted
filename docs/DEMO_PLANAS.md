@@ -61,7 +61,7 @@ nepamirštami. Tas pats failas — `docs/openapi.json`.
 | 2.2 | `POST /api/auth/register` `{"username":"gynimas","password":"Demo123!"}` | `201`, `Location: http://localhost:8080/api/users/5`, `role: USER`, slaptažodžio ir maišos atsakyme nėra |
 | 2.3 | Tas pats dar kartą; vardą parašyti `Gynimas` | `409` — vardas unikalus nepaisant raidžių dydžio |
 | 2.4 | `register` su `"password":"123"` | `400`, `details` nurodo lauką `password` (8–72 simboliai) |
-| 2.5 | `POST /api/auth/login` `{"username":"jonas","password":"blogas"}` | `401`, `"Neteisingas naudotojo vardas arba slaptazodis"` — tas pats ir nežinomam vardui |
+| 2.5 | `POST /api/auth/login` `{"username":"jonas","password":"blogas"}` | `401`, `"Invalid username or password"` — tas pats ir nežinomam vardui |
 | 2.6 | `login` `{"username":"jonas","password":"Demo123!"}` (Swagger pavyzdys jau toks) | `200`: `accessToken`, `tokenType: Bearer`, `expiresIn: 900`, `refreshToken` |
 | 2.7 | Nukopijuoti `accessToken` → **Authorize** → įklijuoti → `GET /api/guilds` | `200`, tik grupės 1 ir 2 (jonas grupės 3 nemato) |
 | 2.8 | `GET /api/auth/me` | jonas, `role: USER`, `memberships`: dvi grupės su `PLAYER` |
@@ -81,11 +81,11 @@ Patogiausia Postman aplanke `0. Autentifikacija` (užklausos eina iš eilės ir 
 | # | Ką daryti | Ką turi matyti |
 | --- | --- | --- |
 | 3.1 | `POST /api/auth/refresh` su `refreshToken` iš prisijungimo (R1) | `200`, nauja pora: access ir R2 |
-| 3.2 | Tas pats R1 dar kartą | `401`, `"Refresh zetonas jau panaudotas arba atsauktas - del saugumo atsauktos visos sesijos"` |
+| 3.2 | Tas pats R1 dar kartą | `401`, `"Refresh token was already used or revoked. All sessions have been revoked for security."` |
 | 3.3 | Dabar R2 | Irgi `401` — pakartotinis panaudojimas reiškia vagystę, atšaukiami **visi** naudotojo refresh žetonai |
 | 3.4 | Prisijungti iš naujo → `POST /api/auth/logout` su refresh | `204` |
 | 3.5 | `refresh` su ką tik atjungtu žetonu | `401` |
-| 3.6 | Sugadinti access žetoną (pridėti raidę) ir kviesti `GET /api/guilds` | `401`, `"Access zetonas neteisingas"`, `www-authenticate: Bearer error="invalid_token"` |
+| 3.6 | Sugadinti access žetoną (pridėti raidę) ir kviesti `GET /api/guilds` | `401`, `"Invalid access token"`, `www-authenticate: Bearer error="invalid_token"` |
 
 Pasakyti: refresh žetonas — atsitiktiniai 32 baitai, DB saugoma tik SHA-256 maiša; kiekvienas
 panaudojamas vieną kartą (rotacija). Access po atsijungimo galioja iki 15 min — tai sąmoninga kaina.
@@ -99,16 +99,16 @@ curl: `3-curl-komandos` → kopijuoti iš `DEMO_KOMANDOS.txt` 5 skyriaus. `$A` �
 | Taisyklė | curl | Ką turi matyti |
 | --- | --- | --- |
 | Svečias — tik prisijungimas ir dokumentacija | `5.1` | `401` |
-| Ne narys nemato grupės | `5.7` jonas → `GET /guilds/3` | `403`, `"Nesate grupes 3 narys"` |
-| Žaidėjas netvirtina įrašų | `5.8` jonas → `PATCH /guilds/2/quests/4/logs/7` `APPROVED` | `403`, `"Irasus perziuri tik grupes DM"` |
+| Ne narys nemato grupės | `5.7` jonas → `GET /guilds/3` | `403`, `"You are not a member of guild 3."` |
+| Žaidėjas netvirtina įrašų | `5.8` jonas → `PATCH /guilds/2/quests/4/logs/7` `APPROVED` | `403`, `"Only the game master can review log entries."` |
 | DM tvirtina | `5.8` komanda su `$A` vietoj `$J` (rokas tvirtina jono įrašą 7) | `200`, `APPROVED`, `xpAwarded: 50` paskaičiavo serveris, `reviewerId: 2` |
-| DM netvirtina savo įrašo | `5.9` | `403`, `"Savo iraso tvirtinti negalima"` |
+| DM netvirtina savo įrašo | `5.9` | `403`, `"You cannot review your own log entry."` |
 | Žaidėjas mato tik savo įrašus, DM — visus | `5.10` | jono sąraše visų `authorId: 4`, roko — visi įrašai |
-| `SIDE_QUEST` kuria tik DM | `5.11` | `403`, `"SIDE_QUEST uzduotis gali kurti tik grupes DM"` |
-| Grupėje vienas DM | `5.12` | narių sąrašas, po to `409`, `"Grupe jau turi DM ..."` |
-| Grupę keičia tik savininkas | jonas → `PATCH /guilds/2` | `403`, `"Grupe keisti gali tik jos savininkas"` |
-| Savininko pašalinti negalima | rokas → `DELETE /guilds/2/members/2` | `422`, `"Grupes savininko pasalinti negalima"` |
-| Naudotojų valdymas — tik ADMIN | `5.13` | jonas `403` (`"Neturite teises atlikti sio veiksmo"`), admin `200` |
+| `SIDE_QUEST` kuria tik DM | `5.11` | `403`, `"Only the game master can create SIDE_QUEST quests."` |
+| Grupėje vienas DM | `5.12` | narių sąrašas, po to `409`, `"This guild already has a game master. ..."` |
+| Grupę keičia tik savininkas | jonas → `PATCH /guilds/2` | `403`, `"Only the guild owner can edit the guild."` |
+| Savininko pašalinti negalima | rokas → `DELETE /guilds/2/members/2` | `422`, `"The guild owner cannot be removed."` |
+| Naudotojų valdymas — tik ADMIN | `5.13` | jonas `403` (`"You do not have permission to perform this action."`), admin `200` |
 | ADMIN mato visas grupes | `5.14` | admin mato visas, jonas — tik savo |
 
 Pasakyti: globali rolė (`USER`/`ADMIN`) yra JWT `role` claim; rolė grupėje (`PLAYER`/`DUNGEON_MASTER`)
@@ -123,8 +123,8 @@ per `GuildService.access()`: `404` — grupės nėra, `403` — ne narys, toliau
 | --- | --- |
 | `GET /api/users` | Visi naudotojai, be slaptažodžių |
 | `PATCH /api/users/4` `{"enabled":false}` | `200`, jonas užblokuotas, jo refresh žetonai atšaukti |
-| `login` kaip jonas | `403`, `"Paskyra uzblokuota"` |
-| `PATCH /api/users/1` `{"enabled":false}` (pats save) | `422`, `"Savo administratoriaus teisiu nuimti ar paskyros uzblokuoti negalima"` |
+| `login` kaip jonas | `403`, `"Account is blocked."` |
+| `PATCH /api/users/1` `{"enabled":false}` (pats save) | `422`, `"You cannot remove your own admin role or block your own account."` |
 | `PATCH /api/users/4` `{"enabled":true}` | Jonas vėl gali prisijungti |
 
 ---
@@ -172,7 +172,7 @@ Kolekciją galima leisti kartotinai — ji pati susikuria vardus ir pasivalo.
 | Bėda | Ką daryti |
 | --- | --- |
 | `Port 8080 was already in use` arba DB nepasileidžia | `0-sustabdyti`, tada `1-paleisti-api` |
-| `401 "Access zetonas pasibaiges ..."` | Praėjo 15 min: prisijungti iš naujo (Git Bash — parašyti `zetonai`) |
+| `401 "Access token has expired. ..."` | Praėjo 15 min: prisijungti iš naujo (Git Bash — parašyti `zetonai`) |
 | Postman visur `401` | Pirma paleisti `0. Autentifikacija` → „Prisijungti“ (užpildo `accessToken`) |
 | Postman pavienė užklausa iš `6.` aplanko meta klaidą | Ji naudoja ankstesnių aplankų kintamuosius — leisti visą kolekciją arba aplankus iš eilės |
 | Swagger vis dar rodo seną žetoną | **Authorize** → *Logout* → įklijuoti naują |

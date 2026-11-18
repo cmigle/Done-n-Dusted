@@ -69,9 +69,9 @@ description: |-
     "timestamp": "2026-09-21T09:15:30.123Z",
     "status": 403,
     "error": "Forbidden",
-    "message": "Savo iraso tvirtinti negalima",
+    "message": "You cannot review your own log entry.",
     "path": "/api/guilds/4/quests/10/logs/14",
-    "details": [ { "field": "title", "message": "must not be blank" } ]
+    "details": [ { "field": "title", "message": "Must not be blank" } ]
   }
   ```
 
