@@ -1,6 +1,6 @@
 import type { ApiErrorBody, TokenResponse } from './types'
 
-/** API adresas: vystant - Vite proxy (/api), debesyje - VITE_API_URL (pvz. https://...azurewebsites.net/api). */
+/** API address: in development the Vite proxy (/api); a separately hosted API comes from VITE_API_URL (e.g. https://...azurewebsites.net/api). */
 export const API_BASE = (import.meta.env.VITE_API_URL ?? '/api').replace(/\/$/, '')
 
 /** Swagger UI lives on the same server as the API. */
@@ -10,7 +10,7 @@ const REFRESH_KEY = 'dnd.refreshToken'
 
 /**
  * The access token lives only in memory (an XSS payload cannot read it from localStorage); the refresh token
- * is kept in localStorage so a reload keeps you signed in. Ideally it would be an HttpOnly cookie (see LD2.md).
+ * is kept in localStorage so a reload keeps you signed in. Ideally it would be an HttpOnly cookie.
  */
 let accessToken: string | null = null
 let refreshing: Promise<boolean> | null = null

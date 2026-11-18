@@ -1,5 +1,5 @@
-// LD3 wireframe'ai (SVG). Paleisti: node docs/wireframes/generate.mjs
-// Pilki staciakampiai be spalvu ir sriftu stiliaus - tik isdestymas, kaip ir dera wireframe'ui.
+// Screen wireframes (SVG). Run: node docs/wireframes/generate.mjs
+// Grey boxes with no colours or font styling: layout only, as a wireframe should be.
 import { writeFileSync } from 'node:fs'
 import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
