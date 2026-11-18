@@ -175,6 +175,29 @@ grandinė grąžina `404`. Stulpelis **Kas** — kam leidžiama (kitiems — `40
 | 27 | `GET` | `/api/users/{userId}` | Vienas naudotojas | `ADMIN` | `200` |
 | 28 | `PATCH` | `/api/users/{userId}` | Keisti rolę ar užblokuoti (`role`, `enabled`) | `ADMIN` | `200` |
 
+### Veikėjo kortelė (Character sheet)
+
+| # | Metodas | Kelias | Aprašymas | Kas | Sėkmė |
+| --- | --- | --- | --- | --- | --- |
+| 29 | `GET` | `/api/guilds/{guildId}/members/{userId}/sheet` | Nario lygis, XP, charakteristikos, inspiration ir serija — tik iš jo `APPROVED` įrašų šioje grupėje. `FULL` dar turi 10 naujausių įrašų ir `pendingCount` | Narys, `ADMIN`; `FULL` — pats narys, DM, `ADMIN`, kitiems nariams `PUBLIC` | `200` |
+
+### Draugystės (Friendship)
+
+| # | Metodas | Kelias | Aprašymas | Kas | Sėkmė |
+| --- | --- | --- | --- | --- | --- |
+| 30 | `GET` | `/api/friends` | Mano draugystės ir kvietimai abiem kryptimis; filtras `status` | Prisijungęs | `200` |
+| 31 | `GET` | `/api/friends/{friendshipId}` | Viena draugystė | Abi pusės (kitiems ir užblokuotajam — `404`) | `200` |
+| 32 | `POST` | `/api/friends` | Pakviesti į draugus (`username`); pora jau yra — `409` | Prisijungęs | `201` + `Location` |
+| 33 | `PATCH` | `/api/friends/{friendshipId}` | `ACCEPTED` — priimti kvietimą, `BLOCKED` — užblokuoti | `ACCEPTED` — gavėjas; `BLOCKED` — abi pusės | `200` |
+| 34 | `DELETE` | `/api/friends/{friendshipId}` | Atšaukti ar atmesti kvietimą, nutraukti draugystę, atblokuoti | Abi pusės; užblokuotą — tik užblokavęs | `204` |
+| 35 | `GET` | `/api/friends/{friendshipId}/sheet` | Draugo `PUBLIC` kortelė, sujungta per visas jo grupes | Draugas (tik `ACCEPTED`) | `200` |
+
+### Sistema
+
+| # | Metodas | Kelias | Aprašymas | Kas | Sėkmė |
+| --- | --- | --- | --- | --- | --- |
+| 36 | `GET` | `/actuator/health` | Sveikatos patikra debesų platformai — tik `{"status":"UP"}`, be detalių | Svečias | `200` |
+
 **Atnaujinimas — `PATCH` (dalinis).** Keičiami tik atsiųsti laukai, neatsiųsti lieka tokie, kokie
 buvo. Todėl, pvz., keičiant tik užduoties sudėtingumą, aprašymas niekur nedingsta. Įrašo
 peržiūros laukai (`xpAwarded`, `inspirationAwarded`, `reviewerNote`) priimami tik kartu su `status`.
@@ -337,12 +360,12 @@ Komandos be Postman (curl) — [`docs/visual/DEMO_KOMANDOS.txt`](docs/visual/DEM
 
 ```
 src/main/java/lt/ktu/donendusted/
-  config/        EmbeddedPostgresConfig, OpenApiConfig, SecurityConfig
+  config/        CorsConfig, EmbeddedPostgresConfig, OpenApiConfig, SecurityConfig
   security/      TokenService (JWT ir refresh žetonai), CurrentUser, JwtProperties, ApiAuthErrorHandler
-  domain/        Guild, Quest, LogEntry, User, GuildMembership, RefreshToken + enum
+  domain/        Guild, Quest, LogEntry, User, GuildMembership, RefreshToken, Friendship + enum
   repository/    Spring Data sąsajos
-  service/       transakcijos, dalykinės taisyklės ir teisės (GuildAccess)
-  web/           kontroleriai, PagedResponse
+  service/       transakcijos, dalykinės taisyklės ir teisės (GuildAccess), CharacterSheetService, FriendshipService
+  web/           kontroleriai (FriendController — draugystės), PagedResponse
   web/dto/       užklausų ir atsakymų įrašai (records)
   error/         ApiError, ApiExceptionHandler, išimtys (401, 403, 404, 409, 422)
 src/main/resources/db/migration/
@@ -351,6 +374,10 @@ src/main/resources/db/migration/
   V3__description_not_null.sql  aprašymas NOT NULL DEFAULT ''
   V4__users_and_tokens.sql      naudotojai (BCrypt) ir refresh žetonai
   V5__guild_membership.sql      narystės, savininkai, autoriai ir seed ryšiai
+  V6__friendship.sql            draugystės; seed: ieva ir jonas — draugai, rokas pakvietė ievą
+src/test/java/lt/ktu/donendusted/
+  *IntegrationTest      MockMvc testai su įterptine PostgreSQL (vienas Spring kontekstas): ./mvnw test
+  service/              veikėjo kortelės formulių vienetų testai
 demo/                   Windows paleidimo skriptai demonstracijai (API, newman, curl, psql)
 docs/
   LD2.md                LD2 pakeitimai ir gynimo klausimai
