@@ -1,59 +1,57 @@
-# Done n Dusted — API dokumentacija
+# Done n Dusted - API reference
 
-KTU T120B165 *Saityno taikomųjų programų projektavimas*. Šis dokumentas aprašo REST API: paleidimą,
-autentifikaciją, roles, visus metodus, atsakymų ir klaidų struktūrą. Angliška projekto apžvalga —
-[`README.md`](../README.md), naudotojo sąsaja (LD3) — [`LD3.md`](LD3.md).
+Done n Dusted is a quest log for tabletop RPG groups: players log real-life progress, the guild's
+game master approves it, and approved entries turn into XP for the player's character.
 
-**Done n Dusted** — DnD žaidimo principu veikianti produktyvumo sistema. Žaidėjas registruoja
-realaus gyvenimo progresą, grupės Dungeon Master jį patvirtina, o tik patvirtinti įrašai keičia
-veikėjo charakteristikas.
+This document describes the REST API: how to run it, authentication, roles, all endpoints, and the
+response and error formats. Project overview - [`README.md`](../README.md), user interface (LD3) -
+[`LD3.md`](LD3.md).
 
-Resursų hierarchija: **Guild (1:N) → Quest (1:N) → LogEntry**. Naudotojai grupėms priklauso per
-**GuildMembership** su role `PLAYER` arba `DUNGEON_MASTER`.
+Resource hierarchy: **Guild (1:N) -> Quest (1:N) -> LogEntry**. Users belong to guilds through a
+**GuildMembership** with the role `PLAYER` or `DUNGEON_MASTER` (the game master).
 
-| Darbas | Šaka / žyma | Gynimo medžiaga |
+| Lab | Branch / tag | Defense material |
 | --- | --- | --- |
-| LD1 — REST API | `ld1`, `v0.1.0` | [`visual/GYNIMO_GIDAS.md`](visual/GYNIMO_GIDAS.md), [`visual/DEMO_KOMANDOS.txt`](visual/DEMO_KOMANDOS.txt) |
-| LD2 — autentifikacija ir autorizacija | `ld2`, `v0.2.1` | [`LD2.md`](LD2.md), [`DEMO_PLANAS.md`](DEMO_PLANAS.md), [`gynimas/LD2_gynimas.html`](gynimas/LD2_gynimas.html) |
-| LD3 — naudotojo sąsaja ir diegimas | `ld3`, `v0.3.0` | [`LD3.md`](LD3.md) |
+| LD1 - REST API | `ld1`, `v0.1.0` | [`visual/GYNIMO_GIDAS.md`](visual/GYNIMO_GIDAS.md), [`visual/DEMO_KOMANDOS.txt`](visual/DEMO_KOMANDOS.txt) |
+| LD2 - authentication and authorization | `ld2`, `v0.2.1` | [`LD2.md`](LD2.md), [`DEMO_PLANAS.md`](DEMO_PLANAS.md), [`gynimas/LD2_gynimas.html`](gynimas/LD2_gynimas.html) |
+| LD3 - user interface and deployment | `ld3`, `v0.3.0` | [`LD3.md`](LD3.md) |
 
 ---
 
-## Greitas paleidimas
+## Quick start
 
-Reikia tik **Java 21**. Nei Maven, nei Docker, nei įdiegtos PostgreSQL neprireikia.
+You only need **Java 21**. No Maven, Docker or installed PostgreSQL is required.
 
 ```bash
 ./mvnw spring-boot:run
 ```
 
-Windows: tą patį daro `demo/1-paleisti-api.cmd` (atlaisvina prievadus ir pats atidaro Swagger);
-kiti `demo/` skriptai paleidžia Postman testus, curl aplinką su žetonais ir psql.
+On Windows, `demo/1-paleisti-api.cmd` does the same (it frees the ports and opens Swagger);
+the other `demo/` scripts run the Postman tests, a curl shell with tokens, and psql.
 
-Pirmas paleidimas atsisiunčia Maven ir PostgreSQL 18 binarinius failus (kelias minutes),
-vėlesni — sekundes. Kai pasirodo `Started DoneNDustedApplication`:
+The first run downloads Maven and the PostgreSQL 18 binaries (a few minutes), later runs take
+seconds. Once `Started DoneNDustedApplication` appears:
 
 | | |
 | --- | --- |
-| API | <http://localhost:8080/api/guilds> (be žetono — `401`) |
-| Swagger UI | <http://localhost:8080/swagger-ui.html> (žetonas — mygtukas **Authorize**) |
+| API | <http://localhost:8080/api/guilds> (without a token - `401`) |
+| Swagger UI | <http://localhost:8080/swagger-ui.html> (token - **Authorize** button) |
 | OpenAPI JSON | <http://localhost:8080/v3/api-docs> |
-| Duomenų bazė | `jdbc:postgresql://localhost:55432/postgres` (naudotojas `postgres`) |
+| Database | `jdbc:postgresql://localhost:55432/postgres` (user `postgres`) |
 
-Numatytasis `dev` profilis paleidžia **tikrą PostgreSQL** serverio procesą, o Flyway iškart
-sukuria schemą ir užpildo ją demonstraciniais duomenimis (4 naudotojai, 3 grupės, 9 užduotys,
-12 įrašų).
+The default `dev` profile starts a **real PostgreSQL** server process, and Flyway immediately
+creates the schema and fills it with demo data (4 users, 3 guilds, 9 quests, 12 log entries).
 
-### Demonstraciniai naudotojai
+### Demo users
 
-Visų slaptažodis — `Demo123!`.
+The password for all of them is `Demo123!`.
 
-| ID | Vardas | Globali rolė | Grupėse |
+| ID | Username | Global role | Guilds |
 | --- | --- | --- | --- |
-| 1 | `admin` | `ADMIN` | — (mato visas) |
-| 2 | `rokas` | `USER` | DM ir savininkas: *Thursday Night Crew*, *Iron Vow*; žaidėjas: *The Quiet Library* |
-| 3 | `ieva` | `USER` | DM ir savininkė: *The Quiet Library*; žaidėja: kitose dviejose |
-| 4 | `jonas` | `USER` | Žaidėjas: *Thursday Night Crew*, *Iron Vow* |
+| 1 | `admin` | `ADMIN` | - (sees all) |
+| 2 | `rokas` | `USER` | Game master and owner: *Thursday Night Crew*, *Iron Vow*; player: *The Quiet Library* |
+| 3 | `ieva` | `USER` | Game master and owner: *The Quiet Library*; player: the other two |
+| 4 | `jonas` | `USER` | Player: *Thursday Night Crew*, *Iron Vow* |
 
 ```bash
 curl -s -X POST http://localhost:8080/api/auth/login \
@@ -63,163 +61,167 @@ curl -s -X POST http://localhost:8080/api/auth/login \
 curl -s http://localhost:8080/api/guilds -H "Authorization: Bearer <accessToken>"
 ```
 
-### Paleidimas su tikra, nuolatine duomenų baze
+### Running with a real, persistent database
 
 ```bash
-docker compose up -d                      # arba savas PostgreSQL serveris
-JWT_SECRET=<bent 32 simboliai> ./mvnw spring-boot:run -Dspring-boot.run.profiles=prod
+docker compose up -d                      # or your own PostgreSQL server
+JWT_SECRET=<at least 32 characters> ./mvnw spring-boot:run -Dspring-boot.run.profiles=prod
 ```
 
-Prisijungimo duomenys imami iš `DB_URL`, `DB_USER`, `DB_PASSWORD` aplinkos kintamųjų.
-`prod` profilyje JWT parašo raktas **privalomas** (`JWT_SECRET`) — be jo programa nepasileidžia.
+Connection settings come from the `DB_URL`, `DB_USER` and `DB_PASSWORD` environment variables.
+In the `prod` profile the JWT signing key is **required** (`JWT_SECRET`); without it the
+application does not start.
 
 ---
 
-## Autentifikacija
+## Authentication
 
-| Žetonas | Kas tai | Galioja | Kur saugomas |
+| Token | What it is | Valid for | Where it is stored |
 | --- | --- | --- | --- |
-| Access | JWT, pasirašytas HS256. Turinys: `sub` (naudotojo ID), `username`, `role`, `iss`, `iat`, `exp` | 15 min | Serveris nesaugo — kiekvienoje užklausoje tikrina parašą ir galiojimą |
-| Refresh | Atsitiktinė 256 bitų eilutė (ne JWT) | 7 d. | DB lentelė `refresh_token`, tik SHA-256 maiša |
+| Access | JWT signed with HS256. Claims: `sub` (user ID), `username`, `role`, `iss`, `iat`, `exp` | 15 min | Not stored on the server; every request checks the signature and expiry |
+| Refresh | Random 256-bit string (not a JWT) | 7 days | Database table `refresh_token`, SHA-256 hash only |
 
-* Access žetonas siunčiamas antraštėje `Authorization: Bearer <accessToken>`.
-* **Rotacija:** `POST /api/auth/refresh` už galiojantį refresh žetoną išduoda naują porą, o senąjį
-  atšaukia. Jei atšauktas žetonas atsiunčiamas dar kartą, jis laikomas pavogtu — atšaukiamos
-  **visos** to naudotojo sesijos.
-* **Atsijungimas** atšaukia refresh žetoną. Access žetonas galioja iki savo `exp`, todėl jis trumpas.
-* Slaptažodžiai saugomi tik kaip **BCrypt** maiša su druska. Neteisingam vardui ir slaptažodžiui
-  grąžinama ta pati klaida, o nežinomo vardo atveju vis tiek atliekamas BCrypt palyginimas, kad
-  atsakymo laikas neišduotų, ar naudotojas egzistuoja.
-* Užblokuotas naudotojas (`enabled = false`) prisijungti ir atnaujinti žetonų negali (`403`).
-* API neturi sesijų ir slapukų (`STATELESS`), todėl CSRF apsauga išjungta: žetoną naršyklė prideda
-  ne pati, o tik klientas, kuris jį žino.
+* The access token is sent in the `Authorization: Bearer <accessToken>` header.
+* **Rotation:** `POST /api/auth/refresh` exchanges a valid refresh token for a new pair and
+  revokes the old one. If a revoked token is sent again, it is treated as stolen and **all** of
+  that user's sessions are revoked.
+* **Logout** revokes the refresh token. The access token stays valid until its `exp`, which is why
+  it is short-lived.
+* Passwords are stored only as **BCrypt** hashes with a salt. A wrong username and a wrong password
+  return the same error, and for an unknown username a BCrypt comparison still runs, so the
+  response time does not reveal whether the user exists.
+* A blocked user (`enabled = false`) cannot log in or refresh tokens (`403`).
+* The API has no sessions or cookies (`STATELESS`), so CSRF protection is disabled: the browser does
+  not add the token on its own, only a client that knows it does.
 
-## Rolės ir teisės
+## Roles and permissions
 
-| Kas | Ką gali |
+| Who | What they can do |
 | --- | --- |
-| **Svečias** (be žetono) | Registruotis, prisijungti, atnaujinti žetonus, žiūrėti Swagger. Kitur — `401` |
-| **Naudotojas** (`USER`) | Kurti grupes (tampa savininku ir DM), matyti savo grupes, `/api/auth/me` |
-| **`PLAYER`** grupėje | Matyti grupę, jos narius ir užduotis; kurti užduotis (ne `SIDE_QUEST`); registruoti progresą; matyti **tik savo** įrašus, keisti ir trinti juos — kol jie `PENDING`; išeiti iš grupės |
-| **`DUNGEON_MASTER`** grupėje | Tai, ką ir žaidėjas, plius: matyti visus grupės įrašus, juos tvirtinti / atmesti ir skirti XP bei inspiration (**ne savo**), kurti `SIDE_QUEST`, keisti ir trinti bet kurią grupės užduotį |
-| **Savininkas** (grupės kūrėjas) | Keisti ir trinti grupę, pridėti ir šalinti narius, keisti jų roles |
-| **`ADMIN`** | Matyti visas grupes ir jų turinį, trinti bet kurią grupę, užduotį ar įrašą, valdyti naudotojus (`/api/users`) |
+| **Guest** (no token) | Register, log in, refresh tokens, view Swagger. Everything else - `401` |
+| **User** (`USER`) | Create guilds (becomes owner and game master), see their own guilds, `/api/auth/me` |
+| **`PLAYER`** in a guild | See the guild, its members and quests; create quests (not `SIDE_QUEST`); log progress; see **only their own** log entries, edit and delete them while they are `PENDING`; leave the guild |
+| **`DUNGEON_MASTER`** (game master) in a guild | Everything a player can do, plus: see all log entries in the guild, approve / reject them and award XP and inspiration (**not their own**), create `SIDE_QUEST` quests, edit and delete any quest in the guild |
+| **Owner** (guild creator) | Edit and delete the guild, add and remove members, change their roles |
+| **`ADMIN`** | See all guilds and their content, delete any guild, quest or log entry, manage users (`/api/users`) |
 
-* Naudotojas skirtingose grupėse gali turėti skirtingas roles. Grupėje — **vienas DM**: bandymas
-  paskirti antrą grąžina `409` (užtikrinta ir DB daliniu unikaliu indeksu).
-* Ne grupės narys apie ją negauna nieko — `403`.
-* Grupių roles serveris kiekvienoje užklausoje ima iš DB, todėl pakeista rolė galioja iš karto.
-  Globali rolė (`ADMIN`) yra žetone ir pasikeičia nuo kito access žetono.
-
----
-
-## API metodai
-
-Visi keliai prasideda `/api`. Vaikinis objektas pasiekiamas **tik per tėvinį** — neteisinga
-grandinė grąžina `404`. Stulpelis **Kas** — kam leidžiama (kitiems — `403`).
-
-### Grupės (Guild)
-
-| # | Metodas | Kelias | Aprašymas | Kas | Sėkmė |
-| --- | --- | --- | --- | --- | --- |
-| 1 | `GET` | `/api/guilds` | Sąrašas; filtras `name`, puslapiavimas, rikiavimas | Savo grupės; `ADMIN` — visos | `200` |
-| 2 | `GET` | `/api/guilds/{guildId}` | Viena grupė | Narys, `ADMIN` | `200` |
-| 3 | `POST` | `/api/guilds` | Sukurti grupę (kūrėjas — savininkas ir DM) | Prisijungęs | `201` + `Location` |
-| 4 | `PATCH` | `/api/guilds/{guildId}` | Dalinai atnaujinti grupę | Savininkas | `200` |
-| 5 | `DELETE` | `/api/guilds/{guildId}` | Ištrinti grupę su visu turiniu | Savininkas, `ADMIN` | `204` |
-
-### Užduotys (Quest)
-
-| # | Metodas | Kelias | Aprašymas | Kas | Sėkmė |
-| --- | --- | --- | --- | --- | --- |
-| 6 | `GET` | `/api/guilds/{guildId}/quests` | Sąrašas; filtrai `stat`, `type`, `difficulty`, `active` | Narys, `ADMIN` | `200` |
-| 7 | `GET` | `/api/guilds/{guildId}/quests/{questId}` | Viena užduotis | Narys, `ADMIN` | `200` |
-| 8 | `POST` | `/api/guilds/{guildId}/quests` | Sukurti užduotį | Narys; `SIDE_QUEST` — tik DM | `201` + `Location` |
-| 9 | `PATCH` | `/api/guilds/{guildId}/quests/{questId}` | Dalinai atnaujinti užduotį | Kūrėjas, DM, savininkas | `200` |
-| 10 | `DELETE` | `/api/guilds/{guildId}/quests/{questId}` | Ištrinti užduotį su įrašais | Kūrėjas, DM, savininkas, `ADMIN` | `204` |
-
-### Progreso įrašai (LogEntry)
-
-| # | Metodas | Kelias | Aprašymas | Kas | Sėkmė |
-| --- | --- | --- | --- | --- | --- |
-| 11 | `GET` | `/api/guilds/{guildId}/quests/{questId}/logs` | Sąrašas; filtras `status` | Žaidėjas — savo; DM, `ADMIN` — visi | `200` |
-| 12 | `GET` | `/api/guilds/{guildId}/quests/{questId}/logs/{logId}` | Vienas įrašas | Autorius, DM, `ADMIN` | `200` |
-| 13 | `POST` | `/api/guilds/{guildId}/quests/{questId}/logs` | Registruoti progresą (visada `PENDING`, 0 XP) | Narys | `201` + `Location` |
-| 14 | `PATCH` | `/api/guilds/{guildId}/quests/{questId}/logs/{logId}` | Turinys — autorius (kol `PENDING`); peržiūra — DM, ne savo įrašo | Autorius / DM | `200` |
-| 15 | `DELETE` | `/api/guilds/{guildId}/quests/{questId}/logs/{logId}` | Ištrinti įrašą | Autorius (kol `PENDING`), DM, `ADMIN` | `204` |
-
-### Autentifikacija (Auth)
-
-| # | Metodas | Kelias | Aprašymas | Kas | Sėkmė |
-| --- | --- | --- | --- | --- | --- |
-| 16 | `POST` | `/api/auth/register` | Registruotis (rolė visada `USER`) | Svečias | `201` + `Location` |
-| 17 | `POST` | `/api/auth/login` | Prisijungti — access ir refresh žetonai | Svečias | `200` |
-| 18 | `POST` | `/api/auth/refresh` | Nauja žetonų pora už refresh žetoną (rotacija) | Svečias | `200` |
-| 19 | `POST` | `/api/auth/logout` | Atšaukti refresh žetoną | Svečias | `204` |
-| 20 | `GET` | `/api/auth/me` | Prisijungęs naudotojas ir jo grupės su rolėmis | Prisijungęs | `200` |
-
-### Grupės nariai (Member)
-
-| # | Metodas | Kelias | Aprašymas | Kas | Sėkmė |
-| --- | --- | --- | --- | --- | --- |
-| 21 | `GET` | `/api/guilds/{guildId}/members` | Narių sąrašas; filtras `role` | Narys, `ADMIN` | `200` |
-| 22 | `GET` | `/api/guilds/{guildId}/members/{userId}` | Vienas narys | Narys, `ADMIN` | `200` |
-| 23 | `POST` | `/api/guilds/{guildId}/members` | Pridėti narį (`username`, `role`) | Savininkas, `ADMIN` | `201` + `Location` |
-| 24 | `PATCH` | `/api/guilds/{guildId}/members/{userId}` | Pakeisti nario rolę | Savininkas, `ADMIN` | `200` |
-| 25 | `DELETE` | `/api/guilds/{guildId}/members/{userId}` | Pašalinti narį arba išeiti pačiam | Savininkas, `ADMIN`, pats narys | `204` |
-
-### Naudotojai (User)
-
-| # | Metodas | Kelias | Aprašymas | Kas | Sėkmė |
-| --- | --- | --- | --- | --- | --- |
-| 26 | `GET` | `/api/users` | Naudotojų sąrašas; filtras `username` | `ADMIN` | `200` |
-| 27 | `GET` | `/api/users/{userId}` | Vienas naudotojas | `ADMIN` | `200` |
-| 28 | `PATCH` | `/api/users/{userId}` | Keisti rolę ar užblokuoti (`role`, `enabled`) | `ADMIN` | `200` |
-
-### Veikėjo kortelė (Character sheet)
-
-| # | Metodas | Kelias | Aprašymas | Kas | Sėkmė |
-| --- | --- | --- | --- | --- | --- |
-| 29 | `GET` | `/api/guilds/{guildId}/members/{userId}/sheet` | Nario lygis, XP, charakteristikos, inspiration ir serija — tik iš jo `APPROVED` įrašų šioje grupėje. `FULL` dar turi 10 naujausių įrašų ir `pendingCount` | Narys, `ADMIN`; `FULL` — pats narys, DM, `ADMIN`, kitiems nariams `PUBLIC` | `200` |
-
-### Draugystės (Friendship)
-
-| # | Metodas | Kelias | Aprašymas | Kas | Sėkmė |
-| --- | --- | --- | --- | --- | --- |
-| 30 | `GET` | `/api/friends` | Mano draugystės ir kvietimai abiem kryptimis; filtras `status` | Prisijungęs | `200` |
-| 31 | `GET` | `/api/friends/{friendshipId}` | Viena draugystė | Abi pusės (kitiems ir užblokuotajam — `404`) | `200` |
-| 32 | `POST` | `/api/friends` | Pakviesti į draugus (`username`); pora jau yra — `409` | Prisijungęs | `201` + `Location` |
-| 33 | `PATCH` | `/api/friends/{friendshipId}` | `ACCEPTED` — priimti kvietimą, `BLOCKED` — užblokuoti | `ACCEPTED` — gavėjas; `BLOCKED` — abi pusės | `200` |
-| 34 | `DELETE` | `/api/friends/{friendshipId}` | Atšaukti ar atmesti kvietimą, nutraukti draugystę, atblokuoti | Abi pusės; užblokuotą — tik užblokavęs | `204` |
-| 35 | `GET` | `/api/friends/{friendshipId}/sheet` | Draugo `PUBLIC` kortelė, sujungta per visas jo grupes | Draugas (tik `ACCEPTED`) | `200` |
-
-### Sistema
-
-| # | Metodas | Kelias | Aprašymas | Kas | Sėkmė |
-| --- | --- | --- | --- | --- | --- |
-| 36 | `GET` | `/actuator/health` | Sveikatos patikra debesų platformai — tik `{"status":"UP"}`, be detalių | Svečias | `200` |
-
-**Atnaujinimas — `PATCH` (dalinis).** Keičiami tik atsiųsti laukai, neatsiųsti lieka tokie, kokie
-buvo. Todėl, pvz., keičiant tik užduoties sudėtingumą, aprašymas niekur nedingsta. Įrašo
-peržiūros laukai (`xpAwarded`, `inspirationAwarded`, `reviewerNote`) priimami tik kartu su `status`.
-
-**Aprašymas niekada nedingsta.** Sukūrus grupę ar užduotį be `description`, jis išsaugomas kaip
-tuščias tekstas `""`, todėl atsakyme laukas visada yra. Tą užtikrina ir duomenų bazė (`NOT NULL
-DEFAULT ''`, migracija `V3`).
-
-Pilna specifikacija kiekvienam metodui — [`docs/openapi.json`](openapi.json) arba gyvai
-Swagger UI. Kiekvienas apsaugotas metodas dokumentuotas su `401`, o konkrečios grupės
-(`/guilds/{guildId}/...`) ir naudotojų metodai — ir su `403`.
+* A user can have different roles in different guilds. A guild has **one game master**: trying to
+  assign a second one returns `409` (also enforced by a partial unique index in the database).
+* A non-member gets nothing about a guild - `403`.
+* The server reads guild roles from the database on every request, so a role change applies
+  immediately. The global role (`ADMIN`) is in the token and changes with the next access token.
 
 ---
 
-## Atsakymų struktūros
+## API endpoints
 
-### Puslapiuotas sąrašas
+All paths start with `/api`. A child resource is reachable **only through its parent** - a wrong
+chain returns `404`. The **Who** column lists who is allowed (everyone else gets `403`).
 
-Visi `GET` sąrašai grąžina vienodą struktūrą. Navigacijos nuorodos statomos iš tikrosios užklausos
-URI, todėl **visi filtrai ir rikiavimas jose išlieka**. `prev` ir `next` nepateikiami, kai tokio
-puslapio nėra. `totalElements` pirmas, kad bendras kiekis (pvz. kiek iš viso grupių) matytųsi iškart.
+### Guilds (Guild)
+
+| # | Method | Path | Description | Who | Success |
+| --- | --- | --- | --- | --- | --- |
+| 1 | `GET` | `/api/guilds` | List; filter `name`, paging, sorting | Own guilds; `ADMIN` - all | `200` |
+| 2 | `GET` | `/api/guilds/{guildId}` | One guild | Member, `ADMIN` | `200` |
+| 3 | `POST` | `/api/guilds` | Create a guild (the creator becomes owner and game master) | Logged in | `201` + `Location` |
+| 4 | `PATCH` | `/api/guilds/{guildId}` | Partially update a guild | Owner | `200` |
+| 5 | `DELETE` | `/api/guilds/{guildId}` | Delete a guild with all its content | Owner, `ADMIN` | `204` |
+
+### Quests (Quest)
+
+| # | Method | Path | Description | Who | Success |
+| --- | --- | --- | --- | --- | --- |
+| 6 | `GET` | `/api/guilds/{guildId}/quests` | List; filters `stat`, `type`, `difficulty`, `active` | Member, `ADMIN` | `200` |
+| 7 | `GET` | `/api/guilds/{guildId}/quests/{questId}` | One quest | Member, `ADMIN` | `200` |
+| 8 | `POST` | `/api/guilds/{guildId}/quests` | Create a quest | Member; `SIDE_QUEST` - game master only | `201` + `Location` |
+| 9 | `PATCH` | `/api/guilds/{guildId}/quests/{questId}` | Partially update a quest | Creator, game master, owner | `200` |
+| 10 | `DELETE` | `/api/guilds/{guildId}/quests/{questId}` | Delete a quest with its log entries | Creator, game master, owner, `ADMIN` | `204` |
+
+### Log entries (LogEntry)
+
+| # | Method | Path | Description | Who | Success |
+| --- | --- | --- | --- | --- | --- |
+| 11 | `GET` | `/api/guilds/{guildId}/quests/{questId}/logs` | List; filter `status` | Player - own; game master, `ADMIN` - all | `200` |
+| 12 | `GET` | `/api/guilds/{guildId}/quests/{questId}/logs/{logId}` | One log entry | Author, game master, `ADMIN` | `200` |
+| 13 | `POST` | `/api/guilds/{guildId}/quests/{questId}/logs` | Log progress (always `PENDING`, 0 XP) | Member | `201` + `Location` |
+| 14 | `PATCH` | `/api/guilds/{guildId}/quests/{questId}/logs/{logId}` | Content - author (while `PENDING`); review - game master, not their own log entry | Author / game master | `200` |
+| 15 | `DELETE` | `/api/guilds/{guildId}/quests/{questId}/logs/{logId}` | Delete a log entry | Author (while `PENDING`), game master, `ADMIN` | `204` |
+
+### Authentication (Auth)
+
+| # | Method | Path | Description | Who | Success |
+| --- | --- | --- | --- | --- | --- |
+| 16 | `POST` | `/api/auth/register` | Register (role is always `USER`) | Guest | `201` + `Location` |
+| 17 | `POST` | `/api/auth/login` | Log in - access and refresh tokens | Guest | `200` |
+| 18 | `POST` | `/api/auth/refresh` | New token pair for a refresh token (rotation) | Guest | `200` |
+| 19 | `POST` | `/api/auth/logout` | Revoke the refresh token | Guest | `204` |
+| 20 | `GET` | `/api/auth/me` | Current user and their guilds with roles | Logged in | `200` |
+
+### Guild members (Member)
+
+| # | Method | Path | Description | Who | Success |
+| --- | --- | --- | --- | --- | --- |
+| 21 | `GET` | `/api/guilds/{guildId}/members` | List members; filter `role` | Member, `ADMIN` | `200` |
+| 22 | `GET` | `/api/guilds/{guildId}/members/{userId}` | One member | Member, `ADMIN` | `200` |
+| 23 | `POST` | `/api/guilds/{guildId}/members` | Add a member (`username`, `role`) | Owner, `ADMIN` | `201` + `Location` |
+| 24 | `PATCH` | `/api/guilds/{guildId}/members/{userId}` | Change a member's role | Owner, `ADMIN` | `200` |
+| 25 | `DELETE` | `/api/guilds/{guildId}/members/{userId}` | Remove a member or leave the guild | Owner, `ADMIN`, the member themselves | `204` |
+
+### Users (User)
+
+| # | Method | Path | Description | Who | Success |
+| --- | --- | --- | --- | --- | --- |
+| 26 | `GET` | `/api/users` | List users; filter `username` | `ADMIN` | `200` |
+| 27 | `GET` | `/api/users/{userId}` | One user | `ADMIN` | `200` |
+| 28 | `PATCH` | `/api/users/{userId}` | Change role or block (`role`, `enabled`) | `ADMIN` | `200` |
+
+### Character sheet
+
+| # | Method | Path | Description | Who | Success |
+| --- | --- | --- | --- | --- | --- |
+| 29 | `GET` | `/api/guilds/{guildId}/members/{userId}/sheet` | The member's level, XP, stats, inspiration and streak, only from their `APPROVED` log entries in this guild. `FULL` also has the 10 latest log entries and `pendingCount` | Member, `ADMIN`; `FULL` - the member, game master, `ADMIN`, other members get `PUBLIC` | `200` |
+
+### Friendships (Friendship)
+
+| # | Method | Path | Description | Who | Success |
+| --- | --- | --- | --- | --- | --- |
+| 30 | `GET` | `/api/friends` | My friendships and friend requests in both directions; filter `status` | Logged in | `200` |
+| 31 | `GET` | `/api/friends/{friendshipId}` | One friendship | Both sides (others and the blocked user get `404`) | `200` |
+| 32 | `POST` | `/api/friends` | Send a friend request (`username`); an existing pair - `409` | Logged in | `201` + `Location` |
+| 33 | `PATCH` | `/api/friends/{friendshipId}` | `ACCEPTED` - accept the friend request, `BLOCKED` - block | `ACCEPTED` - recipient; `BLOCKED` - both sides | `200` |
+| 34 | `DELETE` | `/api/friends/{friendshipId}` | Cancel or decline a friend request, unfriend, unblock | Both sides; a blocked one - only the user who blocked | `204` |
+| 35 | `GET` | `/api/friends/{friendshipId}/sheet` | The friend's `PUBLIC` character sheet, combined across all their guilds | Friend (`ACCEPTED` only) | `200` |
+
+### System
+
+| # | Method | Path | Description | Who | Success |
+| --- | --- | --- | --- | --- | --- |
+| 36 | `GET` | `/actuator/health` | Health check for the cloud platform - only `{"status":"UP"}`, no details | Guest | `200` |
+
+**Updates use `PATCH` (partial).** Only the fields sent are changed; the rest stay as they were.
+So, for example, changing only a quest's difficulty never loses its description. The log entry
+review fields (`xpAwarded`, `inspirationAwarded`, `reviewerNote`) are accepted only together with
+`status`.
+
+**The description never disappears.** When a guild or quest is created without `description`, it is
+saved as an empty string `""`, so the field is always present in responses. The database enforces
+this too (`NOT NULL DEFAULT ''`, migration `V3`).
+
+The full specification of every endpoint is in [`docs/openapi.json`](openapi.json) or live in
+Swagger UI. Every protected endpoint documents `401`, and the guild (`/guilds/{guildId}/...`) and
+user endpoints also document `403`.
+
+---
+
+## Response formats
+
+### Paged list
+
+All `GET` lists return the same structure. Navigation links are built from the actual request
+URI, so **all filters and sorting are kept in them**. `prev` and `next` are omitted when there is
+no such page. `totalElements` comes first so that the total count (for example, how many guilds
+there are) is visible right away.
 
 ```json
 {
@@ -234,27 +236,29 @@ puslapio nėra. `totalElements` pirmas, kad bendras kiekis (pvz. kiek iš viso g
 }
 ```
 
-Puslapiavimo parametrai: `?page=0&size=20&sort=name,asc`. Didžiausias leidžiamas `size` — 100,
-`page` — 1 000 000. Numatytasis dydis — 20, puslapiai skaičiuojami nuo 0.
+Paging parameters: `?page=0&size=20&sort=name,asc`. The largest allowed `size` is 100, and `page`
+is at most 1,000,000. The default size is 20, and pages are counted from 0.
 
-Rikiuoti galima tik pagal paprastus sąrašo laukus — kitaip `400` su leidžiamų laukų sąrašu:
+Sorting is allowed only by simple list fields; anything else returns `400` with the list of
+allowed fields:
 
-| Sąrašas | `sort` laukai |
+| List | `sort` fields |
 | --- | --- |
-| Grupės | `id`, `name`, `createdAt` |
-| Užduotys | `id`, `title`, `stat`, `type`, `difficulty`, `targetCount`, `active`, `createdAt` |
-| Įrašai | `id`, `occurredAt`, `createdAt`, `status`, `xpAwarded`, `reviewedAt` |
-| Nariai | `joinedAt`, `role` |
-| Naudotojai | `id`, `username`, `role`, `enabled`, `createdAt` |
-| Draugystės | `createdAt`, `status` |
+| Guilds | `id`, `name`, `createdAt` |
+| Quests | `id`, `title`, `stat`, `type`, `difficulty`, `targetCount`, `active`, `createdAt` |
+| Log entries | `id`, `occurredAt`, `createdAt`, `status`, `xpAwarded`, `reviewedAt` |
+| Members | `joinedAt`, `role` |
+| Users | `id`, `username`, `role`, `enabled`, `createdAt` |
+| Friendships | `createdAt`, `status` |
 
-Nuorodos (`links`) yra hypermedia elementas: klientas pats nekonstruoja kito puslapio URL, o tiesiog
-eina serverio duota `links.next` nuoroda, kol jos nebėra. Taip veikia ir Postman suvestinės testas.
+The links (`links`) are a hypermedia element: the client does not build the next page URL itself,
+it just follows the `links.next` link from the server until there is none. The Postman summary
+test works this way too.
 
-### Klaidos
+### Errors
 
-Kiekviena klaida — vienoda `ApiError` struktūra, taip pat ir `401` / `403`, kuriuos grąžina
-Spring Security filtrai dar prieš kontrolerį:
+Every error uses the same `ApiError` structure, including the `401` / `403` responses that Spring
+Security filters return before the controller:
 
 ```json
 {
@@ -266,143 +270,147 @@ Spring Security filtrai dar prieš kontrolerį:
 }
 ```
 
-`details` pateikiamas tik tada, kai klaida susijusi su konkrečiais laukais.
+`details` is present only when the error concerns specific fields.
 
-| Kodas | Kada |
+| Code | When |
 | --- | --- |
-| `400` | Užklausos nepavyko suprasti: netinkamas JSON, blogas tipas, nežinoma enum reikšmė, lauko apribojimo pažeidimas |
-| `401` | Nėra žetono, jis sugadintas ar pasibaigęs, blogi prisijungimo duomenys, netinkamas refresh žetonas. Kartu — antraštė `WWW-Authenticate: Bearer` |
-| `403` | Naudotojas žinomas, bet teisių neužtenka: ne grupės narys, netinkama rolė grupėje, ne `ADMIN`, užblokuota paskyra |
-| `404` | Resurso nėra **arba** neteisinga tėvinė grandinė |
-| `405` | Teisingas kelias, netinkamas HTTP metodas |
-| `406` | Klientas `Accept` antraštėje paprašė formato, kurio API neturi |
-| `409` | Užklausa teisinga, bet prieštarauja esamai būsenai (užimtas pavadinimas ar vardas, antras DM, jau narys) |
-| `415` | Užklausos turinys (body) atsiųstas ne `application/json` tipu |
-| `422` | JSON suprastas, laukai teisingi, bet pažeista dalykinės srities taisyklė |
-| `500` | Netikėta serverio klaida |
+| `400` | The request could not be understood: malformed JSON, wrong type, unknown enum value, field constraint violation |
+| `401` | No token, a broken or expired one, wrong login credentials, an invalid refresh token. Comes with the `WWW-Authenticate: Bearer` header |
+| `403` | The user is known but lacks permission: not a guild member, wrong guild role, not `ADMIN`, blocked account |
+| `404` | The resource does not exist **or** the parent chain is wrong |
+| `405` | Correct path, wrong HTTP method |
+| `406` | The client asked in the `Accept` header for a format the API does not offer |
+| `409` | The request is valid but conflicts with the current state (name or username taken, a second game master, already a member) |
+| `415` | The request body was not sent as `application/json` |
+| `422` | The JSON was understood and the fields are valid, but a business rule is violated |
+| `500` | Unexpected server error |
 
-**400 ar 422?** `400` — klaidą galima pastebėti žiūrint vien į užklausą. `422` — užklausa
-nepriekaištinga, bet prieštarauja sistemos taisyklei (`GRIND` be `targetCount`, `occurredAt`
-ateityje, XP neperžiūrėtam įrašui, naujas įrašas prie neaktyvios užduoties, patvirtinto įrašo
-turinio keitimas, nežinomas naudotojas pridedant narį).
+**400 or 422?** `400` means the error can be seen from the request alone. `422` means the request
+is well-formed but breaks a system rule (`GRIND` without `targetCount`, `occurredAt` in the
+future, XP on an unreviewed log entry, a new log entry on an inactive quest, editing an approved
+log entry's content, an unknown user when adding a member).
 
-**401 ar 403?** `401` — serveris nežino, kas jūs. `403` — žino, bet to daryti neleidžia.
+**401 or 403?** `401` means the server does not know who you are. `403` means it knows, but does
+not allow the action.
 
 ---
 
-## Demonstracija su Postman
+## Postman demo
 
-[`postman/DoneNDusted.postman_collection.json`](../postman/DoneNDusted.postman_collection.json) —
-78 užklausos, 176 patikros (švariai paleistoje DB). Kolekcija kaskart užregistruoja naują
-naudotoją, pati susikuria duomenis ir po savęs išsivalo, todėl ją galima paleisti kiek nori kartų
-iš eilės.
+[`postman/DoneNDusted.postman_collection.json`](../postman/DoneNDusted.postman_collection.json) -
+78 requests, 176 checks (on a freshly started database). The collection registers a new user on
+every run, creates its own data and cleans up after itself, so it can be run any number of times
+in a row.
 
 ```bash
 npx newman run postman/DoneNDusted.postman_collection.json
 ```
 
-Arba Postman programoje: *Import* → *Runner* → *Run*. Trukmė — apie **10 sekundžių**.
+Or in the Postman app: *Import* -> *Runner* -> *Run*. It takes about **10 seconds**.
 
-Ta pati kolekcija Postman v3 formatu (atskiri YAML failai) yra
-[`postman/Done n Dusted API (LD2)/`](../postman/Done%20n%20Dusted%20API%20%28LD2%29/); JSON failas
-sugeneruotas iš tų pačių šaltinių. Ją galima paleisti ir Postman CLI:
+The same collection in the Postman v3 format (separate YAML files) is in
+[`postman/Done n Dusted API (LD2)/`](../postman/Done%20n%20Dusted%20API%20%28LD2%29/); the JSON file
+is generated from the same sources. It can also be run with the Postman CLI:
 `postman collection run "postman/Done n Dusted API (LD2)"`.
 
-Kolekcijos lygyje nustatyta *Bearer Token* `{{accessToken}}`. Užklausos, kurias siunčia žaidėjas
-`jonas` ar `admin`, turi savo *Authorization* (`{{playerToken}}`, `{{adminToken}}`).
+The collection sets *Bearer Token* `{{accessToken}}` at the collection level. Requests sent by the
+player `jonas` or by `admin` have their own *Authorization* (`{{playerToken}}`, `{{adminToken}}`).
 
-| Aplankas | Kas parodoma |
+| Folder | What it shows |
 | --- | --- |
-| 0. Autentifikacija | Registracija, `409`, `400`, prisijungimas ir JWT turinys, `/auth/me`, `401` be žetono ir su sugadintu žetonu, refresh rotacija ir pakartotinio panaudojimo aptikimas, atsijungimas |
-| 1. Suvestinė | `admin` vardu: kiek DB yra grupių, užduočių ir įrašų su visais ID (`Is viso - grupiu: 3, uzduociu: 9, irasu: 12`) |
-| 2. Grupės | LD1 grupių CRUD, kūrėjas tampa savininku, naudotojas mato tik savo grupes, puslapiavimas per `links.next` |
-| 3. Nariai | Žaidėjo pridėjimas, `409` jau narys ir antras DM, `422` nežinomas naudotojas, `403` žaidėjui |
-| 4. Užduotys | LD1 užduočių testai, `createdBy` |
-| 5. Progreso įrašai | Įrašą registruoja žaidėjas, tvirtina DM; XP iš sudėtingumo; patvirtinto įrašo turinys užšaldytas (`422`) |
-| 6. Rolės ir teisės | `403`: ne narys, žaidėjas tvirtina, DM keičia svetimą turinį, DM tvirtina savo įrašą, žaidėjas žiūri svetimą įrašą, `SIDE_QUEST`, grupės keitimas, `/api/users`; žaidėjas mato tik savo įrašus; išėjimas iš grupės |
-| 7. Išvalymas | Ištrynimas `204`, antrą grupę trina `admin`, `404` po ištrynimo |
-| 8. Administravimas | Naudotojų sąrašas, `422` bandant užblokuoti save, užblokavimas → prisijungti `403` → atblokavimas |
+| 0. Autentifikacija | Registration, `409`, `400`, login and JWT claims, `/auth/me`, `401` without a token and with a broken token, refresh rotation and reuse detection, logout |
+| 1. Suvestinė | As `admin`: how many guilds, quests and log entries are in the database, with all IDs (`Is viso - grupiu: 3, uzduociu: 9, irasu: 12`) |
+| 2. Grupės | LD1 guild CRUD, the creator becomes the owner, a user sees only their own guilds, paging via `links.next` |
+| 3. Nariai | Adding a player, `409` for an existing member and a second game master, `422` for an unknown user, `403` for a player |
+| 4. Užduotys | LD1 quest tests, `createdBy` |
+| 5. Progreso įrašai | A player logs progress, the game master approves it; XP from difficulty; an approved log entry's content is frozen (`422`) |
+| 6. Rolės ir teisės | `403`: non-member, player approves, game master edits someone else's content, game master approves their own log entry, player views someone else's log entry, `SIDE_QUEST`, guild edit, `/api/users`; a player sees only their own log entries; leaving a guild |
+| 7. Išvalymas | Deletion `204`, `admin` deletes the second guild, `404` after deletion |
+| 8. Administravimas | User list, `422` when blocking yourself, block -> login `403` -> unblock |
 
-Komandos be Postman (curl) — [`docs/visual/DEMO_KOMANDOS.txt`](visual/DEMO_KOMANDOS.txt).
+Commands without Postman (curl) - [`docs/visual/DEMO_KOMANDOS.txt`](visual/DEMO_KOMANDOS.txt).
 
 ---
 
-## Dalykinės srities taisyklės
+## Business rules
 
-* Užduotis privalo deklaruoti auginamą charakteristiką: `STR`, `DEX`, `CON`, `INT`, `WIS`, `CHA`.
-* Užduoties tipas: `MILESTONE`, `HABIT`, `GRIND`, `SIDE_QUEST`. `targetCount` privalomas ir
-  leidžiamas **tik** `GRIND` tipui. `SIDE_QUEST` kuria tik grupės DM.
-* Sudėtingumas yra bazinio XP daugiklis: `TRIVIAL` ×1, `EASY` ×2, `MEDIUM` ×3, `HARD` ×5,
-  `LEGENDARY` ×8; bazinis XP — 10.
-* **XP niekada nepriimamas iš kliento kuriant įrašą.** `LogEntryCreateRequest` tokio lauko
-  apskritai neturi; naujas įrašas visada gimsta `PENDING` su 0 XP, o jo autorius — prisijungęs
-  naudotojas.
-* DM gali perrašyti XP **tik** tvirtinimo metu. Praleidus `xpAwarded`, serveris jį išveda iš
-  užduoties sudėtingumo. Įrašo **negali tvirtinti jo autorius**, net jei jis yra DM.
-* Patvirtintas XP **užšaldomas** įraše. Vėliau pakeitus užduoties sudėtingumą, istorija
-  neperrašoma. Peržiūrėto įrašo turinio (įrodymų) autorius pakeisti nebegali.
-* `PENDING` ir `REJECTED` įrašai privalo likti be XP ir be inspiration — taisyklė užtikrinta ir
-  Java kode, ir `CHECK` apribojimais duomenų bazėje.
+* A quest must declare the stat it improves: `STR`, `DEX`, `CON`, `INT`, `WIS`, `CHA`.
+* Quest type: `MILESTONE`, `HABIT`, `GRIND`, `SIDE_QUEST`. `targetCount` is required and allowed
+  **only** for `GRIND`. Only the guild's game master creates `SIDE_QUEST` quests.
+* Difficulty is a base XP multiplier: `TRIVIAL` x1, `EASY` x2, `MEDIUM` x3, `HARD` x5,
+  `LEGENDARY` x8; the base XP is 10.
+* **XP is never accepted from the client when a log entry is created.** `LogEntryCreateRequest`
+  has no such field at all; a new log entry is always `PENDING` with 0 XP, and its author is the
+  logged-in user.
+* The game master can override XP **only** when approving. If `xpAwarded` is omitted, the server
+  derives it from the quest difficulty. **The author cannot approve their own log entry**, even if
+  they are the game master.
+* Approved XP is **frozen** in the log entry. Changing the quest difficulty later does not rewrite
+  history. The author can no longer change a reviewed log entry's content (evidence).
+* `PENDING` and `REJECTED` log entries must have no XP and no inspiration; the rule is enforced in
+  the Java code and by `CHECK` constraints in the database.
 
 ---
 
-## Technologijos
+## Technologies
 
-| Sluoksnis | Sprendimas |
+| Layer | Choice |
 | --- | --- |
-| Kalba | Java 21 (LTS) |
-| Karkasas | Spring Boot 4.1.1 (Web MVC, Data JPA, Validation) |
-| Saugumas | Spring Security 7 + OAuth2 Resource Server (Nimbus JOSE JWT, HS256), BCrypt |
-| Duomenų bazė | PostgreSQL 18 |
-| Migracijos | Flyway (schema + demonstraciniai duomenys) |
-| Dokumentacija | springdoc-openapi 3.1.1 (OpenAPI 3.1 + Swagger UI su Bearer autorizacija) |
-| Surinkimas | Maven Wrapper (`mvnw`) |
+| Language | Java 21 (LTS) |
+| Framework | Spring Boot 4.1.1 (Web MVC, Data JPA, Validation) |
+| Security | Spring Security 7 + OAuth2 Resource Server (Nimbus JOSE JWT, HS256), BCrypt |
+| Database | PostgreSQL 18 |
+| Migrations | Flyway (schema + demo data) |
+| Documentation | springdoc-openapi 3.1.1 (OpenAPI 3.1 + Swagger UI with Bearer authorization) |
+| Build | Maven Wrapper (`mvnw`) |
 
-## Projekto struktūra
+## Project structure
 
 ```
 src/main/java/lt/ktu/donendusted/
   config/        CorsConfig, EmbeddedPostgresConfig, OpenApiConfig, SecurityConfig
-  security/      TokenService (JWT ir refresh žetonai), CurrentUser, JwtProperties, ApiAuthErrorHandler
-  domain/        Guild, Quest, LogEntry, User, GuildMembership, RefreshToken, Friendship + enum
-  repository/    Spring Data sąsajos
-  service/       transakcijos, dalykinės taisyklės ir teisės (GuildAccess), CharacterSheetService, FriendshipService
-  web/           kontroleriai (FriendController — draugystės), PagedResponse
-  web/dto/       užklausų ir atsakymų įrašai (records)
-  error/         ApiError, ApiExceptionHandler, išimtys (401, 403, 404, 409, 422)
+  security/      TokenService (JWT and refresh tokens), CurrentUser, JwtProperties, ApiAuthErrorHandler
+  domain/        Guild, Quest, LogEntry, User, GuildMembership, RefreshToken, Friendship + enums
+  repository/    Spring Data interfaces
+  service/       transactions, business rules and permissions (GuildAccess), CharacterSheetService, FriendshipService
+  web/           controllers (FriendController - friendships), PagedResponse
+  web/dto/       request and response records
+  error/         ApiError, ApiExceptionHandler, exceptions (401, 403, 404, 409, 422)
+src/main/resources/
+  ValidationMessages.properties  Bean Validation messages (details[].message)
 src/main/resources/db/migration/
-  V1__schema.sql        lentelės, indeksai, CHECK apribojimai
-  V2__seed_data.sql     demonstraciniai duomenys
-  V3__description_not_null.sql  aprašymas NOT NULL DEFAULT ''
-  V4__users_and_tokens.sql      naudotojai (BCrypt) ir refresh žetonai
-  V5__guild_membership.sql      narystės, savininkai, autoriai ir seed ryšiai
-  V6__friendship.sql            draugystės; seed: ieva ir jonas — draugai, rokas pakvietė ievą
+  V1__schema.sql        tables, indexes, CHECK constraints
+  V2__seed_data.sql     demo data
+  V3__description_not_null.sql  description NOT NULL DEFAULT ''
+  V4__users_and_tokens.sql      users (BCrypt) and refresh tokens
+  V5__guild_membership.sql      memberships, owners, authors and seed links
+  V6__friendship.sql            friendships; seed: ieva and jonas are friends, rokas sent ieva a friend request
 src/test/java/lt/ktu/donendusted/
-  *IntegrationTest      MockMvc testai su įterptine PostgreSQL (vienas Spring kontekstas): ./mvnw test
-  service/              veikėjo kortelės formulių vienetų testai
-.github/workflows/      CI: backend testai, frontend lint/testai/build, Postman ir Playwright
-demo/                   Windows paleidimo skriptai demonstracijai (API, newman, curl, psql)
-frontend/               React + TypeScript + Vite klientas (LD3), Vitest ir Playwright testai
+  *IntegrationTest      MockMvc tests with embedded PostgreSQL (one Spring context): ./mvnw test
+  service/              unit tests for the character sheet formulas
+.github/workflows/      CI: backend tests, frontend lint/tests/build, Postman and Playwright
+demo/                   Windows launch scripts for the demo (API, newman, curl, psql)
+frontend/               React + TypeScript + Vite client (LD3), Vitest and Playwright tests
 docs/
-  API.md                šis dokumentas
-  LD3.md                LD3 reikalavimai, sąsaja, diegimas ir gynimas
-  wireframes/           LD3 langų wireframe'ai (SVG) ir jų generatorius
-  screenshots/          programos ekrano nuotraukos
-  LD2.md                LD2 pakeitimai ir gynimo klausimai
-  DEMO_PLANAS.md        ką ir kokia tvarka rodyti gynime
-  gynimas/              LD2 gynimo puslapis (HTML) ir jo šaltiniai (Archify)
-  openapi.json          sugeneruota OpenAPI specifikacija
-  visual/               LD1 gynimo gidas, demo komandos ir diagramos
+  API.md                this document
+  LD3.md                LD3 requirements, user interface, deployment and defense
+  wireframes/           LD3 screen wireframes (SVG) and their generator
+  screenshots/          application screenshots
+  LD2.md                LD2 changes and defense questions
+  DEMO_PLANAS.md        what to show at the defense and in which order
+  gynimas/              LD2 defense page (HTML) and its sources (Archify)
+  openapi.json          generated OpenAPI specification
+  visual/               LD1 defense guide, demo commands and diagrams
 postman/
-  Done n Dusted API (LD2)/              kolekcija Postman v3 formatu (YAML)
-  DoneNDusted.postman_collection.json   ta pati kolekcija v2.1 JSON (newman)
+  Done n Dusted API (LD2)/              collection in the Postman v3 format (YAML)
+  DoneNDusted.postman_collection.json   the same collection as v2.1 JSON (newman)
 ```
 
-## Naudotojo sąsaja (LD3)
+## User interface (LD3)
 
-React klientas yra kataloge [`frontend/`](../frontend/), jo reikalavimai, wireframe'ai ir diegimas į
-debesį aprašyti [`LD3.md`](LD3.md).
+The React client is in [`frontend/`](../frontend/); its requirements, wireframes and cloud
+deployment are described in [`LD3.md`](LD3.md).
 
 ---
 
-Autorė: **Miglė Cirtautaitė** · Dėstytojas: Tomas Blažauskas · Kaunas, 2026
+Author: **Miglė Cirtautaitė** · Lecturer: Tomas Blažauskas · Kaunas, 2026
