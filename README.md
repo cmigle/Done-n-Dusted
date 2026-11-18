@@ -12,7 +12,10 @@ TypeScript** client, built in three stages that are each kept on their own branc
 **Live demo: <https://done-n-dusted.azurewebsites.net>** · API docs: [Swagger UI](https://done-n-dusted.azurewebsites.net/swagger-ui.html) ·
 demo accounts `rokas` (game master), `jonas` (player), `ieva` (password `Demo123!`); the admin password on the live demo is private
 
-![Character sheet](docs/screenshots/05-sheet-desktop.png)
+| Day | Night |
+| --- | --- |
+| ![Landing page in the day theme](docs/screenshots/01-landing-desktop.png) | ![Landing page in the night theme](docs/screenshots/01-landing-desktop-dark.png) |
+| ![Character sheet in the day theme](docs/screenshots/05-sheet-desktop.png) | ![Character sheet in the night theme](docs/screenshots/05-sheet-desktop-dark.png) |
 
 | Guild with quests | Game master review | Mobile |
 | --- | --- | --- |
@@ -26,7 +29,9 @@ demo accounts `rokas` (game master), `jonas` (player), `ieva` (password `Demo123
 - **Character sheet**: level, XP progress, six stats, inspiration and streak; full view for the player and game master, public view for others
 - **Friendships**: requests, accept, block; friends see each other's public sheet across guilds
 - **Auth**: short-lived JWT access tokens, rotating refresh tokens with reuse detection, BCrypt passwords
-- **Pixel UI**: Sweetie-16 palette with a 60/30/10 rule and one colour per stat, Pixelify Sans headings with IBM Plex Mono text (readable numbers), SVG pixel icons, procedurally generated 8×8 avatars, responsive layout with a 768 px breakpoint and a hamburger menu
+- **Pixel UI with day and night themes**: follows the system colour scheme, a header toggle remembers the choice and is applied before first paint (no flash); a pixel-art scene per theme (sun and drifting clouds, or moon, twinkling stars and a campfire)
+- **Design tokens**: pastel palette with one colour per stat, ink outlines and hard 4 px shadows, Pixelify Sans headings and buttons with Nunito text and numbers; every text pair checked for WCAG 4.5:1 in both themes by `npm run contrast` in CI
+- **Responsive and accessible**: 768 px breakpoint with a hamburger menu, procedurally generated 8×8 avatars, `prefers-reduced-motion` respected, visible focus, labelled forms
 
 ## Tech stack
 
