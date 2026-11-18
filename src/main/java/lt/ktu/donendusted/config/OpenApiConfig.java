@@ -4,7 +4,6 @@ import io.swagger.v3.oas.models.Components;
 import io.swagger.v3.oas.models.OpenAPI;
 import io.swagger.v3.oas.models.info.Contact;
 import io.swagger.v3.oas.models.info.Info;
-import io.swagger.v3.oas.models.info.License;
 import io.swagger.v3.oas.models.media.Content;
 import io.swagger.v3.oas.models.media.MediaType;
 import io.swagger.v3.oas.models.media.Schema;
@@ -47,8 +46,7 @@ public class OpenApiConfig {
                                 mato visas grupes, salina turini ir valdo naudotojus.
                                 401 - nera zetono arba jis netinka, 403 - neuztenka teisiu.
                                 """)
-                        .contact(new Contact().name("Migle Cirtautaite"))
-                        .license(new License().name("KTU T120B165")))
+                        .contact(new Contact().name("Migle Cirtautaite")))
                 .servers(List.of(new Server().url("/").description("Dabartinis serveris")))
                 .components(new Components().addSecuritySchemes(BEARER, new SecurityScheme()
                         .type(SecurityScheme.Type.HTTP)
