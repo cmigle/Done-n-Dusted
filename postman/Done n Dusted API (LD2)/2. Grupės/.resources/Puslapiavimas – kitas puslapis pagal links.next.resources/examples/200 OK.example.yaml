@@ -16,7 +16,7 @@ response:
           {
             "id": 3,
             "name": "The Quiet Library",
-            "description": "Skaitymo ir mokymosi grupe - daugiausia INT ir WIS uzduotys.",
+            "description": "A guild for reading and learning, mostly INT and WIS quests.",
             "ownerId": 3,
             "createdAt": "2026-11-08T14:31:19.403902Z"
           },

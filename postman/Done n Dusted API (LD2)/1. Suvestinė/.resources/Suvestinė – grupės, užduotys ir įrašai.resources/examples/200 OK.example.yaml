@@ -16,21 +16,21 @@ response:
           {
             "id": 2,
             "name": "Iron Vow",
-            "description": "Sporto ir sveikatos ipirociu grupe, pastoviai augina STR ir CON.",
+            "description": "A guild for sport and health habits, steadily raising STR and CON.",
             "ownerId": 2,
             "createdAt": "2026-11-08T14:31:19.403902Z"
           },
           {
             "id": 3,
             "name": "The Quiet Library",
-            "description": "Skaitymo ir mokymosi grupe - daugiausia INT ir WIS uzduotys.",
+            "description": "A guild for reading and learning, mostly INT and WIS quests.",
             "ownerId": 3,
             "createdAt": "2026-11-08T14:31:19.403902Z"
           },
           {
             "id": 1,
             "name": "Thursday Night Crew",
-            "description": "Ketvirtadieniais renkasi kampanija - keturi zaidejai ir vienas DM.",
+            "description": "A campaign group that meets on Thursdays: four players and one game master.",
             "ownerId": 2,
             "createdAt": "2026-11-08T14:31:19.403902Z"
           }
