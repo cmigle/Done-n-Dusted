@@ -26,7 +26,7 @@ async function shot(page, file, fullPage = true) {
 
 async function login(page, username) {
   await page.goto(`${base}/prisijungti`)
-  await page.getByLabel('Vardas').fill(username)
+  await page.getByLabel('Naudotojo vardas').fill(username)
   await page.getByLabel('Slaptažodis', { exact: true }).fill('Demo123!')
   await page.getByRole('button', { name: 'Prisijungti' }).click()
   await page.waitForURL('**/taverna')
