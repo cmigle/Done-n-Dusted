@@ -35,7 +35,7 @@ import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 @RestController
 @RequestMapping(path = "/api/guilds/{guildId}/quests/{questId}/logs", produces = MediaType.APPLICATION_JSON_VALUE)
-@Tag(name = "Log entries", description = "Progreso irasai - pasiekiami tik per grupe ir uzduoti")
+@Tag(name = "Log entries", description = "Log entries, reachable only through their guild and quest")
 public class LogEntryController {
 
     private final LogEntryService logs;
@@ -45,17 +45,17 @@ public class LogEntryController {
     }
 
     @GetMapping
-    @Operation(summary = "Uzduoties irasu sarasas",
-            description = "Puslapiuotas sarasas; filtruojamas pagal busena. Rikiuojama nuo naujausio ivykio.")
+    @Operation(summary = "List a quest's log entries",
+            description = "Paged list, filterable by status. Sorted from the most recent activity.")
     @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "Sarasas grazintas"),
-            @ApiResponse(responseCode = "404", description = "Neteisinga grupes/uzduoties grandine",
+            @ApiResponse(responseCode = "200", description = "List returned"),
+            @ApiResponse(responseCode = "404", description = "Wrong guild/quest chain",
                     content = @Content(schema = @Schema(implementation = ApiError.class)))
     })
     public PagedResponse<LogEntryResponse> list(
             @PathVariable Long guildId,
             @PathVariable Long questId,
-            @Parameter(description = "Filtras pagal iraso busena") @RequestParam(required = false) LogStatus status,
+            @Parameter(description = "Filter by log entry status") @RequestParam(required = false) LogStatus status,
             @ParameterObject @PageableDefault(size = 20, sort = "occurredAt", direction = Sort.Direction.DESC) Pageable pageable) {
 
         return PagedResponse.from(logs.list(guildId, questId, status,
@@ -64,10 +64,10 @@ public class LogEntryController {
     }
 
     @GetMapping("/{logId}")
-    @Operation(summary = "Vienas irasas")
+    @Operation(summary = "Get a log entry")
     @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "Irasas rastas"),
-            @ApiResponse(responseCode = "404", description = "Neteisinga grandine arba iraso nera",
+            @ApiResponse(responseCode = "200", description = "Log entry found"),
+            @ApiResponse(responseCode = "404", description = "Wrong chain or log entry not found",
                     content = @Content(schema = @Schema(implementation = ApiError.class)))
     })
     public LogEntryResponse get(@PathVariable Long guildId, @PathVariable Long questId,
@@ -76,15 +76,15 @@ public class LogEntryController {
     }
 
     @PostMapping(consumes = MediaType.APPLICATION_JSON_VALUE)
-    @Operation(summary = "Registruoti progresa",
-            description = "Irasas visada sukuriamas PENDING busenoje su 0 XP - taskus skiria tik DM tvirtindamas.")
+    @Operation(summary = "Log progress",
+            description = "A log entry is always created as PENDING with 0 XP; only the game master awards XP when approving it.")
     @ApiResponses({
-            @ApiResponse(responseCode = "201", description = "Irasas sukurtas"),
-            @ApiResponse(responseCode = "400", description = "Neteisingas payload",
+            @ApiResponse(responseCode = "201", description = "Log entry created"),
+            @ApiResponse(responseCode = "400", description = "Invalid request body",
                     content = @Content(schema = @Schema(implementation = ApiError.class))),
-            @ApiResponse(responseCode = "404", description = "Neteisinga grandine",
+            @ApiResponse(responseCode = "404", description = "Wrong chain",
                     content = @Content(schema = @Schema(implementation = ApiError.class))),
-            @ApiResponse(responseCode = "422", description = "Neaktyvi uzduotis arba data ateityje",
+            @ApiResponse(responseCode = "422", description = "Inactive quest or a date in the future",
                     content = @Content(schema = @Schema(implementation = ApiError.class)))
     })
     public ResponseEntity<LogEntryResponse> create(@PathVariable Long guildId, @PathVariable Long questId,
@@ -98,20 +98,20 @@ public class LogEntryController {
     }
 
     @PatchMapping(path = "/{logId}", consumes = MediaType.APPLICATION_JSON_VALUE)
-    @Operation(summary = "Atnaujinti irasa ir jo perziuros rezultata",
+    @Operation(summary = "Update a log entry and its review result",
             description = """
-                    Dalinis atnaujinimas: keiciami tik atsiusti laukai. xpAwarded, inspirationAwarded ir
-                    reviewerNote priimami tik kartu su status. Tvirtinant (APPROVED) praleistas xpAwarded
-                    reiskia, kad XP imamas is uzduoties sudetingumo. PENDING ir REJECTED irasai privalo
-                    likti be XP ir inspiration.
+                    Partial update: only the fields sent are changed. xpAwarded, inspirationAwarded and
+                    reviewerNote are accepted only together with status. On approval (APPROVED) an omitted xpAwarded
+                    means the XP comes from the quest difficulty. PENDING and REJECTED log entries must
+                    have no XP or inspiration.
                     """)
     @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "Irasas atnaujintas"),
-            @ApiResponse(responseCode = "400", description = "Neteisingas payload",
+            @ApiResponse(responseCode = "200", description = "Log entry updated"),
+            @ApiResponse(responseCode = "400", description = "Invalid request body",
                     content = @Content(schema = @Schema(implementation = ApiError.class))),
-            @ApiResponse(responseCode = "404", description = "Neteisinga grandine arba iraso nera",
+            @ApiResponse(responseCode = "404", description = "Wrong chain or log entry not found",
                     content = @Content(schema = @Schema(implementation = ApiError.class))),
-            @ApiResponse(responseCode = "422", description = "Pazeista dalykine taisykle",
+            @ApiResponse(responseCode = "422", description = "Business rule violated",
                     content = @Content(schema = @Schema(implementation = ApiError.class)))
     })
     public LogEntryResponse update(@PathVariable Long guildId, @PathVariable Long questId,
@@ -121,10 +121,10 @@ public class LogEntryController {
     }
 
     @DeleteMapping("/{logId}")
-    @Operation(summary = "Istrinti irasa")
+    @Operation(summary = "Delete a log entry")
     @ApiResponses({
-            @ApiResponse(responseCode = "204", description = "Istrinta; atsakymas be turinio"),
-            @ApiResponse(responseCode = "404", description = "Neteisinga grandine arba iraso nera",
+            @ApiResponse(responseCode = "204", description = "Deleted; no response body"),
+            @ApiResponse(responseCode = "404", description = "Wrong chain or log entry not found",
                     content = @Content(schema = @Schema(implementation = ApiError.class)))
     })
     public ResponseEntity<Void> delete(@PathVariable Long guildId, @PathVariable Long questId,

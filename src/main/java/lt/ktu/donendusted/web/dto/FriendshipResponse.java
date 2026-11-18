@@ -7,19 +7,19 @@ import lt.ktu.donendusted.domain.FriendshipStatus;
 import lt.ktu.donendusted.domain.User;
 
 /** Draugyste prisijungusio naudotojo akimis: userId ir username - visada kita puse. */
-@Schema(name = "FriendshipResponse", description = "Draugyste arba kvietimas")
+@Schema(name = "FriendshipResponse", description = "Friendship or friend request")
 public record FriendshipResponse(
         @Schema(example = "1") Long id,
-        @Schema(description = "Kito naudotojo id", example = "4") Long userId,
-        @Schema(description = "Kito naudotojo vardas", example = "jonas") String username,
+        @Schema(description = "ID of the other user", example = "4") Long userId,
+        @Schema(description = "Username of the other user", example = "jonas") String username,
         @Schema(example = "ACCEPTED") FriendshipStatus status,
 
-        @Schema(description = "OUTGOING - kvietima siunte (BLOCKED - uzblokavo) prisijunges naudotojas; "
-                + "INCOMING - kitas naudotojas", example = "OUTGOING")
+        @Schema(description = "OUTGOING if the current user sent the friend request (for BLOCKED, did the blocking); "
+                + "INCOMING if the other user did", example = "OUTGOING")
         Direction direction,
 
         Instant createdAt,
-        @Schema(description = "Kada kvietimas priimtas ar uzblokuotas; nera, kol PENDING") Instant respondedAt) {
+        @Schema(description = "When the friend request was accepted or blocked; absent while PENDING") Instant respondedAt) {
 
     public enum Direction {
         OUTGOING, INCOMING

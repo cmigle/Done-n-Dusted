@@ -96,7 +96,7 @@ public class SecurityConfig {
     public SecretKey jwtSigningKey(JwtProperties props) {
         byte[] secret = props.secret().getBytes(StandardCharsets.UTF_8);
         if (secret.length < 32) {
-            throw new IllegalStateException("app.jwt.secret turi buti bent 32 baitu ilgio (HS256)");
+            throw new IllegalStateException("app.jwt.secret must be at least 32 bytes long (HS256)");
         }
         return new SecretKeySpec(secret, "HmacSHA256");
     }

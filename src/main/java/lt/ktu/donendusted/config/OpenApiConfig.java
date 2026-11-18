@@ -28,31 +28,31 @@ public class OpenApiConfig {
                         .title("Done n Dusted API")
                         .version("0.3.0")
                         .description("""
-                                DnD principu veikianti produktyvumo sistema.
+                                A productivity system built on DnD ideas.
 
-                                Resursu hierarchija: **Guild (1:N) -> Quest (1:N) -> LogEntry**.
-                                Vaikinis objektas pasiekiamas tik per tevini kelia; neteisinga
-                                grandine grazina 404. Visos klaidos grazinamos vienoda `ApiError`
-                                struktura, visi sarasai - puslapiuoti `PagedResponse` su
-                                self/first/prev/next/last nuorodomis.
+                                Resource hierarchy: **Guild (1:N) -> Quest (1:N) -> LogEntry**.
+                                A child resource is reachable only through its parent path; a wrong
+                                chain returns 404. All errors use the same `ApiError`
+                                structure, and all lists are paged `PagedResponse` objects with
+                                self/first/prev/next/last links.
 
-                                **Autentifikacija (JWT).** `POST /api/auth/login` grazina access zetona
-                                (galioja 15 min) ir refresh zetona (7 d.). Access zetonas siunciamas
-                                antrasteje `Authorization: Bearer <accessToken>`; pasibaigus - nauja pora
-                                gaunama per `POST /api/auth/refresh`. Swagger UI: mygtukas **Authorize**.
+                                **Authentication (JWT).** `POST /api/auth/login` returns an access token
+                                (valid for 15 min) and a refresh token (7 days). Send the access token
+                                in the `Authorization: Bearer <accessToken>` header; when it expires, get a new pair
+                                from `POST /api/auth/refresh`. In Swagger UI, use the **Authorize** button.
 
-                                **Roles.** Svecias - tik registracija ir prisijungimas. Grupeje naudotojas
-                                yra `PLAYER` arba `DUNGEON_MASTER` (vienas grupeje). `ADMIN` - globali role:
-                                mato visas grupes, salina turini ir valdo naudotojus.
-                                401 - nera zetono arba jis netinka, 403 - neuztenka teisiu.
+                                **Roles.** A guest can only register and log in. In a guild, a user
+                                is a `PLAYER` or the `DUNGEON_MASTER` (the game master, one per guild). `ADMIN` is a global role:
+                                sees all guilds, removes content and manages users.
+                                401: no token or an invalid one; 403: not enough permissions.
                                 """)
                         .contact(new Contact().name("Migle Cirtautaite")))
-                .servers(List.of(new Server().url("/").description("Dabartinis serveris")))
+                .servers(List.of(new Server().url("/").description("Current server")))
                 .components(new Components().addSecuritySchemes(BEARER, new SecurityScheme()
                         .type(SecurityScheme.Type.HTTP)
                         .scheme("bearer")
                         .bearerFormat("JWT")
-                        .description("Access zetonas is POST /api/auth/login")))
+                        .description("Access token from POST /api/auth/login")))
                 .addSecurityItem(new SecurityRequirement().addList(BEARER));
     }
 
@@ -68,20 +68,20 @@ public class OpenApiConfig {
                     || (operation.getParameters() != null && !operation.getParameters().isEmpty());
             if (hasInput) {
                 operation.getResponses().putIfAbsent("400",
-                        error("Neteisingi parametrai ar turinys (pvz. ne skaicius vietoje ID, netinkamas sort ar JSON)"));
+                        error("Invalid parameters or body (for example, a non-numeric ID, an invalid sort or malformed JSON)"));
             }
             if (path.contains("{")) {
                 operation.getResponses().putIfAbsent("404",
-                        error("Resursas nerastas arba neteisinga tevine grandine"));
+                        error("Resource not found or wrong parent chain"));
             }
             if (operation.getSecurity() != null && operation.getSecurity().isEmpty()) {
                 return;
             }
             operation.getResponses().putIfAbsent("401",
-                    error("Nera access zetono arba jis neteisingas / pasibaiges"));
+                    error("Access token missing, invalid or expired"));
             if (path.startsWith("/api/guilds/{guildId}") || path.startsWith("/api/users")) {
                 operation.getResponses().putIfAbsent("403",
-                        error("Neuztenka teisiu: ne grupes narys, netinkama role grupeje arba ne ADMIN"));
+                        error("Not enough permissions: not a guild member, wrong guild role or not ADMIN"));
             }
         }));
     }

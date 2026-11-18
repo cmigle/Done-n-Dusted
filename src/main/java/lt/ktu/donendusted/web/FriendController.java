@@ -38,7 +38,7 @@ import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 /** Prisijungusio naudotojo draugystes. Svetima draugyste - 404, ne 403: jos buvimas neatskleidziamas. */
 @RestController
 @RequestMapping(path = "/api/friends", produces = MediaType.APPLICATION_JSON_VALUE)
-@Tag(name = "Friends", description = "Draugystes kvietimai ir draugu veikejo korteles")
+@Tag(name = "Friends", description = "Friend requests and friends' character sheets")
 public class FriendController {
 
     private final FriendshipService friends;
@@ -48,11 +48,11 @@ public class FriendController {
     }
 
     @GetMapping
-    @Operation(summary = "Mano draugystes ir kvietimai",
-            description = "Abiem kryptimis (OUTGOING ir INCOMING). Rikiuojama nuo naujausio kvietimo.")
-    @ApiResponse(responseCode = "200", description = "Sarasas grazintas")
+    @Operation(summary = "My friendships and friend requests",
+            description = "Both directions (OUTGOING and INCOMING). Sorted from the newest friend request.")
+    @ApiResponse(responseCode = "200", description = "List returned")
     public PagedResponse<FriendshipResponse> list(
-            @Parameter(description = "Filtras pagal busena") @RequestParam(required = false) FriendshipStatus status,
+            @Parameter(description = "Filter by status") @RequestParam(required = false) FriendshipStatus status,
             @ParameterObject @PageableDefault(size = 20, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable) {
 
         Long me = CurrentUser.get().id();
@@ -61,10 +61,10 @@ public class FriendController {
     }
 
     @GetMapping("/{friendshipId}")
-    @Operation(summary = "Viena draugyste")
+    @Operation(summary = "Get a friendship")
     @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "Draugyste rasta"),
-            @ApiResponse(responseCode = "404", description = "Draugystes nera arba ji ne jusu",
+            @ApiResponse(responseCode = "200", description = "Friendship found"),
+            @ApiResponse(responseCode = "404", description = "Friendship not found or not yours",
                     content = @Content(schema = @Schema(implementation = ApiError.class)))
     })
     public FriendshipResponse get(@PathVariable Long friendshipId) {
@@ -72,14 +72,14 @@ public class FriendController {
     }
 
     @PostMapping(consumes = MediaType.APPLICATION_JSON_VALUE)
-    @Operation(summary = "Pakviesti i draugus", description = "Kvietimas sukuriamas PENDING busenoje.")
+    @Operation(summary = "Send a friend request", description = "The friend request is created with status PENDING.")
     @ApiResponses({
-            @ApiResponse(responseCode = "201", description = "Kvietimas issiustas"),
-            @ApiResponse(responseCode = "400", description = "Neteisingas payload",
+            @ApiResponse(responseCode = "201", description = "Friend request sent"),
+            @ApiResponse(responseCode = "400", description = "Invalid request body",
                     content = @Content(schema = @Schema(implementation = ApiError.class))),
-            @ApiResponse(responseCode = "409", description = "Su siuo naudotoju draugyste ar kvietimas jau yra",
+            @ApiResponse(responseCode = "409", description = "A friendship or friend request with this user already exists",
                     content = @Content(schema = @Schema(implementation = ApiError.class))),
-            @ApiResponse(responseCode = "422", description = "Tokio naudotojo nera arba kvieciamas pats save",
+            @ApiResponse(responseCode = "422", description = "No such user, or the user invited themselves",
                     content = @Content(schema = @Schema(implementation = ApiError.class)))
     })
     public ResponseEntity<FriendshipResponse> request(@Valid @RequestBody FriendRequest request) {
@@ -92,20 +92,20 @@ public class FriendController {
     }
 
     @PatchMapping(path = "/{friendshipId}", consumes = MediaType.APPLICATION_JSON_VALUE)
-    @Operation(summary = "Priimti kvietima arba uzblokuoti",
+    @Operation(summary = "Accept a friend request or block",
             description = """
-                    ACCEPTED - laukianti kvietima priima tik jo gavejas. BLOCKED - uzblokuoti gali bet kuri puse;
-                    uzblokuotasis sios draugystes nebemato. Atmesti, atsaukti ar atblokuoti - DELETE.
+                    ACCEPTED: only the recipient can accept a pending friend request. BLOCKED: either side can block;
+                    the blocked user no longer sees this friendship. To decline, cancel or unblock, use DELETE.
                     """)
     @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "Busena pakeista"),
-            @ApiResponse(responseCode = "400", description = "Neteisingas payload",
+            @ApiResponse(responseCode = "200", description = "Status changed"),
+            @ApiResponse(responseCode = "400", description = "Invalid request body",
                     content = @Content(schema = @Schema(implementation = ApiError.class))),
-            @ApiResponse(responseCode = "403", description = "Savo issiusta kvietima priima ne siuntejas",
+            @ApiResponse(responseCode = "403", description = "The sender cannot accept their own friend request",
                     content = @Content(schema = @Schema(implementation = ApiError.class))),
-            @ApiResponse(responseCode = "404", description = "Draugystes nera arba ji ne jusu",
+            @ApiResponse(responseCode = "404", description = "Friendship not found or not yours",
                     content = @Content(schema = @Schema(implementation = ApiError.class))),
-            @ApiResponse(responseCode = "422", description = "Negalimas busenos perejimas",
+            @ApiResponse(responseCode = "422", description = "Status transition not allowed",
                     content = @Content(schema = @Schema(implementation = ApiError.class)))
     })
     public FriendshipResponse update(@PathVariable Long friendshipId,
@@ -114,11 +114,11 @@ public class FriendController {
     }
 
     @DeleteMapping("/{friendshipId}")
-    @Operation(summary = "Atsaukti, atmesti, nutraukti arba atblokuoti",
-            description = "Bet kuri puse; uzblokuota draugyste istrina (atblokuoja) tik uzblokaves naudotojas.")
+    @Operation(summary = "Cancel, decline, unfriend or unblock",
+            description = "Either side; a blocked friendship can only be deleted (unblocked) by the user who blocked it.")
     @ApiResponses({
-            @ApiResponse(responseCode = "204", description = "Istrinta; atsakymas be turinio"),
-            @ApiResponse(responseCode = "404", description = "Draugystes nera arba ji ne jusu",
+            @ApiResponse(responseCode = "204", description = "Deleted; no response body"),
+            @ApiResponse(responseCode = "404", description = "Friendship not found or not yours",
                     content = @Content(schema = @Schema(implementation = ApiError.class)))
     })
     public ResponseEntity<Void> delete(@PathVariable Long friendshipId) {
@@ -127,13 +127,13 @@ public class FriendController {
     }
 
     @GetMapping("/{friendshipId}/sheet")
-    @Operation(summary = "Draugo veikejo kortele",
-            description = "Tik patvirtintai draugystei: PUBLIC pjuvis, sujungtas per visas draugo grupes.")
+    @Operation(summary = "Friend's character sheet",
+            description = "Accepted friendships only: the PUBLIC view, combined across all of the friend's guilds.")
     @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "Kortele grazinta"),
-            @ApiResponse(responseCode = "403", description = "Draugyste dar nepatvirtinta arba uzblokuota",
+            @ApiResponse(responseCode = "200", description = "Character sheet returned"),
+            @ApiResponse(responseCode = "403", description = "Friendship not accepted yet, or blocked",
                     content = @Content(schema = @Schema(implementation = ApiError.class))),
-            @ApiResponse(responseCode = "404", description = "Draugystes nera arba ji ne jusu",
+            @ApiResponse(responseCode = "404", description = "Friendship not found or not yours",
                     content = @Content(schema = @Schema(implementation = ApiError.class)))
     })
     public CharacterSheetResponse sheet(@PathVariable Long friendshipId) {

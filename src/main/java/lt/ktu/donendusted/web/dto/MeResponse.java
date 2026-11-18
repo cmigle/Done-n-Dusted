@@ -9,7 +9,7 @@ import lt.ktu.donendusted.domain.User;
 import lt.ktu.donendusted.domain.UserRole;
 
 /** Prisijunges naudotojas ir jo grupes - klientas is karto zino, kur jis DM, o kur zaidejas. */
-@Schema(name = "MeResponse", description = "Prisijunges naudotojas su narystemis")
+@Schema(name = "MeResponse", description = "Current user with guild memberships")
 public record MeResponse(
         @Schema(example = "2") Long id,
         @Schema(example = "rokas") String username,

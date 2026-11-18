@@ -9,7 +9,7 @@ import lt.ktu.donendusted.domain.QuestType;
 import lt.ktu.donendusted.domain.Stat;
 
 /** PATCH - dalinis atnaujinimas: visi laukai neprivalomi, neatsiustas (null) laukas nekeiciamas. */
-@Schema(name = "QuestUpdateRequest", description = "Dalinis uzduoties atnaujinimas - keiciami tik atsiusti laukai")
+@Schema(name = "QuestUpdateRequest", description = "Partial quest update: only the fields sent are changed")
 public record QuestUpdateRequest(
 
         @Schema(example = "Run 50 kilometers")
@@ -17,21 +17,21 @@ public record QuestUpdateRequest(
         @Size(min = 3, max = 120)
         String title,
 
-        @Schema(description = "Naujas aprasymas; nenurodzius nekeiciamas, \"\" isvalo",
-                example = "Kaupiamoji uzduotis - kiekvienas patvirtintas irasas priartina prie tikslo.")
+        @Schema(description = "New description; unchanged when omitted, \"\" clears it",
+                example = "A GRIND quest: every approved log entry brings you closer to the goal.")
         @Size(max = 1000)
         String description,
 
         @Schema(example = "CON")
         Stat stat,
 
-        @Schema(description = "Pakeitus i ne GRIND tipa, targetCount isvalomas", example = "GRIND")
+        @Schema(description = "Changing to a non-GRIND type clears targetCount", example = "GRIND")
         QuestType type,
 
         @Schema(example = "HARD")
         Difficulty difficulty,
 
-        @Schema(description = "Leidziamas tik GRIND tipo uzduociai", example = "50")
+        @Schema(description = "Allowed for GRIND quests only", example = "50")
         @Positive
         Integer targetCount,
 
