@@ -1,0 +1,129 @@
+/* ---------- Landing scene: pixel art coloured by theme tokens ---------- */
+.scene-day {
+  display: var(--scene-day);
+}
+.scene-night {
+  display: var(--scene-night);
+}
+
+.px-sun { fill: var(--sun); }
+.px-sun-2 { fill: var(--sun-2); }
+.px-moon { fill: var(--moon); }
+.px-moon-2 { fill: var(--moon-2); }
+.px-cloud { fill: var(--cloud); }
+.px-cloud-2 { fill: var(--cloud-2); }
+.px-star { fill: var(--star); }
+.px-grass { fill: var(--grass); }
+.px-grass-2 { fill: var(--grass-2); }
+.px-flower-1 { fill: var(--flower-1); }
+.px-flower-2 { fill: var(--flower-2); }
+.px-flower-3 { fill: var(--flower-3); }
+.px-fire-1 { fill: var(--fire-1); }
+.px-fire-2 { fill: var(--fire-2); }
+.px-fire-3 { fill: var(--fire-3); }
+.px-wood { fill: var(--wood); }
+
+/* Full-bleed sky behind the hero; .site-main clips the horizontal overflow */
+.scene {
+  position: absolute;
+  z-index: -1;
+  top: calc(-1 * var(--s4));
+  bottom: 0;
+  left: 50%;
+  width: 100vw;
+  transform: translateX(-50%);
+  overflow: hidden;
+  pointer-events: none;
+  /* Two flat bands, no blur: the lower one is the haze just above the grass */
+  background: linear-gradient(to bottom, var(--sky) calc(100% - 88px), var(--sky-2) calc(100% - 88px));
+}
+.scene svg {
+  position: absolute;
+  max-width: none;
+}
+.scene__orb {
+  top: var(--s3);
+  right: max(var(--s2), 6vw);
+}
+.scene__cloud {
+  left: 0;
+  animation: cloud-drift 150s linear infinite;
+}
+.scene__cloud--1 {
+  top: 40px;
+  animation-delay: -30s;
+}
+.scene__cloud--2 {
+  top: 96px;
+  animation-duration: 190s;
+  animation-delay: -120s;
+}
+.scene__cloud--3 {
+  top: 72px;
+  animation-duration: 170s;
+  animation-delay: -75s;
+}
+@keyframes cloud-drift {
+  from {
+    transform: translateX(-80px);
+  }
+  to {
+    transform: translateX(100vw);
+  }
+}
+.scene__star {
+  animation: twinkle 3.2s steps(2, end) infinite;
+}
+@keyframes twinkle {
+  50% {
+    opacity: 0.25;
+  }
+}
+.scene__fire {
+  left: max(var(--s2), 4vw);
+  bottom: 16px;
+}
+.flame {
+  opacity: 0;
+  animation: flame 540ms steps(1, end) infinite;
+}
+.flame--1 {
+  opacity: 1;
+}
+.flame--2 {
+  animation-delay: -180ms;
+}
+.flame--3 {
+  animation-delay: -360ms;
+}
+/* Each frame is visible for one third of the cycle */
+@keyframes flame {
+  0% {
+    opacity: 1;
+  }
+  33.33%,
+  100% {
+    opacity: 0;
+  }
+}
+.scene__ground {
+  position: absolute;
+  left: 0;
+  bottom: 0;
+}
+
+/* Grass strip shared by the scene and the footer */
+.grass {
+  display: block;
+  pointer-events: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .scene *,
+  .scene *::before {
+    animation: none !important;
+  }
+  .flame--1 {
+    opacity: 1;
+  }
+}
