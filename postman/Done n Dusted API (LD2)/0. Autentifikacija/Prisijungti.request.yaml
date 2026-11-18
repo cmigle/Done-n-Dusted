@@ -7,7 +7,7 @@ description: |-
 
   Testas iškoduoja JWT ir patikrina jo turinį. Abu žetonai išsaugomi kintamuosiuose.
 
-  README lentelės metodas **#17**.
+  docs/API.md lentelės metodas **#17**.
 url: "{{baseUrl}}/auth/login"
 method: POST
 headers:

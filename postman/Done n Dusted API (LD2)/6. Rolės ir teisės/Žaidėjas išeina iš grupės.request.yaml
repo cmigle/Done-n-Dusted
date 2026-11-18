@@ -2,7 +2,7 @@ $kind: http-request
 description: |-
   Narys gali pašalinti pats save (išeiti). Kitus narius šalina tik savininkas arba administratorius.
 
-  README lentelės metodas **#25**.
+  docs/API.md lentelės metodas **#25**.
 url: "{{baseUrl}}/guilds/{{guildA}}/members/{{playerId}}"
 method: DELETE
 auth:

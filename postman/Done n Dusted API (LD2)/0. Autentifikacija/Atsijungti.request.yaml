@@ -2,7 +2,7 @@ $kind: http-request
 description: |-
   Atšaukia refresh žetoną. Access žetonas galioja iki savo `exp` (serveris jų nesaugo), todėl jis trumpas — 15 min.
 
-  README lentelės metodas **#19**.
+  docs/API.md lentelės metodas **#19**.
 url: "{{baseUrl}}/auth/logout"
 method: POST
 headers:

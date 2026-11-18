@@ -2,7 +2,7 @@ $kind: http-request
 description: |-
   Ištrina progreso įrašą. Atsakymas yra `204 No Content` — atsakymas be turinio.
 
-  README lentelės metodas **#15**.
+  docs/API.md lentelės metodas **#15**.
 url: "{{baseUrl}}/guilds/{{guildA}}/quests/{{questId}}/logs/{{logId}}"
 method: DELETE
 scripts:

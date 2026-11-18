@@ -2,7 +2,7 @@ $kind: http-request
 description: |-
   Ištrina grupę A kartu su visu jos turiniu (`204 No Content`).
 
-  README lentelės metodas **#5**.
+  docs/API.md lentelės metodas **#5**.
 url: "{{baseUrl}}/guilds/{{guildA}}"
 method: DELETE
 scripts:

@@ -2,7 +2,7 @@ $kind: http-request
 description: |-
   Grąžina vieną užduotį per jos tėvinę grupę.
 
-  README lentelės metodas **#7**.
+  docs/API.md lentelės metodas **#7**.
 url: "{{baseUrl}}/guilds/{{guildA}}/quests/{{questId}}"
 method: GET
 scripts:

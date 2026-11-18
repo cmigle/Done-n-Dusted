@@ -4,7 +4,7 @@ description: |-
 
   Filtras `status` gali būti `PENDING`, `APPROVED` arba `REJECTED`. Čia ieškoma įrašų, kurie dar laukia peržiūros.
 
-  README lentelės metodas **#11**.
+  docs/API.md lentelės metodas **#11**.
 
   Siunčia grupės DM — jis mato visų žaidėjų įrašus. Žaidėjas matytų tik savo (žr. `6. Rolės ir teisės`).
 url: "{{baseUrl}}/guilds/{{guildA}}/quests/{{questId}}/logs?status=PENDING"

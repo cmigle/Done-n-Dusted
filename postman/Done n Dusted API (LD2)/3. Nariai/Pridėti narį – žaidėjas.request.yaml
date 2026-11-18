@@ -2,7 +2,7 @@ $kind: http-request
 description: |-
   Savininkas prideda naudotoją `jonas` kaip žaidėją. Naudotojas nurodomas vardu.
 
-  README lentelės metodas **#23**.
+  docs/API.md lentelės metodas **#23**.
 url: "{{baseUrl}}/guilds/{{guildA}}/members"
 method: POST
 headers:

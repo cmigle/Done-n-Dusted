@@ -7,7 +7,7 @@ description: |-
 
   Puslapiavimas atskirai parodomas dviejose kitose užklausose.
 
-  README lentelės metodas **#1**.
+  docs/API.md lentelės metodas **#1**.
 url: "{{baseUrl}}/guilds"
 method: GET
 scripts:

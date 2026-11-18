@@ -2,7 +2,7 @@ $kind: http-request
 description: |-
   Grąžina vieną grupę pagal ID.
 
-  README lentelės metodas **#2**.
+  docs/API.md lentelės metodas **#2**.
 url: "{{baseUrl}}/guilds/{{guildA}}"
 method: GET
 scripts:

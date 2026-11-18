@@ -4,7 +4,7 @@ description: |-
 
   `xpAwarded` nesiunčiamas, todėl serveris jį paima iš užduoties sudėtingumo (`LEGENDARY` = **80**). Užpildomi `reviewedAt` ir `reviewerId`. Peržiūros laukus keisti gali tik grupės DM.
 
-  README lentelės metodas **#14**.
+  docs/API.md lentelės metodas **#14**.
 url: "{{baseUrl}}/guilds/{{guildA}}/quests/{{questId}}/logs/{{logId}}"
 method: PATCH
 headers:

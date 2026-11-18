@@ -24,7 +24,7 @@ interneto; šaltinis `gynimas/ld2-gynimas.archify.md`.
 | Dokumentacija | OpenAPI `bearerAuth` schema, Swagger **Authorize**, `401` / `403` kiekviename metode |
 | Demonstracija | Postman: 78 užklausos, 176 patikros; curl — `visual/DEMO_KOMANDOS.txt` 0.5 ir 5 skyriai |
 
-Nauji API metodai: #16–#28 (README lentelės) — 5 autentifikacijos, 5 narių, 3 naudotojų valdymo.
+Nauji API metodai: #16–#28 (docs/API.md lentelės) — 5 autentifikacijos, 5 narių, 3 naudotojų valdymo.
 
 ---
 

@@ -2,7 +2,7 @@ $kind: http-request
 description: |-
   Grupės kūrėjas automatiškai tampa jos nariu su role `DUNGEON_MASTER`.
 
-  README lentelės metodas **#21**.
+  docs/API.md lentelės metodas **#21**.
 url: "{{baseUrl}}/guilds/{{guildA}}/members"
 method: GET
 scripts:

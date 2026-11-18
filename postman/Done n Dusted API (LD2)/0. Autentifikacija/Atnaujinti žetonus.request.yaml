@@ -2,7 +2,7 @@ $kind: http-request
 description: |-
   Kai access žetonas pasibaigia, klientas nauja pora gauna be slaptažodžio — už refresh žetoną. Senasis refresh žetonas atšaukiamas (rotacija) ir išsaugomas `oldRefreshToken` kitai patikrai.
 
-  README lentelės metodas **#18**.
+  docs/API.md lentelės metodas **#18**.
 url: "{{baseUrl}}/auth/refresh"
 method: POST
 headers:
