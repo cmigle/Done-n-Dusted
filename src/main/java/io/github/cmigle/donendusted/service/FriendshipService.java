@@ -1,0 +1,131 @@
+package io.github.cmigle.donendusted.service;
+
+import jakarta.persistence.criteria.Predicate;
+import java.time.Instant;
+import java.util.ArrayList;
+import java.util.List;
+import io.github.cmigle.donendusted.domain.Friendship;
+import io.github.cmigle.donendusted.domain.FriendshipStatus;
+import io.github.cmigle.donendusted.domain.User;
+import io.github.cmigle.donendusted.error.BusinessRuleException;
+import io.github.cmigle.donendusted.error.ConflictException;
+import io.github.cmigle.donendusted.error.ForbiddenException;
+import io.github.cmigle.donendusted.error.ResourceNotFoundException;
+import io.github.cmigle.donendusted.repository.FriendshipRepository;
+import io.github.cmigle.donendusted.repository.UserRepository;
+import io.github.cmigle.donendusted.security.CurrentUser;
+import io.github.cmigle.donendusted.web.dto.CharacterSheetResponse;
+import io.github.cmigle.donendusted.web.dto.FriendRequest;
+import io.github.cmigle.donendusted.web.dto.FriendshipUpdateRequest;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+/**
+ * Draugystes. Kvietima priima tik gavejas, uzblokuoti gali bet kuri puse. Naudotojas mato ir keicia tik savo
+ * draugystes - svetima arba ji uzblokavusio naudotojo eilute grazina 404, kad blokavimas nebutu atskleistas.
+ * Patvirtinta draugyste atveria draugo viesa veikejo kortele.
+ */
+@Service
+@Transactional
+public class FriendshipService {
+
+    private final FriendshipRepository friendships;
+    private final UserRepository users;
+    private final CharacterSheetService sheets;
+
+    public FriendshipService(FriendshipRepository friendships, UserRepository users, CharacterSheetService sheets) {
+        this.friendships = friendships;
+        this.users = users;
+        this.sheets = sheets;
+    }
+
+    /** Savo draugystes ir kvietimai abiem kryptimis; uzblokuotajam BLOCKED eilute nerodoma. */
+    @Transactional(readOnly = true)
+    public Page<Friendship> list(FriendshipStatus status, Pageable pageable) {
+        Long me = CurrentUser.get().id();
+        Specification<Friendship> spec = (root, query, cb) -> {
+            List<Predicate> predicates = new ArrayList<>();
+            predicates.add(cb.or(
+                    cb.equal(root.get("requester").get("id"), me),
+                    cb.and(cb.equal(root.get("addressee").get("id"), me),
+                            cb.notEqual(root.get("status"), FriendshipStatus.BLOCKED))));
+            if (status != null) {
+                predicates.add(cb.equal(root.get("status"), status));
+            }
+            return cb.and(predicates.toArray(Predicate[]::new));
+        };
+        return friendships.findAll(spec, pageable);
+    }
+
+    @Transactional(readOnly = true)
+    public Friendship get(Long id) {
+        return find(id, CurrentUser.get().id());
+    }
+
+    public Friendship request(FriendRequest request) {
+        Long me = CurrentUser.get().id();
+        // Kaip ir pridedant nari: naudotojas nurodomas body, todel jo nebuvimas - turinio klaida (422), ne 404.
+        User addressee = users.findByUsernameIgnoreCase(request.username())
+                .orElseThrow(() -> new BusinessRuleException("User \"" + request.username() + "\" not found"));
+        if (addressee.getId().equals(me)) {
+            throw new BusinessRuleException("You cannot send a friend request to yourself.");
+        }
+        // Bet kokia esama pora, ir BLOCKED, - tas pats 409: neatskleidziame, kad kitas naudotojas uzblokavo.
+        if (friendships.existsBetween(me, addressee.getId())) {
+            throw new ConflictException("A friendship or friend request with \"" + addressee.getUsername() + "\" already exists.");
+        }
+        return friendships.save(new Friendship(users.getReferenceById(me), addressee));
+    }
+
+    public Friendship update(Long id, FriendshipUpdateRequest request) {
+        Long me = CurrentUser.get().id();
+        Friendship friendship = find(id, me);
+        switch (request.status()) {
+            case ACCEPTED -> {
+                if (friendship.getStatus() != FriendshipStatus.PENDING) {
+                    throw new BusinessRuleException("Only a pending friend request can be accepted. This one is already "
+                            + friendship.getStatus() + ".");
+                }
+                if (!friendship.isAddressee(me)) {
+                    throw new ForbiddenException("Only the recipient can accept a friend request.");
+                }
+                friendship.accept(Instant.now());
+            }
+            case BLOCKED -> {
+                // find() BLOCKED eilute grazina tik uzblokavusiajam - antra karta blokuoti nera ko.
+                if (friendship.getStatus() == FriendshipStatus.BLOCKED) {
+                    throw new BusinessRuleException("User is already blocked.");
+                }
+                friendship.block(me, Instant.now());
+            }
+            case PENDING -> throw new BusinessRuleException(
+                    "Status can only be changed to ACCEPTED or BLOCKED. Use DELETE to cancel or decline a friend request.");
+        }
+        return friendship;
+    }
+
+    /** Atsaukti ar atmesti kvietima, nutraukti draugyste arba (uzblokavusiajam) atblokuoti - eilute istrinama. */
+    public void delete(Long id) {
+        friendships.delete(find(id, CurrentUser.get().id()));
+    }
+
+    /** Draugo viesa kortele, sujungta per visas jo grupes. Tik patvirtintai draugystei. */
+    @Transactional(readOnly = true)
+    public CharacterSheetResponse friendSheet(Long id) {
+        Long me = CurrentUser.get().id();
+        Friendship friendship = find(id, me);
+        if (friendship.getStatus() != FriendshipStatus.ACCEPTED) {
+            throw new ForbiddenException("Only accepted friends can see the character sheet.");
+        }
+        return sheets.publicSheet(friendship.other(me));
+    }
+
+    private Friendship find(Long id, Long me) {
+        return friendships.findWithUsersById(id)
+                .filter(friendship -> friendship.isVisibleTo(me))
+                .orElseThrow(() -> new ResourceNotFoundException("Friendship " + id + " not found"));
+    }
+}
