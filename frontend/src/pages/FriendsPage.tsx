@@ -7,6 +7,7 @@ import { CharacterSheetView } from '../components/CharacterSheetView'
 import { useToast } from '../components/toast'
 import { Empty, ErrorNote, Field, Loading, Modal, PixelAvatar, Window } from '../components/ui'
 import { formatDate } from '../lib/game'
+import { useTitle } from '../lib/useTitle'
 
 export function FriendsPage() {
   const queryClient = useQueryClient()
@@ -14,6 +15,7 @@ export function FriendsPage() {
   const [username, setUsername] = useState('')
   const [error, setError] = useState<string>()
   const [viewing, setViewing] = useState<Friendship | null>(null)
+  useTitle('Draugai')
   const all = useQuery({ queryKey: ['friends', 'all'], queryFn: () => friends.list() })
 
   const refresh = () => queryClient.invalidateQueries({ queryKey: ['friends'] })

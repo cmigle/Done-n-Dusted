@@ -6,6 +6,7 @@ import { auth } from '../api/endpoints'
 import { useAuth } from '../auth/AuthContext'
 import { useToast } from '../components/toast'
 import { Field, Window } from '../components/ui'
+import { useTitle } from '../lib/useTitle'
 
 export function LoginPage() {
   const { login } = useAuth()
@@ -14,6 +15,7 @@ export function LoginPage() {
   const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
   const [showPassword, setShowPassword] = useState(false)
+  useTitle('Prisijungimas')
   const [error, setError] = useState<string>()
   const [busy, setBusy] = useState(false)
 
@@ -36,7 +38,7 @@ export function LoginPage() {
     <div className="auth">
       <Window title="Prisijungti" icon={<LoginIcon size={24} aria-hidden="true" />}>
         <form className="form" onSubmit={submit} noValidate>
-          <Field label="Vardas">
+          <Field label="Naudotojo vardas">
             {(p) => (
               <input
                 {...p}
@@ -71,10 +73,23 @@ export function LoginPage() {
             </button>
           </div>
         </form>
-        <p className="muted auth__hint">
-          Demonstraciniai naudotojai: <code>rokas</code> (DM), <code>jonas</code> (žaidėjas), <code>ieva</code> –
-          slaptažodis <code>Demo123!</code>. Neturi paskyros? <Link to="/registracija">Registruokis</Link>.
-        </p>
+        <div className="muted auth__hint">
+          <p>Demonstraciniai naudotojai:</p>
+          <ul className="demo-users">
+            <li>
+              <code>rokas</code> / <code>Demo123!</code> – žaidimo vedėjas ir grupės savininkas
+            </li>
+            <li>
+              <code>jonas</code> / <code>Demo123!</code> – žaidėjas
+            </li>
+            <li>
+              <code>ieva</code> / <code>Demo123!</code> – žaidimo vedėja vienoje grupėje, žaidėja kitose
+            </li>
+          </ul>
+          <p>
+            Neturi paskyros? <Link to="/registracija">Registruokis</Link>.
+          </p>
+        </div>
       </Window>
     </div>
   )
@@ -88,12 +103,13 @@ export function RegisterPage() {
   const [password, setPassword] = useState('')
   const [repeat, setRepeat] = useState('')
   const [errors, setErrors] = useState<Record<string, string>>({})
+  useTitle('Registracija')
   const [busy, setBusy] = useState(false)
 
   async function submit(e: FormEvent) {
     e.preventDefault()
     const local: Record<string, string> = {}
-    if (!/^[A-Za-z0-9_.-]{3,30}$/.test(username)) local.username = '3–30 simbolių: raidės, skaičiai, _ . -'
+    if (!/^[A-Za-z0-9_.-]{3,30}$/.test(username)) local.username = '3–30 simbolių: raidės, skaitmenys, _ . -'
     if (password.length < 8) local.password = 'Bent 8 simboliai'
     if (password !== repeat) local.repeat = 'Slaptažodžiai nesutampa'
     setErrors(local)
@@ -103,7 +119,7 @@ export function RegisterPage() {
     try {
       await auth.register(username, password)
       await login(username, password)
-      toast('success', `Sveikas atvykęs, ${username}!`)
+      toast('success', `Sveiki atvykę, ${username}!`)
       navigate('/taverna', { replace: true })
     } catch (err) {
       if (err instanceof ApiError) {
@@ -122,7 +138,7 @@ export function RegisterPage() {
     <div className="auth">
       <Window title="Sukurti veikėją" icon={<UserPlus size={24} aria-hidden="true" />}>
         <form className="form" onSubmit={submit} noValidate>
-          <Field label="Vardas" hint="3–30 simbolių: raidės, skaičiai, _ . -" error={errors.username || undefined}>
+          <Field label="Naudotojo vardas" hint="3–30 simbolių: raidės, skaitmenys, _ . -" error={errors.username || undefined}>
             {(p) => (
               <input
                 {...p}

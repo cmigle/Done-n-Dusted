@@ -139,7 +139,7 @@ export function RequireAuth({ admin = false }: { admin?: boolean }) {
   if (status === 'loading') {
     return (
       <div className="empty">
-        <Spinner label="Atkuriama sesija" />
+        <Spinner label="Atkuriamas prisijungimas" />
       </div>
     )
   }
