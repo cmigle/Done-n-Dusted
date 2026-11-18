@@ -12,3 +12,6 @@ target/
 *.log
 
 node_modules/
+
+# React sasaja supakuojama i jar tik diegiant (deploy workflow)
+src/main/resources/static/
