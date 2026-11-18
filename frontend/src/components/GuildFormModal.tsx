@@ -32,7 +32,7 @@ export function GuildFormModal({
     onSuccess: async (saved) => {
       await queryClient.invalidateQueries({ queryKey: ['guilds'] })
       await reloadUser() // nauja naryste (savininkas tampa DM) matosi /me
-      toast('success', guild ? 'Grupė atnaujinta' : `Grupė „${saved.name}“ įkurta – tu jos DM`)
+      toast('success', guild ? 'Grupė atnaujinta' : `Grupė „${saved.name}“ įkurta – tu esi jos žaidimo vedėjas`)
       onSaved?.(saved)
       onClose()
     },

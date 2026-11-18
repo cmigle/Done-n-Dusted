@@ -3,7 +3,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { ApiError } from '../api/client'
 import { logs } from '../api/endpoints'
 import type { LogEntry, LogStatus, Quest } from '../api/types'
-import { DIFFICULTY_INFO, formatDateTime } from '../lib/game'
+import { DIFFICULTY_INFO, formatDateTime, pt } from '../lib/game'
 import { useToast } from './toast'
 import { Field, Modal } from './ui'
 
@@ -39,7 +39,7 @@ export function ReviewModal({
       }),
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: ['logs', guildId] })
-      toast('success', status === 'APPROVED' ? `${authorName} gauna ${xp} XP` : 'Įrašas atmestas')
+      toast('success', status === 'APPROVED' ? `${authorName} gauna ${pt(xp)}` : 'Įrašas atmestas')
       onClose()
     },
     onError: (err) => setError(err instanceof ApiError ? err.message : 'Nepavyko išsaugoti'),
@@ -80,7 +80,7 @@ export function ReviewModal({
         </fieldset>
         {status === 'APPROVED' && (
           <div className="form__row form__row--2">
-            <Field label={`Patirtis: ${xp} XP`} hint={`Pagal sunkumą – ${baseXp} XP`}>
+            <Field label={`Patirtis: ${pt(xp)}`} hint={`Pagal sunkumą – ${pt(baseXp)}`}>
               {(p) => (
                 <input
                   {...p}
@@ -118,7 +118,7 @@ export function ReviewModal({
             Atšaukti
           </button>
           <button className={`btn ${status === 'REJECTED' ? 'btn--danger' : 'btn--success'}`} disabled={review.isPending}>
-            {status === 'APPROVED' ? `Patvirtinti ir skirti ${xp} XP` : 'Atmesti įrašą'}
+            {status === 'APPROVED' ? `Patvirtinti ir skirti ${pt(xp)}` : 'Atmesti įrašą'}
           </button>
         </div>
       </form>

@@ -24,7 +24,7 @@ for (const width of [360, 768, 1280]) {
     await page.screenshot({ path: `${out}/menu-${width}.png` })
   }
   await page.goto(`${base}/prisijungti`)
-  await page.getByLabel('Vardas').fill('rokas')
+  await page.getByLabel('Naudotojo vardas').fill('rokas')
   await page.getByLabel('Slaptažodis', { exact: true }).fill('Demo123!')
   await page.getByRole('button', { name: 'Prisijungti' }).click()
   await page.waitForURL('**/taverna')

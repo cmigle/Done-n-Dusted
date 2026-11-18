@@ -10,6 +10,7 @@ import {
   QUEST_TYPE_INFO,
   STATS,
   STAT_INFO,
+  pt,
 } from '../lib/game'
 import { useToast } from './toast'
 import { Field, Modal } from './ui'
@@ -83,13 +84,13 @@ export function QuestFormModal({
               <select {...p} className="select" value={stat} onChange={(e) => setStat(e.target.value as Stat)}>
                 {STATS.map((s) => (
                   <option key={s} value={s}>
-                    {STAT_INFO[s].name} ({s})
+                    {STAT_INFO[s].name} ({STAT_INFO[s].abbr})
                   </option>
                 ))}
               </select>
             )}
           </Field>
-          <Field label="Tipas" hint={type === 'SIDE_QUEST' && !isDm ? 'Šalutinę užduotį skiria tik DM' : QUEST_TYPE_INFO[type].hint}>
+          <Field label="Tipas" hint={type === 'SIDE_QUEST' && !isDm ? 'Šalutinę užduotį skiria tik žaidimo vedėjas' : QUEST_TYPE_INFO[type].hint}>
             {(p) => (
               <select {...p} className="select" value={type} onChange={(e) => setType(e.target.value as QuestType)}>
                 {QUEST_TYPES.map((t) => (
@@ -106,7 +107,7 @@ export function QuestFormModal({
           {DIFFICULTIES.map((d) => (
             <label key={d} className="choice">
               <input type="radio" name="difficulty" value={d} checked={difficulty === d} onChange={() => setDifficulty(d)} />
-              {DIFFICULTY_INFO[d].name} <span className="muted">({DIFFICULTY_INFO[d].xp} XP)</span>
+              {DIFFICULTY_INFO[d].name} <span className="muted">({pt(DIFFICULTY_INFO[d].xp)})</span>
             </label>
           ))}
         </fieldset>

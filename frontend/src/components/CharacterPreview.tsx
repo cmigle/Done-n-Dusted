@@ -1,5 +1,5 @@
 import type { Stat } from '../api/types'
-import { STATS, STAT_INFO } from '../lib/game'
+import { STATS, STAT_INFO, pt } from '../lib/game'
 import { StatIcon } from './StatIcon'
 import { Bar, PixelAvatar } from './ui'
 
@@ -16,12 +16,12 @@ export function CharacterPreview() {
           <p className="muted">Žaidėja grupėje „Geležinė priesaika“</p>
         </div>
         <span className="level-badge" aria-label="Lygis 4">
-          <span aria-hidden="true">Lv</span> 4
+          <span aria-hidden="true">lygis</span> 4
         </span>
       </div>
-      <Bar value={65} max={100} label="Patirtis: 65 iš 100 iki 5 lygio" animate />
+      <Bar value={65} max={100} label="Patirties taškai: 65 iš 100 iki 5 lygio" animate />
       <p className="preview__xp">
-        <span className="xp-number">65 / 100 XP</span> iki 5 lygio
+        <span className="xp-number">65 / {pt(100)}</span> iki 5 lygio
       </p>
       <ul className="stats stats--compact">
         {STATS.map((stat) => (
@@ -38,7 +38,7 @@ export function CharacterPreview() {
       <figcaption className="preview__log">
         <span className="preview__log-label">Paskutinis žygis</span>
         <span>
-          Nubėgau 5 km palei upę → <span className="xp-number">+20 XP</span>{' '}
+          Nubėgau 5 km palei upę → <span className="xp-number">+{pt(20)}</span>{' '}
           <span style={{ color: STAT_INFO.CON.color }}>Ištvermė</span>
         </span>
       </figcaption>

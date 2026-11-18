@@ -1,7 +1,9 @@
 import { Link } from 'react-router'
 import { Window } from '../components/ui'
+import { useTitle } from '../lib/useTitle'
 
 export function NotFoundPage() {
+  useTitle('Puslapis nerastas')
   return (
     <div className="auth">
       <Window>

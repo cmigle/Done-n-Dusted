@@ -152,6 +152,16 @@
   margin: var(--s2) 0 0;
   font-size: var(--fs-sm);
 }
+.auth__hint p {
+  margin: 0 0 4px;
+}
+.demo-users {
+  margin: 4px 0 var(--s1);
+  padding-left: 1.25em;
+}
+.demo-users li + li {
+  margin-top: 2px;
+}
 code {
   font-family: inherit;
   color: var(--gold);

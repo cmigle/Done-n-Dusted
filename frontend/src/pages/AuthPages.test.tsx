@@ -30,7 +30,7 @@ describe('LoginPage', () => {
       ),
     )
     renderPage(<LoginPage />)
-    await userEvent.type(screen.getByLabelText('Vardas'), 'jonas')
+    await userEvent.type(screen.getByLabelText('Naudotojo vardas'), 'jonas')
     await userEvent.type(screen.getByLabelText('Slaptažodis'), 'blogas')
     await userEvent.click(screen.getByRole('button', { name: 'Prisijungti' }))
     expect(await screen.findByRole('alert')).toHaveTextContent('Neteisingas naudotojo vardas arba slaptazodis')
@@ -42,7 +42,7 @@ describe('RegisterPage', () => {
     const fetchMock = vi.fn()
     vi.stubGlobal('fetch', fetchMock)
     renderPage(<RegisterPage />)
-    await userEvent.type(screen.getByLabelText('Vardas'), 'ab')
+    await userEvent.type(screen.getByLabelText('Naudotojo vardas'), 'ab')
     await userEvent.type(screen.getByLabelText('Slaptažodis'), 'Demo123!')
     await userEvent.type(screen.getByLabelText('Pakartok slaptažodį'), 'Kitas123!')
     await userEvent.click(screen.getByRole('button', { name: 'Sukurti veikėją' }))

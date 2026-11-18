@@ -7,6 +7,7 @@ import { useAuth } from '../auth/AuthContext'
 import { useToast } from '../components/toast'
 import { ErrorNote, Field, Loading, PixelAvatar, Window } from '../components/ui'
 import { USER_ROLE_INFO, formatDate } from '../lib/game'
+import { useTitle } from '../lib/useTitle'
 
 export function AdminUsersPage() {
   const { user } = useAuth()
@@ -14,6 +15,7 @@ export function AdminUsersPage() {
   const toast = useToast()
   const [search, setSearch] = useState('')
   const [page, setPage] = useState(0)
+  useTitle('Administravimas')
   const list = useQuery({
     queryKey: ['users', search, page],
     queryFn: () => users.list({ username: search || undefined, page }),

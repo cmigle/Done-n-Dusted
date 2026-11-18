@@ -3,6 +3,7 @@ import { useQuery } from '@tanstack/react-query'
 import { guilds, members } from '../api/endpoints'
 import { CharacterSheetView } from '../components/CharacterSheetView'
 import { ErrorNote, Loading, Window } from '../components/ui'
+import { useTitle } from '../lib/useTitle'
 
 export function SheetPage() {
   const params = useParams()
@@ -10,10 +11,11 @@ export function SheetPage() {
   const userId = Number(params.userId)
   const guild = useQuery({ queryKey: ['guilds', guildId], queryFn: () => guilds.get(guildId) })
   const sheet = useQuery({ queryKey: ['sheet', guildId, userId], queryFn: () => members.sheet(guildId, userId) })
+  useTitle(sheet.data ? `${sheet.data.username} – veikėjo kortelė` : 'Veikėjo kortelė')
 
   return (
     <>
-      <nav aria-label="Kelias" className="crumbs">
+      <nav aria-label="Naršymo kelias" className="crumbs">
         <Link to="/taverna">Taverna</Link> / <Link to={`/grupes/${guildId}?skirtukas=nariai`}>{guild.data?.name ?? 'Grupė'}</Link> /{' '}
         <span aria-current="page">Veikėjo kortelė</span>
       </nav>
