@@ -3,12 +3,12 @@ import type { Difficulty, GuildRole, LogStatus, QuestType, Stat, UserRole } from
 export const STATS: Stat[] = ['STR', 'DEX', 'CON', 'INT', 'WIS', 'CHA']
 
 export const STAT_INFO: Record<Stat, { name: string; hint: string; color: string }> = {
-  STR: { name: 'Jėga', hint: 'sportas, fizinis darbas', color: 'var(--ruby)' },
-  DEX: { name: 'Vikrumas', hint: 'judėjimas, rankdarbiai', color: 'var(--leaf)' },
-  CON: { name: 'Ištvermė', hint: 'įpročiai, sveikata', color: 'var(--ember)' },
-  INT: { name: 'Intelektas', hint: 'mokslai, darbas', color: 'var(--sky)' },
-  WIS: { name: 'Išmintis', hint: 'skaitymas, refleksija', color: 'var(--aqua)' },
-  CHA: { name: 'Charizma', hint: 'žmonės, bendravimas', color: 'var(--gold)' },
+  STR: { name: 'Jėga', hint: 'sportas, fizinis darbas', color: 'var(--stat-str)' },
+  DEX: { name: 'Vikrumas', hint: 'judėjimas, rankdarbiai', color: 'var(--stat-dex)' },
+  CON: { name: 'Ištvermė', hint: 'įpročiai, sveikata', color: 'var(--stat-con)' },
+  INT: { name: 'Intelektas', hint: 'mokslai, darbas', color: 'var(--stat-int)' },
+  WIS: { name: 'Išmintis', hint: 'skaitymas, refleksija', color: 'var(--stat-wis)' },
+  CHA: { name: 'Charizma', hint: 'žmonės, bendravimas', color: 'var(--stat-cha)' },
 }
 
 export const DIFFICULTIES: Difficulty[] = ['TRIVIAL', 'EASY', 'MEDIUM', 'HARD', 'LEGENDARY']

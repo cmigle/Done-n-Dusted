@@ -14,7 +14,10 @@
 .grid {
   display: grid;
   gap: var(--s3);
-  grid-template-columns: 1fr;
+  grid-template-columns: minmax(0, 1fr);
+}
+.grid > * {
+  min-width: 0;
 }
 @media (min-width: 768px) {
   .grid--2 {
@@ -71,14 +74,15 @@
   display: inline-flex;
   align-items: center;
   gap: var(--s1);
-  color: var(--gold);
+  color: var(--frost);
+  font-family: var(--font-display);
   font-size: var(--fs-md);
   font-weight: 700;
   text-decoration: none;
   text-shadow: 3px 3px 0 var(--midnight);
 }
 .brand:hover {
-  color: var(--lime);
+  color: var(--gold);
 }
 .brand img {
   width: 40px;
@@ -116,9 +120,9 @@
   border-color: var(--steel);
 }
 .nav__link.active {
-  background: var(--gold);
-  border-color: var(--gold);
-  color: var(--midnight);
+  background: var(--slate);
+  border-color: var(--frost);
+  color: var(--frost);
 }
 
 .header-user {
@@ -143,8 +147,19 @@
     display: inline-flex;
     margin-left: auto;
   }
+  /* Atidarius meniu - turinys po juo pritemdomas, kad meniu neplaukiotu virs H1 */
+  .nav-backdrop {
+    position: fixed;
+    inset: var(--header-h) 0 0 0;
+    z-index: 15;
+    background: rgb(26 28 44 / 80%);
+    border: 0;
+    padding: 0;
+    animation: fade-in var(--speed) var(--ease);
+  }
   .nav {
     position: absolute;
+    z-index: 16; /* virs .nav-backdrop */
     left: 0;
     right: 0;
     top: 100%;
@@ -173,6 +188,20 @@
   }
 }
 
+.nav-backdrop {
+  display: none;
+}
+@media (max-width: 767px) {
+  .nav-backdrop {
+    display: block;
+  }
+}
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+}
+
 /* ---------- Content ---------- */
 .site-main {
   flex: 1;
@@ -182,20 +211,20 @@
   margin-bottom: var(--s4);
 }
 .page-head h1 {
-  text-shadow: 4px 4px 0 var(--shadow);
+  text-shadow: 3px 3px 0 var(--ruby);
 }
 .page-head p {
   color: var(--text-muted);
 }
 
-/* ---------- Footer: zole ir zeme ---------- */
+/* ---------- Footer: tamsi juosta su zoles skirtuku virsuje ---------- */
 .site-footer {
   position: relative;
   margin-top: auto;
   color: var(--frost);
-  background: var(--teal);
-  border-top: 8px solid var(--leaf);
-  padding: var(--s4) 0 var(--s3);
+  background: var(--night);
+  border-top: var(--px) solid var(--leaf);
+  padding: var(--s3) 0;
   font-size: var(--fs-sm);
 }
 .site-footer::before {
@@ -204,7 +233,7 @@
   position: absolute;
   left: 0;
   right: 0;
-  top: -16px;
+  top: -12px;
   height: 8px;
   background: repeating-linear-gradient(
     90deg,
@@ -214,48 +243,37 @@
     transparent 28px 40px
   );
 }
-.site-footer__grid {
-  display: grid;
-  gap: var(--s2);
+.site-footer__bar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--s1) var(--s3);
+  align-items: center;
+  justify-content: space-between;
 }
-@media (min-width: 768px) {
-  .site-footer__grid {
-    grid-template-columns: 2fr 1fr 1fr;
-    align-items: start;
-  }
+.site-footer__legal {
+  margin: 0;
+  max-width: none;
 }
-.site-footer h2 {
-  font-size: var(--fs-base);
-  color: var(--lime);
-  margin-bottom: var(--s1);
-}
-.site-footer ul {
+.site-footer__links {
   list-style: none;
   margin: 0;
   padding: 0;
-}
-.site-footer li + li {
-  margin-top: 4px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--s1) var(--s3);
 }
 .site-footer a {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
   color: var(--frost);
-  text-decoration: underline dotted var(--lime);
+  text-decoration: underline dotted var(--leaf);
+  text-underline-offset: 4px;
 }
 .site-footer a:hover {
   color: var(--lime);
 }
-.site-footer p {
-  margin: 0;
-  color: var(--frost);
-}
 /* Pixelify Sans neturi aiskaus (c) zenklo - jis is sistemos srifto */
 .legal-sign {
   font-family: system-ui, sans-serif;
-}
-.site-footer__legal {
-  max-width: none;
-  margin-top: var(--s3);
-  padding-top: var(--s2);
-  border-top: 2px dashed var(--leaf);
-  color: var(--frost); /* steel ant teal per mazas kontrastas */
 }

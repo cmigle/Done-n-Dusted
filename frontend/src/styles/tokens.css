@@ -33,8 +33,23 @@
   --info: var(--sky);
   --focus: var(--gold);
 
-  /* Tipografija: viena seima, skale 1.25 */
-  --font: 'Pixelify Sans', 'Courier New', monospace;
+  /* 60/30/10: fonas - midnight, pavirsiai - shadow su viena slate krastine, auksas - tik CTA ir XP */
+  --surface: var(--shadow);
+  --surface-sunken: var(--midnight);
+  --border: var(--slate);
+  --night: #12131f; /* footer - tamsesnis uz puslapio fona */
+
+  /* Charakteristiku spalvos - vienodos visame saite */
+  --stat-str: var(--ruby);
+  --stat-dex: var(--lime);
+  --stat-con: var(--ember);
+  --stat-int: var(--sky);
+  --stat-wis: var(--aqua);
+  --stat-cha: #f08fb0;
+
+  /* Tipografija: pikselinis sriftas tik logotipui ir H1/H2, tekstui ir skaiciams - IBM Plex Mono */
+  --font-display: 'Pixelify Sans', 'IBM Plex Mono', monospace;
+  --font: 'IBM Plex Mono', ui-monospace, 'Cascadia Mono', 'Courier New', monospace;
   --fs-sm: 0.8rem;
   --fs-base: 1rem;
   --fs-md: 1.25rem;

@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { Link, NavLink, Navigate, Outlet, useLocation } from 'react-router'
-import { Close, Home, Login, Logout, Menu, Shield, UserPlus, Users } from '@nsmr/pixelart-react'
+import { BookOpen, Close, Github, Home, Login, Logout, Menu, Shield, UserPlus, Users } from '@nsmr/pixelart-react'
 import { API_DOCS_URL } from '../api/client'
 import { useAuth } from '../auth/AuthContext'
 import { PixelAvatar, Spinner } from './ui'
@@ -16,6 +16,7 @@ function Header() {
 
   return (
     <header className="site-header">
+      {open && <div className="nav-backdrop" aria-hidden="true" onClick={() => setOpenOn(null)} />}
       <div className="container site-header__bar">
         <Link to={user ? '/taverna' : '/'} className="brand">
           <img src="/logo.svg" alt="" width={40} height={40} />
@@ -93,35 +94,22 @@ const YEAR = new Date().getFullYear()
 function Footer() {
   return (
     <footer className="site-footer">
-      <div className="container">
-        <div className="site-footer__grid">
-          <div>
-            <h2>Done n Dusted</h2>
-            <p>Realūs žygiai tarp sesijų – patvirtina tavo grupės Dungeon Master.</p>
-          </div>
-          <div>
-            <h2>Projektas</h2>
-            <ul>
-              <li>
-                <a href="https://github.com/cmigle/Done-n-Dusted" target="_blank" rel="noreferrer">
-                  GitHub
-                </a>
-              </li>
-              <li>
-                <a href={API_DOCS_URL}>
-                  API dokumentacija
-                </a>
-              </li>
-            </ul>
-          </div>
-          <div>
-            <h2>Kursas</h2>
-            <p>KTU T120B165 Saityno taikomųjų programų projektavimas</p>
-          </div>
-        </div>
+      <div className="container site-footer__bar">
         <p className="site-footer__legal">
-          <span className="legal-sign" aria-hidden="true">©</span> {YEAR} Miglė Cirtautaitė
+          KTU T120B165 · <span className="legal-sign">©</span> {YEAR} Miglė Cirtautaitė
         </p>
+        <ul className="site-footer__links">
+          <li>
+            <a href="https://github.com/cmigle/Done-n-Dusted" target="_blank" rel="noreferrer">
+              <Github size={18} aria-hidden="true" /> GitHub
+            </a>
+          </li>
+          <li>
+            <a href={API_DOCS_URL}>
+              <BookOpen size={18} aria-hidden="true" /> API dokumentacija
+            </a>
+          </li>
+        </ul>
       </div>
     </footer>
   )

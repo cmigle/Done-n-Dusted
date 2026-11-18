@@ -26,7 +26,7 @@ demo accounts `rokas` (DM), `jonas` (player), `ieva` (password `Demo123!`); the 
 - **Character sheet**: level, XP progress, six stats, inspiration and streak; full view for the player and DM, public view for others
 - **Friendships**: requests, accept, block; friends see each other's public sheet across guilds
 - **Auth**: short-lived JWT access tokens, rotating refresh tokens with reuse detection, BCrypt passwords
-- **Pixel UI**: Sweetie-16 palette, Pixelify Sans, SVG pixel icons, procedurally generated 8×8 avatars, responsive layout with a 768 px breakpoint and a hamburger menu
+- **Pixel UI**: Sweetie-16 palette with a 60/30/10 rule and one colour per stat, Pixelify Sans headings with IBM Plex Mono text (readable numbers), SVG pixel icons, procedurally generated 8×8 avatars, responsive layout with a 768 px breakpoint and a hamburger menu
 
 ## Tech stack
 

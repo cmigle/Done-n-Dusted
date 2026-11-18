@@ -1,27 +1,91 @@
 /* ---------- Landing ---------- */
 .hero {
   display: grid;
+  /* minmax(0, ...) - stulpelis nesiplecia pagal ilgiausia zodi ir neislenda uz ekrano */
+  grid-template-columns: minmax(0, 1fr);
   gap: var(--s4);
   align-items: center;
 }
 @media (min-width: 768px) {
   .hero {
-    grid-template-columns: 5fr 7fr;
+    grid-template-columns: minmax(0, 6fr) minmax(0, 5fr);
   }
 }
 .hero__text h1 {
-  font-size: var(--fs-2xl);
-  color: var(--gold);
-  text-shadow: 4px 4px 0 var(--plum);
+  color: var(--frost);
+  text-shadow: 3px 3px 0 var(--ruby);
 }
 .hero__text p {
-  font-size: var(--fs-md);
+  font-size: 1.0625rem;
+  max-width: 52ch;
 }
-.hero__art {
+.hero__actions {
+  display: grid;
+  gap: var(--s2);
+}
+@media (min-width: 480px) {
+  .hero__actions {
+    grid-template-columns: repeat(2, minmax(0, max-content));
+  }
+}
+.hero__actions .btn {
   width: 100%;
-  border: var(--px) solid var(--frost);
-  box-shadow: 8px 8px 0 var(--shadow);
-  background: var(--midnight);
+}
+.preview {
+  display: grid;
+  gap: 12px;
+  margin: 0;
+}
+.preview__head {
+  display: flex;
+  align-items: center;
+  gap: var(--s2);
+}
+.preview__who {
+  flex: 1;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.preview__who p {
+  margin: 0;
+}
+.preview__name {
+  font-family: var(--font-display);
+  font-size: var(--fs-lg);
+  font-weight: 700;
+  line-height: 1.1;
+}
+.preview__xp {
+  margin: 0;
+  font-size: var(--fs-sm);
+  color: var(--text-muted);
+}
+.preview__log {
+  display: grid;
+  gap: 4px;
+  padding: 12px;
+  background: var(--surface-sunken);
+  border-left: var(--px) solid var(--stat-con);
+  font-size: var(--fs-sm);
+}
+.preview__log-label {
+  color: var(--text-muted);
+}
+.xp-number {
+  color: var(--gold);
+  font-weight: 700;
+}
+.stats--compact {
+  gap: 6px;
+  margin: 0;
+}
+.stats--compact .stat {
+  grid-template-columns: 24px 7.5rem 2rem 1fr;
+  grid-template-areas: 'icon name score bar';
+}
+.stats--compact .bar {
+  height: 14px;
+  border-width: 2px;
 }
 .steps {
   list-style: none;
@@ -30,6 +94,53 @@
 }
 .steps .window p {
   margin: 0;
+}
+.step__title {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: var(--fs-md);
+}
+.step__title svg {
+  flex: none;
+}
+.link-button {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--s1);
+  margin-top: var(--s3);
+  padding: 6px 0;
+  font: inherit;
+  font-weight: 600;
+  color: var(--sky);
+  background: none;
+  border: 0;
+  cursor: pointer;
+  text-decoration: underline;
+  text-decoration-thickness: 2px;
+  text-underline-offset: 4px;
+}
+.link-button:hover {
+  color: var(--aqua);
+}
+.banner {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--s3);
+  align-items: center;
+}
+@media (min-width: 768px) {
+  .banner {
+    grid-template-columns: minmax(0, 7fr) minmax(0, 5fr);
+  }
+}
+.banner__art {
+  width: 100%;
+  border: 3px solid var(--border);
+  background: var(--midnight);
+}
+.banner__text h2 {
+  font-size: var(--fs-xl);
 }
 
 /* ---------- Prisijungimas ---------- */
@@ -134,6 +245,11 @@ code {
 .quest-card__stat {
   flex: none;
   margin-top: 2px;
+}
+.badge--outline {
+  background: transparent;
+  color: var(--frost);
+  border: 2px solid;
 }
 .quest-card__meta {
   gap: var(--s1);

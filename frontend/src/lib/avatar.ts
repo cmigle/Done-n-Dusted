@@ -38,7 +38,9 @@ export function sprite(name: string): Sprite {
   const next = random(hash(name.toLowerCase()))
   const body = BODY[Math.floor(next() * BODY.length)]
   const trim = TRIM[Math.floor(next() * TRIM.length)]
-  const cells: Sprite['cells'] = []
+  // Vienas langelis - viena reiksme: velesnis (pvz. akys) uzraso ankstesni.
+  const grid = new Map<string, [number, number, 1 | 2]>()
+  const put = (row: number, col: number, kind: 1 | 2) => grid.set(`${row}-${col}`, [row, col, kind])
   for (let row = 1; row < 7; row++) {
     for (let col = 1; col < 4; col++) {
       // Viduryje tankiau - figura panasesne i personaza, ne i triuksma.
@@ -46,11 +48,13 @@ export function sprite(name: string): Sprite {
       const roll = next()
       if (roll < chance) {
         const kind: 1 | 2 = roll < chance * 0.2 ? 2 : 1
-        cells.push([row, col, kind], [row, 7 - col, kind])
+        put(row, col, kind)
+        put(row, 7 - col, kind)
       }
     }
   }
   // Akys - kad visada butu "veidas".
-  cells.push([2, 2, 2], [2, 5, 2])
-  return { body, trim, cells }
+  put(2, 2, 2)
+  put(2, 5, 2)
+  return { body, trim, cells: [...grid.values()] }
 }
