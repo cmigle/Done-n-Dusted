@@ -20,7 +20,7 @@ zetonai() {
   J="Authorization: Bearer $(prisijungti jonas)"
   ADM="Authorization: Bearer $(prisijungti admin)"
   echo "Prisijungta: \$A - rokas, \$J - jonas, \$ADM - admin."
-  echo "Zetonai galioja 15 min. Gavus 401 \"Access zetonas pasibaiges\", parasyk: zetonai"
+  echo "Zetonai galioja 15 min. Gavus 401 \"Access token has expired\", parasyk: zetonai"
 }
 
 # JWT turinys (vidurine dalis, Base64url): jwt - roko zetonas, jwt "$kitas_zetonas" - bet kuris
