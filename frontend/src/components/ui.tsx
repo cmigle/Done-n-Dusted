@@ -9,7 +9,7 @@ export function PixelAvatar({ name, size = 40 }: { name: string; size?: number }
     <span className="avatar" style={{ width: size, height: size }} aria-hidden="true">
       <svg viewBox="0 0 8 8" shapeRendering="crispEdges" width={size - 6} height={size - 6}>
         {s.cells.map(([row, col, kind]) => (
-          <rect key={`${row}-${col}-${kind}`} x={col} y={row} width="1" height="1" fill={kind === 1 ? s.body : s.trim} />
+          <rect key={`${row}-${col}`} x={col} y={row} width="1" height="1" fill={kind === 1 ? s.body : s.trim} />
         ))}
       </svg>
     </span>

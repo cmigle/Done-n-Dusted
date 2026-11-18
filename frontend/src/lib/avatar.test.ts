@@ -10,6 +10,13 @@ describe('sprite', () => {
     expect(sprite('rokas')).not.toEqual(sprite('ieva'))
   })
 
+  it('kiekvienas langelis piesiamas viena karta', () => {
+    for (const name of ['rokas', 'ieva', 'jonas', 'admin', 'Aurelija']) {
+      const keys = sprite(name).cells.map(([row, col]) => `${row}-${col}`)
+      expect(new Set(keys).size).toBe(keys.length)
+    }
+  })
+
   it('figura simetriska ir telpa 8x8 tinklelyje', () => {
     const { cells } = sprite('jonas')
     const key = (r: number, c: number) => cells.some(([row, col]) => row === r && col === c)
