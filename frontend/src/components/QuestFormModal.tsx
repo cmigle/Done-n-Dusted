@@ -10,12 +10,12 @@ import {
   QUEST_TYPE_INFO,
   STATS,
   STAT_INFO,
-  pt,
+  xp,
 } from '../lib/game'
 import { useToast } from './toast'
 import { Field, Modal } from './ui'
 
-/** Uzduoties kurimas arba redagavimas: text, textarea, select, radio, number, checkbox. */
+/** Creates or edits a quest: text, textarea, select, radio, number and checkbox inputs. */
 export function QuestFormModal({
   guildId,
   quest,
@@ -53,7 +53,7 @@ export function QuestFormModal({
     },
     onSuccess: async (saved) => {
       await queryClient.invalidateQueries({ queryKey: ['quests', guildId] })
-      toast('success', quest ? 'Užduotis atnaujinta' : `Užduotis „${saved.title}“ paskelbta`)
+      toast('success', quest ? 'Quest updated' : `Quest “${saved.title}” posted`)
       onClose()
     },
     onError: (err) => setError(err instanceof ApiError ? err : undefined),
@@ -68,18 +68,18 @@ export function QuestFormModal({
   const fieldError = (name: string) => error?.errorFor(name)
 
   return (
-    <Modal open onClose={onClose} title={quest ? 'Redaguoti užduotį' : 'Nauja užduotis'}>
+    <Modal open onClose={onClose} title={quest ? 'Edit quest' : 'New quest'}>
       <form className="form" onSubmit={submit} noValidate>
-        <Field label="Pavadinimas" hint="3–120 simbolių" error={fieldError('title') ?? (error?.status === 409 ? error.message : undefined)}>
+        <Field label="Title" hint="3–120 characters" error={fieldError('title') ?? (error?.status === 409 ? error.message : undefined)}>
           {(p) => <input {...p} className="input" value={title} maxLength={120} onChange={(e) => setTitle(e.target.value)} required />}
         </Field>
-        <Field label="Aprašymas" error={fieldError('description')}>
+        <Field label="Description" error={fieldError('description')}>
           {(p) => (
             <textarea {...p} className="textarea" value={description} maxLength={1000} onChange={(e) => setDescription(e.target.value)} />
           )}
         </Field>
         <div className="form__row form__row--2">
-          <Field label="Charakteristika" hint={STAT_INFO[stat].hint}>
+          <Field label="Stat" hint={STAT_INFO[stat].hint}>
             {(p) => (
               <select {...p} className="select" value={stat} onChange={(e) => setStat(e.target.value as Stat)}>
                 {STATS.map((s) => (
@@ -90,7 +90,7 @@ export function QuestFormModal({
               </select>
             )}
           </Field>
-          <Field label="Tipas" hint={type === 'SIDE_QUEST' && !isDm ? 'Šalutinę užduotį skiria tik žaidimo vedėjas' : QUEST_TYPE_INFO[type].hint}>
+          <Field label="Type" hint={type === 'SIDE_QUEST' && !isDm ? 'Only the game master can assign side quests' : QUEST_TYPE_INFO[type].hint}>
             {(p) => (
               <select {...p} className="select" value={type} onChange={(e) => setType(e.target.value as QuestType)}>
                 {QUEST_TYPES.map((t) => (
@@ -103,16 +103,16 @@ export function QuestFormModal({
           </Field>
         </div>
         <fieldset className="choices">
-          <legend>Sunkumas</legend>
+          <legend>Difficulty</legend>
           {DIFFICULTIES.map((d) => (
             <label key={d} className="choice">
               <input type="radio" name="difficulty" value={d} checked={difficulty === d} onChange={() => setDifficulty(d)} />
-              {DIFFICULTY_INFO[d].name} <span className="muted">({pt(DIFFICULTY_INFO[d].xp)})</span>
+              {DIFFICULTY_INFO[d].name} <span className="muted">({xp(DIFFICULTY_INFO[d].xp)})</span>
             </label>
           ))}
         </fieldset>
         {type === 'GRIND' && (
-          <Field label="Tikslas (kartų skaičius)" hint="Kiek kartų reikia atlikti" error={fieldError('targetCount') ?? (error?.status === 422 ? error.message : undefined)}>
+          <Field label="Target (times)" hint="How many times it has to be done" error={fieldError('targetCount') ?? (error?.status === 422 ? error.message : undefined)}>
             {(p) => (
               <input
                 {...p}
@@ -130,17 +130,17 @@ export function QuestFormModal({
         )}
         <label className="choice">
           <input type="checkbox" checked={active} onChange={(e) => setActive(e.target.checked)} />
-          Aktyvi – galima registruoti progresą
+          Active – players can log progress
         </label>
         {error && !error.details.length && error.status !== 409 && !(type === 'GRIND' && error.status === 422) && (
           <p className="field__error">{error.message}</p>
         )}
         <div className="form__actions">
           <button type="button" className="btn btn--ghost" onClick={onClose}>
-            Atšaukti
+            Cancel
           </button>
           <button className="btn" disabled={save.isPending || title.trim().length < 3}>
-            {quest ? 'Išsaugoti' : 'Paskelbti užduotį'}
+            {quest ? 'Save' : 'Post quest'}
           </button>
         </div>
       </form>

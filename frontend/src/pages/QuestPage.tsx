@@ -19,8 +19,8 @@ import {
   formatDateTime,
   localInputToIso,
   plural,
-  pt,
   toLocalInputValue,
+  xp,
 } from '../lib/game'
 import { useTitle } from '../lib/useTitle'
 
@@ -40,7 +40,7 @@ export function QuestPage() {
   const guild = useQuery({ queryKey: ['guilds', guildId], queryFn: () => guilds.get(guildId) })
   const quest = useQuery({ queryKey: ['quests', guildId, 'one', questId], queryFn: () => quests.get(guildId, questId) })
   const memberList = useQuery({ queryKey: ['members', guildId], queryFn: () => members.list(guildId) })
-  useTitle(quest.data?.title ?? 'Užduotis')
+  useTitle(quest.data?.title ?? 'Quest')
   const entries = useQuery({
     queryKey: ['logs', guildId, questId, status],
     queryFn: () => logs.list(guildId, questId, { status }),
@@ -57,8 +57,8 @@ export function QuestPage() {
     mutationFn: () => quests.remove(guildId, questId),
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: ['quests', guildId] })
-      toast('success', 'Užduotis ištrinta')
-      navigate(`/grupes/${guildId}`, { replace: true })
+      toast('success', 'Quest deleted')
+      navigate(`/guilds/${guildId}`, { replace: true })
     },
     onError: (err) => toast('error', err.message),
   })
@@ -66,7 +66,7 @@ export function QuestPage() {
     mutationFn: (logId: number) => logs.remove(guildId, questId, logId),
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: ['logs', guildId] })
-      toast('success', 'Įrašas ištrintas')
+      toast('success', 'Entry deleted')
     },
     onError: (err) => toast('error', err.message),
   })
@@ -74,9 +74,9 @@ export function QuestPage() {
   if (quest.isPending) return <Loading />
   if (quest.isError) {
     return (
-      <Window title="Užduotis nepasiekiama">
+      <Window title="Quest unavailable">
         <ErrorNote error={quest.error} />
-        <Link to={`/grupes/${guildId}`}>Grįžti į grupę</Link>
+        <Link to={`/guilds/${guildId}`}>Back to the guild</Link>
       </Window>
     )
   }
@@ -87,14 +87,14 @@ export function QuestPage() {
 
   return (
     <>
-      <nav aria-label="Naršymo kelias" className="crumbs">
-        <Link to="/taverna">Taverna</Link> / <Link to={`/grupes/${guildId}`}>{guild.data?.name ?? 'Grupė'}</Link> /{' '}
+      <nav aria-label="Breadcrumb" className="crumbs">
+        <Link to="/tavern">Tavern</Link> / <Link to={`/guilds/${guildId}`}>{guild.data?.name ?? 'Guild'}</Link> /{' '}
         <span aria-current="page">{q.title}</span>
       </nav>
 
       <div className="grid grid--sidebar">
         <div className="stack">
-          <Window className="quest-detail" >
+          <Window className="quest-detail">
             <div className="quest-detail__icon" style={{ color: stat.color }}>
               <StatIcon stat={q.stat} size={48} />
             </div>
@@ -102,42 +102,42 @@ export function QuestPage() {
             {q.description && <p>{q.description}</p>}
             <dl className="facts">
               <div>
-                <dt>Charakteristika</dt>
+                <dt>Stat</dt>
                 <dd style={{ color: stat.color }}>{stat.name}</dd>
               </div>
               <div>
-                <dt>Sunkumas</dt>
+                <dt>Difficulty</dt>
                 <dd>{DIFFICULTY_INFO[q.difficulty].name}</dd>
               </div>
               <div>
-                <dt>Tipas</dt>
+                <dt>Type</dt>
                 <dd>{QUEST_TYPE_INFO[q.type].name}</dd>
               </div>
               <div>
-                <dt>Atlygis</dt>
-                <dd className="text-gold">{pt(q.xpPerCompletion)}</dd>
+                <dt>Reward</dt>
+                <dd className="text-gold">{xp(q.xpPerCompletion)}</dd>
               </div>
               {q.targetCount && (
                 <div>
-                  <dt>Tikslas</dt>
+                  <dt>Target</dt>
                   <dd>
-                    {q.targetCount} {plural(q.targetCount, 'kartas', 'kartai', 'kartų')}
+                    {q.targetCount} {plural(q.targetCount, 'time', 'times')}
                   </dd>
                 </div>
               )}
               <div>
-                <dt>Kūrėjas</dt>
+                <dt>Created by</dt>
                 <dd>{(q.createdBy && names.get(q.createdBy)) || '—'}</dd>
               </div>
             </dl>
-            {!q.active && <p className="badge">Neaktyvi – naujų įrašų nepriima</p>}
+            {!q.active && <p className="badge">Inactive – not accepting new entries</p>}
             {canEdit && (
               <div className="row">
                 <button type="button" className="btn btn--secondary btn--small" onClick={() => setEditing(true)}>
-                  <Edit size={18} aria-hidden="true" /> Redaguoti
+                  <Edit size={18} aria-hidden="true" /> Edit
                 </button>
                 <button type="button" className="btn btn--danger btn--small" onClick={() => setDeleting(true)}>
-                  <Trash size={18} aria-hidden="true" /> Ištrinti
+                  <Trash size={18} aria-hidden="true" /> Delete
                 </button>
               </div>
             )}
@@ -146,13 +146,13 @@ export function QuestPage() {
         </div>
 
         <Window
-          title="Progreso įrašai"
+          title="Progress log"
           headingLevel={2}
           actions={
-            <Field label="Būsena">
+            <Field label="Status">
               {(p) => (
                 <select {...p} className="select select--small" value={status} onChange={(e) => setStatus(e.target.value as LogStatus | '')}>
-                  <option value="">Visos</option>
+                  <option value="">All</option>
                   <option value="PENDING">{STATUS_INFO.PENDING.name}</option>
                   <option value="APPROVED">{STATUS_INFO.APPROVED.name}</option>
                   <option value="REJECTED">{STATUS_INFO.REJECTED.name}</option>
@@ -161,11 +161,11 @@ export function QuestPage() {
             </Field>
           }
         >
-          {!isDm && !isAdmin && <p className="muted">Matai tik savo įrašus – kitų žaidėjų įrašus mato žaidimo vedėjas.</p>}
+          {!isDm && !isAdmin && <p className="muted">You see only your own entries – the game master sees everyone's.</p>}
           {entries.isPending && <Loading />}
           {entries.isError && <ErrorNote error={entries.error} />}
           {entries.data?.content.length === 0 && (
-            <Empty icon={<Script size={48} aria-hidden="true" />}>Įrašų dar nėra.</Empty>
+            <Empty icon={<Script size={48} aria-hidden="true" />}>No entries yet.</Empty>
           )}
           <ul className="list">
             {entries.data?.content.map((entry) => {
@@ -180,9 +180,9 @@ export function QuestPage() {
                       <span className={`badge ${STATUS_INFO[entry.status].badge}`}>{STATUS_INFO[entry.status].name}</span>{' '}
                       {entry.status === 'APPROVED' && (
                         <span className="badge badge--gold">
-                          +{pt(entry.xpAwarded)}
+                          +{xp(entry.xpAwarded)}
                           {entry.inspirationAwarded > 0
-                            ? `, +${entry.inspirationAwarded} ${plural(entry.inspirationAwarded, 'įkvėpimo taškas', 'įkvėpimo taškai', 'įkvėpimo taškų')}`
+                            ? `, +${entry.inspirationAwarded} inspiration`
                             : ''}
                         </span>
                       )}
@@ -190,12 +190,12 @@ export function QuestPage() {
                     {entry.note && <p className="log__note">{entry.note}</p>}
                     {entry.evidenceUrl && (
                       <a href={entry.evidenceUrl} target="_blank" rel="noreferrer">
-                        Įrodymas
+                        Evidence
                       </a>
                     )}
                     {entry.reviewerNote && (
                       <p className="log__review">
-                        Vedėjo pastaba: <em>{entry.reviewerNote}</em>
+                        Game master's note: <em>{entry.reviewerNote}</em>
                       </p>
                     )}
                     <span className="muted">{formatDateTime(entry.occurredAt)}</span>
@@ -203,14 +203,14 @@ export function QuestPage() {
                   <div className="log__actions">
                     {isDm && !mine && entry.status === 'PENDING' && (
                       <button type="button" className="btn btn--small" onClick={() => setReviewing(entry)}>
-                        Peržiūrėti
+                        Review
                       </button>
                     )}
                     {((mine && entry.status === 'PENDING') || isDm || isAdmin) && (
                       <button
                         type="button"
                         className="btn btn--ghost btn--small btn--icon"
-                        aria-label="Ištrinti įrašą"
+                        aria-label="Delete entry"
                         onClick={() => removeLog.mutate(entry.id)}
                       >
                         <Trash size={18} aria-hidden="true" />
@@ -227,13 +227,13 @@ export function QuestPage() {
       {editing && <QuestFormModal guildId={guildId} quest={q} isDm={isDm} onClose={() => setEditing(false)} />}
       {deleting && (
         <ConfirmModal
-          title="Ištrinti užduotį?"
-          confirmLabel="Ištrinti"
+          title="Delete this quest?"
+          confirmLabel="Delete"
           busy={removeQuest.isPending}
           onConfirm={() => removeQuest.mutate()}
           onClose={() => setDeleting(false)}
         >
-          <p>Kartu bus ištrinti visi „{q.title}“ įrašai – ir patvirtinti.</p>
+          <p>All entries for “{q.title}” will be deleted too, including approved ones.</p>
         </ConfirmModal>
       )}
       {reviewing && (
@@ -249,7 +249,7 @@ export function QuestPage() {
   )
 }
 
-/** Progreso registravimas: textarea, url, datetime-local. */
+/** Logging progress: textarea, url and datetime-local inputs. */
 function LogForm({ guildId, questId }: { guildId: number; questId: number }) {
   const queryClient = useQueryClient()
   const toast = useToast()
@@ -269,7 +269,7 @@ function LogForm({ guildId, questId }: { guildId: number; questId: number }) {
       await queryClient.invalidateQueries({ queryKey: ['logs', guildId] })
       setNote('')
       setEvidenceUrl('')
-      toast('success', 'Įrašas užregistruotas – laukia žaidimo vedėjo patvirtinimo')
+      toast('success', 'Entry logged – waiting for the game master to approve it')
     },
     onError: (err) => setError(err instanceof ApiError ? err : undefined),
   })
@@ -281,21 +281,21 @@ function LogForm({ guildId, questId }: { guildId: number; questId: number }) {
   }
 
   return (
-    <Window title="Užregistruoti žygį" icon={<NotePlus size={24} aria-hidden="true" />} headingLevel={2}>
+    <Window title="Log progress" icon={<NotePlus size={24} aria-hidden="true" />} headingLevel={2}>
       <form className="form" onSubmit={submit} noValidate>
-        <Field label="Ką padarei?" error={error?.errorFor('note')}>
+        <Field label="What did you do?" error={error?.errorFor('note')}>
           {(p) => (
             <textarea
               {...p}
               className="textarea"
-              placeholder="Pvz., nubėgau 8 km palei upę"
+              placeholder="E.g. ran 8 km along the river"
               value={note}
               maxLength={1000}
               onChange={(e) => setNote(e.target.value)}
             />
           )}
         </Field>
-        <Field label="Įrodymo nuoroda" hint="Neprivaloma, pvz., nuotrauka" error={error?.errorFor('evidenceUrl')}>
+        <Field label="Evidence link" hint="Optional, e.g. a photo" error={error?.errorFor('evidenceUrl')}>
           {(p) => (
             <input
               {...p}
@@ -308,7 +308,7 @@ function LogForm({ guildId, questId }: { guildId: number; questId: number }) {
             />
           )}
         </Field>
-        <Field label="Kada?" error={error?.errorFor('occurredAt') ?? (error && !error.details.length ? error.message : undefined)}>
+        <Field label="When?" error={error?.errorFor('occurredAt') ?? (error && !error.details.length ? error.message : undefined)}>
           {(p) => (
             <input
               {...p}
@@ -323,7 +323,7 @@ function LogForm({ guildId, questId }: { guildId: number; questId: number }) {
         </Field>
         <div className="form__actions">
           <button className="btn" disabled={create.isPending || !occurredAt}>
-            Užregistruoti
+            Log entry
           </button>
         </div>
       </form>

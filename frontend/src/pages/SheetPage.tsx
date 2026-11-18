@@ -11,18 +11,18 @@ export function SheetPage() {
   const userId = Number(params.userId)
   const guild = useQuery({ queryKey: ['guilds', guildId], queryFn: () => guilds.get(guildId) })
   const sheet = useQuery({ queryKey: ['sheet', guildId, userId], queryFn: () => members.sheet(guildId, userId) })
-  useTitle(sheet.data ? `${sheet.data.username} – veikėjo kortelė` : 'Veikėjo kortelė')
+  useTitle(sheet.data ? `${sheet.data.username}'s character sheet` : 'Character sheet')
 
   return (
     <>
-      <nav aria-label="Naršymo kelias" className="crumbs">
-        <Link to="/taverna">Taverna</Link> / <Link to={`/grupes/${guildId}?skirtukas=nariai`}>{guild.data?.name ?? 'Grupė'}</Link> /{' '}
-        <span aria-current="page">Veikėjo kortelė</span>
+      <nav aria-label="Breadcrumb" className="crumbs">
+        <Link to="/tavern">Tavern</Link> / <Link to={`/guilds/${guildId}?tab=members`}>{guild.data?.name ?? 'Guild'}</Link> /{' '}
+        <span aria-current="page">Character sheet</span>
       </nav>
-      <h1 className="visually-hidden">Veikėjo kortelė</h1>
+      <h1 className="visually-hidden">Character sheet</h1>
       {sheet.isPending && <Loading />}
       {sheet.isError && (
-        <Window title="Kortelė nepasiekiama">
+        <Window title="Sheet unavailable">
           <ErrorNote error={sheet.error} />
         </Window>
       )}
