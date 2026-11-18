@@ -14,7 +14,7 @@ response:
         "timestamp": "2026-11-08T14:31:36.622036500Z",
         "status": 404,
         "error": "Not Found",
-        "message": "LogEntry 13 nerastas uzduotyje 10",
+        "message": "Log entry 13 not found in quest 10",
         "path": "/api/guilds/4/quests/10/logs/13"
       }
 order: 1000

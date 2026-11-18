@@ -14,7 +14,7 @@ scripts:
   - type: afterResponse
     code: |-
       pm.test('422 Unprocessable Entity', () => pm.response.to.have.status(422));
-      pm.test('Saves uzblokuoti negalima', () => pm.expect(pm.response.json().message).to.include('Savo'));
+      pm.test('Saves uzblokuoti negalima', () => pm.expect(pm.response.json().message).to.include('your own'));
     language: text/javascript
 examples: ./.resources/Klaida 422 – savęs užblokuoti negalima.resources/examples
 order: 3000

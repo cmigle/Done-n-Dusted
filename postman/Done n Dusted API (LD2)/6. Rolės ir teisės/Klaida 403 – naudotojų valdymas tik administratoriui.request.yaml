@@ -6,7 +6,7 @@ scripts:
   - type: afterResponse
     code: |-
       pm.test('403 Forbidden', () => pm.response.to.have.status(403));
-      pm.test('Ne ADMIN - 403', () => pm.expect(pm.response.json().message).to.include('Neturite teises'));
+      pm.test('Ne ADMIN - 403', () => pm.expect(pm.response.json().message).to.include('permission'));
     language: text/javascript
 examples: ./.resources/Klaida 403 – naudotojų valdymas tik administratoriui.resources/examples
 order: 12000

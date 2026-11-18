@@ -14,12 +14,12 @@ response:
         "timestamp": "2026-11-08T14:31:33.085553900Z",
         "status": 400,
         "error": "Bad Request",
-        "message": "Neteisingas uzklausos turinys",
+        "message": "Invalid request body",
         "path": "/api/guilds",
         "details": [
           {
             "field": "name",
-            "message": "size must be between 3 and 60"
+            "message": "Must be between 3 and 60 characters"
           }
         ]
       }

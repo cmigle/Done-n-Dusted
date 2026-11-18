@@ -6,7 +6,7 @@ scripts:
   - type: afterResponse
     code: |-
       pm.test('403 Forbidden', () => pm.response.to.have.status(403));
-      pm.test('Paaiskinama, kad naudotojas ne narys', () => pm.expect(pm.response.json().message).to.include('narys'));
+      pm.test('Paaiskinama, kad naudotojas ne narys', () => pm.expect(pm.response.json().message).to.include('not a member'));
     language: text/javascript
 examples: ./.resources/Klaida 403 – ne grupės narys.resources/examples
 order: 1000

@@ -14,7 +14,7 @@ response:
         "timestamp": "2026-11-08T14:31:34.774710900Z",
         "status": 422,
         "error": "Unprocessable Entity",
-        "message": "GRIND tipo uzduotis privalo tureti targetCount",
+        "message": "A GRIND quest requires targetCount.",
         "path": "/api/guilds/4/quests"
       }
 order: 1000

@@ -14,7 +14,7 @@ response:
         "timestamp": "2026-11-08T14:31:36.979868300Z",
         "status": 403,
         "error": "Forbidden",
-        "message": "Irasus perziuri tik grupes DM",
+        "message": "Only the game master can review log entries.",
         "path": "/api/guilds/4/quests/10/logs/14"
       }
 order: 1000

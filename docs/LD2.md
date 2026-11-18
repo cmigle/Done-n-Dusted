@@ -35,13 +35,13 @@ Pavyzdys: `PATCH /api/guilds/2/quests/4/logs/7` su `{"status":"APPROVED"}`.
 1. **`BearerTokenAuthenticationFilter`** (Spring Security) paima `Authorization: Bearer ...`.
    Nėra antraštės → `ExceptionTranslationFilter` → `ApiAuthErrorHandler` → `401`.
 2. **`JwtDecoder`** (`SecurityConfig`) patikrina parašą (HS256 raktas), `exp` ir `iss`. Netinka →
-   `401 "Access zetonas neteisingas"` arba `"... pasibaiges"`.
+   `401 "Invalid access token"` arba `"Access token has expired. ..."`.
 3. `JwtAuthenticationConverter` claim `role` paverčia `ROLE_USER` / `ROLE_ADMIN`.
    `/api/users/**` čia pat reikalauja `ROLE_ADMIN`, kitaip `403`.
 4. Kontroleris — kaip LD1. Servisas kviečia **`guilds.access(2)`**: randa grupę (`404`), iš DB paima
    naudotojo rolę joje (`403`, jei ne narys ir ne `ADMIN`) ir grąžina `GuildAccess`.
 5. `LogEntryService.update()`: peržiūros laukai → `access.require(access.isDm(), ...)` ir
-   `access.require(!access.is(entry.getAuthor()), "Savo iraso tvirtinti negalima")`.
+   `access.require(!access.is(entry.getAuthor()), "You cannot review your own log entry.")`.
    Nepraeina → `ForbiddenException` → `ApiExceptionHandler` → `403`.
 6. Tik po teisių tikrinamos dalykinės taisyklės (`422`) ir atliekamas pakeitimas.
 
