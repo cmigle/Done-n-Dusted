@@ -19,7 +19,7 @@ import type {
   UserRole,
 } from './types'
 
-// ---------- Autentifikacija ----------
+// ---------- Auth ----------
 export const auth = {
   login: (username: string, password: string) =>
     api<TokenResponse>('/auth/login', { method: 'POST', body: { username, password }, auth: false }),
@@ -30,7 +30,7 @@ export const auth = {
   me: () => api<Me>('/auth/me'),
 }
 
-// ---------- Grupes ----------
+// ---------- Guilds ----------
 export interface GuildInput {
   name: string
   description?: string
@@ -45,7 +45,7 @@ export const guilds = {
   remove: (id: number) => api<void>(`/guilds/${id}`, { method: 'DELETE' }),
 }
 
-// ---------- Nariai ----------
+// ---------- Members ----------
 export const members = {
   list: (guildId: number) =>
     api<Paged<Member>>(`/guilds/${guildId}/members`, { query: { size: 100, sort: 'joinedAt,asc' } }),
@@ -59,7 +59,7 @@ export const members = {
     api<CharacterSheet>(`/guilds/${guildId}/members/${userId}/sheet`),
 }
 
-// ---------- Uzduotys ----------
+// ---------- Quests ----------
 export interface QuestInput {
   title: string
   description?: string
@@ -91,7 +91,7 @@ export const quests = {
     api<void>(`/guilds/${guildId}/quests/${questId}`, { method: 'DELETE' }),
 }
 
-// ---------- Progreso irasai ----------
+// ---------- Log entries ----------
 export interface LogInput {
   note?: string
   evidenceUrl?: string
@@ -116,7 +116,7 @@ export const logs = {
     api<void>(`/guilds/${guildId}/quests/${questId}/logs/${logId}`, { method: 'DELETE' }),
 }
 
-// ---------- Draugai ----------
+// ---------- Friends ----------
 export const friends = {
   list: (status?: FriendshipStatus) =>
     api<Paged<Friendship>>('/friends', { query: { status, size: 100 } }),
@@ -127,7 +127,7 @@ export const friends = {
   sheet: (id: number) => api<CharacterSheet>(`/friends/${id}/sheet`),
 }
 
-// ---------- Administravimas ----------
+// ---------- Admin ----------
 export const users = {
   list: (query: { username?: string; page?: number } = {}) =>
     api<Paged<User>>('/users', { query: { size: 20, sort: 'id,asc', ...query } }),

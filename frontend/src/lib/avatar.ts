@@ -1,6 +1,6 @@
 /**
- * Proceduriskai generuojamas pikselinis personazas: is vardo gaunamas skaicius, is jo - 8x8 simetriska
- * figura ir dvi spalvos. Tas pats vardas visada duoda ta pati avatara, paveiksleliu saugoti nereikia.
+ * A procedurally generated pixel character: the name hashes to a seed, the seed to a symmetric 8x8 figure
+ * and two colours. The same name always gives the same avatar, so no images need to be stored.
  */
 
 const BODY = ['#b13e53', '#ef7d57', '#ffcd75', '#a7f070', '#38b764', '#41a6f6', '#73eff7', '#94b0c2']
@@ -30,7 +30,7 @@ function random(seed: number) {
 export interface Sprite {
   body: string
   trim: string
-  /** [eilute, stulpelis, 1 - kunas | 2 - apvadas] */
+  /** [row, column, 1 = body | 2 = trim] */
   cells: [number, number, 1 | 2][]
 }
 
@@ -38,12 +38,12 @@ export function sprite(name: string): Sprite {
   const next = random(hash(name.toLowerCase()))
   const body = BODY[Math.floor(next() * BODY.length)]
   const trim = TRIM[Math.floor(next() * TRIM.length)]
-  // Vienas langelis - viena reiksme: velesnis (pvz. akys) uzraso ankstesni.
+  // One value per cell: a later one (e.g. the eyes) overwrites an earlier one.
   const grid = new Map<string, [number, number, 1 | 2]>()
   const put = (row: number, col: number, kind: 1 | 2) => grid.set(`${row}-${col}`, [row, col, kind])
   for (let row = 1; row < 7; row++) {
     for (let col = 1; col < 4; col++) {
-      // Viduryje tankiau - figura panasesne i personaza, ne i triuksma.
+      // Denser in the middle, so the figure looks like a character rather than noise.
       const chance = col === 3 ? 0.75 : 0.5
       const roll = next()
       if (roll < chance) {
@@ -53,7 +53,7 @@ export function sprite(name: string): Sprite {
       }
     }
   }
-  // Akys - kad visada butu "veidas".
+  // Eyes, so there is always a "face".
   put(2, 2, 2)
   put(2, 5, 2)
   return { body, trim, cells: [...grid.values()] }
