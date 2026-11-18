@@ -3,6 +3,7 @@ package lt.ktu.donendusted.config;
 import io.zonky.test.db.postgres.embedded.EmbeddedPostgres;
 import java.io.IOException;
 import javax.sql.DataSource;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
@@ -17,11 +18,12 @@ import org.springframework.context.annotation.Profile;
 public class EmbeddedPostgresConfig {
 
     // destroyMethod = "close": sustabdzius programa, Spring uzdaro ir PostgreSQL procesa.
-    // Portas fiksuotas (55432), kad demonstracijos metu butu galima prisijungti per DBeaver/psql.
+    // Numatytasis portas fiksuotas (55432), kad demonstracijos metu butu galima prisijungti per DBeaver/psql.
+    // app.embedded-db.port=0 - atsitiktinis laisvas portas (testams ir antrai kopijai salia demo).
     // Duomenys laikini - kiekvienas paleidimas pradeda nuo svarios DB, Flyway vel ja uzpildo.
     @Bean(destroyMethod = "close")
-    public EmbeddedPostgres embeddedPostgres() throws IOException {
-        return EmbeddedPostgres.builder().setPort(55432).start();
+    public EmbeddedPostgres embeddedPostgres(@Value("${app.embedded-db.port:55432}") int port) throws IOException {
+        return EmbeddedPostgres.builder().setPort(port).start();
     }
 
     @Bean
