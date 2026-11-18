@@ -5,10 +5,11 @@ const unique = (prefix: string) => `${prefix} ${Date.now().toString(36)}`
 
 async function login(page: Page, username: string) {
   await page.goto('/prisijungti')
-  await page.getByLabel('Vardas').fill(username)
+  await page.getByLabel('Naudotojo vardas').fill(username)
   await page.getByLabel('Slaptažodis', { exact: true }).fill(PASSWORD)
   await page.getByRole('button', { name: 'Prisijungti' }).click()
   await expect(page).toHaveURL(/\/taverna$/)
+  await expect(page).toHaveTitle('Taverna – Done n Dusted')
 }
 
 async function logout(page: Page) {
@@ -18,7 +19,7 @@ async function logout(page: Page) {
 
 test('svecias mato taisykliu modalini langa ir uzdaro ji Esc', async ({ page }) => {
   await page.goto('/')
-  await expect(page.getByRole('heading', { level: 1 })).toHaveText('Tavo veikėjas auga tarp sesijų')
+  await expect(page.getByRole('heading', { level: 1 })).toHaveText('Tavo veikėjas auga tarp žaidimų')
   await page.getByRole('button', { name: 'Kaip skaičiuojama patirtis?' }).click()
   const dialog = page.getByRole('dialog', { name: 'Kaip skaičiuojama patirtis' })
   await expect(dialog).toBeVisible()
@@ -34,10 +35,11 @@ test('neprisijungus apsaugotas puslapis veda i prisijungima', async ({ page }) =
 
 test('neteisingas slaptazodis rodo serverio klaida', async ({ page }) => {
   await page.goto('/prisijungti')
-  await page.getByLabel('Vardas').fill('jonas')
+  await expect(page).toHaveTitle('Prisijungimas – Done n Dusted')
+  await page.getByLabel('Naudotojo vardas').fill('jonas')
   await page.getByLabel('Slaptažodis', { exact: true }).fill('blogas-slaptazodis')
   await page.getByRole('button', { name: 'Prisijungti' }).click()
-  await expect(page.getByRole('alert')).toContainText('Neteisingas naudotojo vardas arba slaptazodis')
+  await expect(page.getByRole('alert')).toContainText(/Neteisingas naudotojo vardas arba slapta[zž]odis/)
 })
 
 test('zaidejas registruoja zygi, DM ji patvirtina, XP matosi korteleje', async ({ page }) => {
@@ -47,9 +49,9 @@ test('zaidejas registruoja zygi, DM ji patvirtina, XP matosi korteleje', async (
   await page.getByLabel('Ką padarei?').fill(note)
   await page.getByLabel('Įrodymo nuoroda').fill('https://example.org/e2e.png')
   await page.getByRole('button', { name: 'Užregistruoti' }).click()
-  await expect(page.getByText('Įrašas užregistruotas – laukia DM')).toBeVisible()
+  await expect(page.getByText('Įrašas užregistruotas – laukia žaidimo vedėjo patvirtinimo')).toBeVisible()
   const entry = page.getByRole('listitem').filter({ hasText: note })
-  await expect(entry.getByText('Laukia DM')).toBeVisible()
+  await expect(entry.getByText('Laukia vedėjo')).toBeVisible()
   await logout(page)
 
   await login(page, 'rokas')
@@ -60,8 +62,8 @@ test('zaidejas registruoja zygi, DM ji patvirtina, XP matosi korteleje', async (
   await dialog.getByLabel(/Patirtis/).fill('60')
   await dialog.getByLabel('Įkvėpimas').fill('1')
   await dialog.getByLabel('Pastaba žaidėjui').fill('Puikus tempas!')
-  await dialog.getByRole('button', { name: 'Patvirtinti ir skirti 60 XP' }).click()
-  await expect(page.getByText('jonas gauna 60 XP')).toBeVisible()
+  await dialog.getByRole('button', { name: /Patvirtinti ir skirti 60\sPT/ }).click()
+  await expect(page.getByText(/jonas gauna 60\sPT/)).toBeVisible()
 
   await page.goto('/grupes/2/nariai/4')
   const sheet = page.getByRole('article', { name: 'jonas veikėjo kortelė' })
@@ -93,7 +95,7 @@ test('uzimtas grupes pavadinimas rodomas prie lauko', async ({ page }) => {
   const dialog = page.getByRole('dialog', { name: 'Įkurti grupę' })
   await dialog.getByLabel('Pavadinimas').fill('Iron Vow')
   await dialog.getByRole('button', { name: 'Įkurti grupę' }).click()
-  await expect(dialog.getByRole('alert')).toContainText('jau egzistuoja')
+  await expect(dialog.getByRole('alert')).toContainText(/Iron Vow/)
 })
 
 test('draugas mato vieša kortele, o ne irasus', async ({ page }) => {
@@ -121,6 +123,7 @@ test('administravimas pasiekiamas tik administratoriui', async ({ page }) => {
 test('nezinomas kelias rodo 404', async ({ page }) => {
   await page.goto('/nera-tokio')
   await expect(page.getByRole('heading', { name: 'Šis kelias veda niekur' })).toBeVisible()
+  await expect(page).toHaveTitle('Puslapis nerastas – Done n Dusted')
 })
 
 test.describe('telefonas', () => {
