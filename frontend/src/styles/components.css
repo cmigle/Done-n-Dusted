@@ -163,6 +163,9 @@
   min-height: 96px;
   resize: vertical;
 }
+.modal .textarea {
+  min-height: 72px;
+}
 .input:focus,
 .select:focus,
 .textarea:focus {
@@ -371,7 +374,8 @@
   font-size: var(--fs-lg);
 }
 .modal__body {
-  max-height: min(70vh, 640px);
+  /* Visas langas telpa ekrane: virsuje ir apacioje lieka po 80 px */
+  max-height: calc(100vh - 160px);
   overflow-y: auto;
   padding-right: 4px;
 }

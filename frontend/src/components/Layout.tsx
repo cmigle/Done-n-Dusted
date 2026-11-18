@@ -119,7 +119,9 @@ function Footer() {
             <p>KTU T120B165 Saityno taikomųjų programų projektavimas</p>
           </div>
         </div>
-        <p className="site-footer__legal">© {YEAR} Miglė Cirtautaitė</p>
+        <p className="site-footer__legal">
+          <span className="legal-sign" aria-hidden="true">©</span> {YEAR} Miglė Cirtautaitė
+        </p>
       </div>
     </footer>
   )
