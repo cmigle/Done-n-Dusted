@@ -3,7 +3,7 @@ import { Window } from '../components/ui'
 import { useTitle } from '../lib/useTitle'
 
 export function NotFoundPage() {
-  useTitle('Puslapis nerastas')
+  useTitle('Page not found')
   return (
     <div className="auth">
       <Window>
@@ -11,10 +11,10 @@ export function NotFoundPage() {
           <p className="game-over" aria-hidden="true">
             404
           </p>
-          <h1>Šis kelias veda niekur</h1>
-          <p>Tokio puslapio nėra. Gal žemėlapis pasenęs?</p>
+          <h1>This road leads nowhere</h1>
+          <p>There is no such page. Maybe the map is out of date?</p>
           <Link to="/" className="btn">
-            Grįžti į pradžią
+            Back to the start
           </Link>
         </div>
       </Window>

@@ -3,11 +3,11 @@ import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { ApiError } from '../api/client'
 import { logs } from '../api/endpoints'
 import type { LogEntry, LogStatus, Quest } from '../api/types'
-import { DIFFICULTY_INFO, formatDateTime, pt } from '../lib/game'
+import { DIFFICULTY_INFO, formatDateTime, xp as formatXp } from '../lib/game'
 import { useToast } from './toast'
 import { Field, Modal } from './ui'
 
-/** DM sprendimas: radio (busena), range (XP), number (ikvepimas), textarea (pastaba). */
+/** The game master's decision: radio (status), range (XP), number (inspiration) and textarea (note). */
 export function ReviewModal({
   guildId,
   quest,
@@ -39,10 +39,10 @@ export function ReviewModal({
       }),
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: ['logs', guildId] })
-      toast('success', status === 'APPROVED' ? `${authorName} gauna ${pt(xp)}` : 'Įrašas atmestas')
+      toast('success', status === 'APPROVED' ? `${authorName} earns ${formatXp(xp)}` : 'Entry rejected')
       onClose()
     },
-    onError: (err) => setError(err instanceof ApiError ? err.message : 'Nepavyko išsaugoti'),
+    onError: (err) => setError(err instanceof ApiError ? err.message : 'Could not save'),
   })
 
   function submit(e: FormEvent) {
@@ -52,35 +52,35 @@ export function ReviewModal({
   }
 
   return (
-    <Modal open onClose={onClose} title="Peržiūrėti įrašą">
+    <Modal open onClose={onClose} title="Review entry">
       <div className="review-summary">
         <p>
-          <strong>{authorName}</strong> – „{quest.title}“, {formatDateTime(entry.occurredAt)}
+          <strong>{authorName}</strong> – “{quest.title}”, {formatDateTime(entry.occurredAt)}
         </p>
         {entry.note && <blockquote className="quote">{entry.note}</blockquote>}
         {entry.evidenceUrl && (
           <p>
             <a href={entry.evidenceUrl} target="_blank" rel="noreferrer">
-              Atidaryti įrodymą
+              Open evidence
             </a>
           </p>
         )}
       </div>
       <form className="form" onSubmit={submit}>
         <fieldset className="choices">
-          <legend>Sprendimas</legend>
+          <legend>Decision</legend>
           <label className="choice">
             <input type="radio" name="status" checked={status === 'APPROVED'} onChange={() => setStatus('APPROVED')} />
-            Patvirtinti
+            Approve
           </label>
           <label className="choice">
             <input type="radio" name="status" checked={status === 'REJECTED'} onChange={() => setStatus('REJECTED')} />
-            Atmesti
+            Reject
           </label>
         </fieldset>
         {status === 'APPROVED' && (
           <div className="form__row form__row--2">
-            <Field label={`Patirtis: ${pt(xp)}`} hint={`Pagal sunkumą – ${pt(baseXp)}`}>
+            <Field label={`Experience: ${formatXp(xp)}`} hint={`By difficulty – ${formatXp(baseXp)}`}>
               {(p) => (
                 <input
                   {...p}
@@ -94,7 +94,7 @@ export function ReviewModal({
                 />
               )}
             </Field>
-            <Field label="Įkvėpimas" hint="Už neįprastą ar juokingą žygį">
+            <Field label="Inspiration" hint="For an unusual or funny feat">
               {(p) => (
                 <input
                   {...p}
@@ -109,16 +109,16 @@ export function ReviewModal({
             </Field>
           </div>
         )}
-        <Field label="Pastaba žaidėjui" hint="Neprivaloma">
+        <Field label="Note to the player" hint="Optional">
           {(p) => <textarea {...p} className="textarea" value={note} maxLength={500} onChange={(e) => setNote(e.target.value)} />}
         </Field>
         {error && <p className="field__error">{error}</p>}
         <div className="form__actions">
           <button type="button" className="btn btn--ghost" onClick={onClose}>
-            Atšaukti
+            Cancel
           </button>
           <button className={`btn ${status === 'REJECTED' ? 'btn--danger' : 'btn--success'}`} disabled={review.isPending}>
-            {status === 'APPROVED' ? `Patvirtinti ir skirti ${pt(xp)}` : 'Atmesti įrašą'}
+            {status === 'APPROVED' ? `Approve and award ${formatXp(xp)}` : 'Reject entry'}
           </button>
         </div>
       </form>
@@ -146,7 +146,7 @@ export function ConfirmModal({
       {children}
       <div className="form__actions">
         <button type="button" className="btn btn--ghost" onClick={onClose}>
-          Atšaukti
+          Cancel
         </button>
         <button type="button" className="btn btn--danger" disabled={busy} onClick={onConfirm}>
           {confirmLabel}

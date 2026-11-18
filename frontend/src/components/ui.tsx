@@ -2,7 +2,7 @@ import { useEffect, useId, useRef, type CSSProperties, type ReactNode } from 're
 import { Close } from '@nsmr/pixelart-react'
 import { sprite } from '../lib/avatar'
 
-/* ---------- Pikselinis avataras ---------- */
+/* ---------- Pixel avatar ---------- */
 export function PixelAvatar({ name, size = 40 }: { name: string; size?: number }) {
   const s = sprite(name)
   return (
@@ -16,7 +16,7 @@ export function PixelAvatar({ name, size = 40 }: { name: string; size?: number }
   )
 }
 
-/* ---------- RPG langas ---------- */
+/* ---------- RPG window ---------- */
 export function Window({
   title,
   icon,
@@ -49,7 +49,7 @@ export function Window({
   )
 }
 
-/* ---------- Modalinis langas (natyvus <dialog>: fokusas, Esc ir backdrop - narsykles) ---------- */
+/* ---------- Modal (native <dialog>: the browser handles focus, Esc and the backdrop) ---------- */
 export function Modal({
   open,
   title,
@@ -85,7 +85,7 @@ export function Modal({
         <div className="window">
           <div className="modal__head">
             <h2 id={titleId}>{title}</h2>
-            <button type="button" className="btn btn--ghost btn--icon" onClick={onClose} aria-label="Uždaryti">
+            <button type="button" className="btn btn--ghost btn--icon" onClick={onClose} aria-label="Close">
               <Close size={20} aria-hidden="true" />
             </button>
           </div>
@@ -96,7 +96,7 @@ export function Modal({
   )
 }
 
-/* ---------- Juosta (XP, charakteristika) ---------- */
+/* ---------- Bar (XP, stat) ---------- */
 export function Bar({
   value,
   max,
@@ -126,7 +126,7 @@ export function Bar({
   )
 }
 
-/* ---------- Formos laukas ---------- */
+/* ---------- Form field ---------- */
 export function Field({
   label,
   hint,
@@ -160,8 +160,8 @@ export function Field({
   )
 }
 
-/* ---------- Busenos ---------- */
-export function Spinner({ label = 'Kraunama' }: { label?: string }) {
+/* ---------- States ---------- */
+export function Spinner({ label = 'Loading' }: { label?: string }) {
   return (
     <span className="spinner" role="status" aria-label={label}>
       <span />
@@ -189,7 +189,7 @@ export function Empty({ icon, children }: { icon?: ReactNode; children: ReactNod
 }
 
 export function ErrorNote({ error }: { error: unknown }) {
-  const message = error instanceof Error ? error.message : 'Kažkas nepavyko'
+  const message = error instanceof Error ? error.message : 'Something went wrong'
   return (
     <p className="field__error" role="alert">
       {message}

@@ -15,7 +15,7 @@ export function LoginPage() {
   const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
   const [showPassword, setShowPassword] = useState(false)
-  useTitle('Prisijungimas')
+  useTitle('Log in')
   const [error, setError] = useState<string>()
   const [busy, setBusy] = useState(false)
 
@@ -26,9 +26,9 @@ export function LoginPage() {
     try {
       await login(username.trim(), password)
       const from = (location.state as { from?: string } | null)?.from
-      navigate(from ?? '/taverna', { replace: true })
+      navigate(from ?? '/tavern', { replace: true })
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : 'Nepavyko prisijungti')
+      setError(err instanceof ApiError ? err.message : 'Could not log in')
     } finally {
       setBusy(false)
     }
@@ -36,9 +36,9 @@ export function LoginPage() {
 
   return (
     <div className="auth">
-      <Window title="Prisijungti" icon={<LoginIcon size={24} aria-hidden="true" />}>
+      <Window title="Log in" icon={<LoginIcon size={24} aria-hidden="true" />}>
         <form className="form" onSubmit={submit} noValidate>
-          <Field label="Naudotojo vardas">
+          <Field label="Username">
             {(p) => (
               <input
                 {...p}
@@ -50,7 +50,7 @@ export function LoginPage() {
               />
             )}
           </Field>
-          <Field label="Slaptažodis" error={error}>
+          <Field label="Password" error={error}>
             {(p) => (
               <input
                 {...p}
@@ -65,29 +65,29 @@ export function LoginPage() {
           </Field>
           <label className="choice">
             <input type="checkbox" checked={showPassword} onChange={(e) => setShowPassword(e.target.checked)} />
-            Rodyti slaptažodį
+            Show password
           </label>
           <div className="form__actions">
             <button className="btn" disabled={busy || !username || !password}>
-              {busy ? 'Jungiamasi…' : 'Prisijungti'}
+              {busy ? 'Logging in…' : 'Log in'}
             </button>
           </div>
         </form>
         <div className="muted auth__hint">
-          <p>Demonstraciniai naudotojai:</p>
+          <p>Demo users:</p>
           <ul className="demo-users">
             <li>
-              <code>rokas</code> / <code>Demo123!</code> – žaidimo vedėjas ir grupės savininkas
+              <code>rokas</code> / <code>Demo123!</code> – game master and guild owner
             </li>
             <li>
-              <code>jonas</code> / <code>Demo123!</code> – žaidėjas
+              <code>jonas</code> / <code>Demo123!</code> – player
             </li>
             <li>
-              <code>ieva</code> / <code>Demo123!</code> – žaidimo vedėja vienoje grupėje, žaidėja kitose
+              <code>ieva</code> / <code>Demo123!</code> – game master in one guild, player in the others
             </li>
           </ul>
           <p>
-            Neturi paskyros? <Link to="/registracija">Registruokis</Link>.
+            No account yet? <Link to="/register">Sign up</Link>.
           </p>
         </div>
       </Window>
@@ -103,15 +103,15 @@ export function RegisterPage() {
   const [password, setPassword] = useState('')
   const [repeat, setRepeat] = useState('')
   const [errors, setErrors] = useState<Record<string, string>>({})
-  useTitle('Registracija')
+  useTitle('Sign up')
   const [busy, setBusy] = useState(false)
 
   async function submit(e: FormEvent) {
     e.preventDefault()
     const local: Record<string, string> = {}
-    if (!/^[A-Za-z0-9_.-]{3,30}$/.test(username)) local.username = '3–30 simbolių: raidės, skaitmenys, _ . -'
-    if (password.length < 8) local.password = 'Bent 8 simboliai'
-    if (password !== repeat) local.repeat = 'Slaptažodžiai nesutampa'
+    if (!/^[A-Za-z0-9_.-]{3,30}$/.test(username)) local.username = '3–30 characters: letters, digits, _ . -'
+    if (password.length < 8) local.password = 'At least 8 characters'
+    if (password !== repeat) local.repeat = 'Passwords do not match'
     setErrors(local)
     if (Object.keys(local).length) return
 
@@ -119,8 +119,8 @@ export function RegisterPage() {
     try {
       await auth.register(username, password)
       await login(username, password)
-      toast('success', `Sveiki atvykę, ${username}!`)
-      navigate('/taverna', { replace: true })
+      toast('success', `Welcome, ${username}!`)
+      navigate('/tavern', { replace: true })
     } catch (err) {
       if (err instanceof ApiError) {
         setErrors({
@@ -136,9 +136,9 @@ export function RegisterPage() {
 
   return (
     <div className="auth">
-      <Window title="Sukurti veikėją" icon={<UserPlus size={24} aria-hidden="true" />}>
+      <Window title="Create a character" icon={<UserPlus size={24} aria-hidden="true" />}>
         <form className="form" onSubmit={submit} noValidate>
-          <Field label="Naudotojo vardas" hint="3–30 simbolių: raidės, skaitmenys, _ . -" error={errors.username || undefined}>
+          <Field label="Username" hint="3–30 characters: letters, digits, _ . -" error={errors.username || undefined}>
             {(p) => (
               <input
                 {...p}
@@ -150,7 +150,7 @@ export function RegisterPage() {
               />
             )}
           </Field>
-          <Field label="Slaptažodis" hint="Bent 8 simboliai" error={errors.password || undefined}>
+          <Field label="Password" hint="At least 8 characters" error={errors.password || undefined}>
             {(p) => (
               <input
                 {...p}
@@ -163,7 +163,7 @@ export function RegisterPage() {
               />
             )}
           </Field>
-          <Field label="Pakartok slaptažodį" error={errors.repeat || undefined}>
+          <Field label="Repeat password" error={errors.repeat || undefined}>
             {(p) => (
               <input
                 {...p}
@@ -179,12 +179,12 @@ export function RegisterPage() {
           {errors.form && <p className="field__error">{errors.form}</p>}
           <div className="form__actions">
             <button className="btn" disabled={busy}>
-              {busy ? 'Kuriama…' : 'Sukurti veikėją'}
+              {busy ? 'Creating…' : 'Create character'}
             </button>
           </div>
         </form>
         <p className="muted auth__hint">
-          Jau turi paskyrą? <Link to="/prisijungti">Prisijunk</Link>.
+          Already have an account? <Link to="/login">Log in</Link>.
         </p>
       </Window>
     </div>

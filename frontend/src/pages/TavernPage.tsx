@@ -12,7 +12,7 @@ import { useTitle } from '../lib/useTitle'
 export function TavernPage() {
   const { user, roleIn } = useAuth()
   const [creating, setCreating] = useState(false)
-  useTitle('Taverna')
+  useTitle('Tavern')
   const guildList = useQuery({ queryKey: ['guilds'], queryFn: () => guilds.list() })
   const pending = useQuery({ queryKey: ['friends', 'PENDING'], queryFn: () => friends.list('PENDING'), retry: false })
   const incoming = pending.data?.content.filter((f) => f.direction === 'INCOMING').length ?? 0
@@ -22,8 +22,8 @@ export function TavernPage() {
   return (
     <>
       <div className="page-head">
-        <h1>Taverna</h1>
-        <p>Čia susitinka tavo grupės. Pasirink, kur šiandien keliausi.</p>
+        <h1>Tavern</h1>
+        <p>Your guilds meet here. Pick where you are heading today.</p>
       </div>
 
       <div className="grid grid--sidebar">
@@ -34,31 +34,31 @@ export function TavernPage() {
               <div>
                 <h2 className="hero-card__name">{user.username}</h2>
                 <p className="muted">
-                  {USER_ROLE_INFO[user.role]}, nuo {formatDate(user.createdAt)}
+                  {USER_ROLE_INFO[user.role]} since {formatDate(user.createdAt)}
                 </p>
                 <p>
-                  Grupių: <strong>{user.memberships.length}</strong>
+                  Guilds: <strong>{user.memberships.length}</strong>
                 </p>
               </div>
             </div>
           </Window>
           {incoming > 0 && (
-            <Window title="Pakvietimai" icon={<Mail size={24} aria-hidden="true" />} headingLevel={3}>
+            <Window title="Invitations" icon={<Mail size={24} aria-hidden="true" />} headingLevel={3}>
               <p>
-                Turi {incoming} {plural(incoming, 'naują draugystės kvietimą', 'naujus draugystės kvietimus', 'naujų draugystės kvietimų')}.
+                You have {incoming} new {plural(incoming, 'friend request', 'friend requests')}.
               </p>
-              <Link to="/draugai" className="btn btn--small">
-                Peržiūrėti
+              <Link to="/friends" className="btn btn--small">
+                View
               </Link>
             </Window>
           )}
         </aside>
 
-        <section aria-labelledby="mano-grupes">
+        <section aria-labelledby="my-guilds">
           <div className="row row--between section-head">
-            <h2 id="mano-grupes">Tavo grupės</h2>
+            <h2 id="my-guilds">Your guilds</h2>
             <button type="button" className="btn" onClick={() => setCreating(true)}>
-              <Plus size={20} aria-hidden="true" /> Įkurti grupę
+              <Plus size={20} aria-hidden="true" /> Found a guild
             </button>
           </div>
 
@@ -67,7 +67,7 @@ export function TavernPage() {
           {guildList.data && guildList.data.content.length === 0 && (
             <Window>
               <Empty icon={<Script size={48} aria-hidden="true" />}>
-                Dar nepriklausai jokiai grupei. Įkurk savo arba paprašyk grupės savininko tave pridėti.
+                You are not in a guild yet. Found your own or ask a guild owner to add you.
               </Empty>
             </Window>
           )}
@@ -76,11 +76,11 @@ export function TavernPage() {
               const role = roleIn(g.id)
               return (
                 <li key={g.id}>
-                  <Link to={`/grupes/${g.id}`} className="window window--link guild-card">
+                  <Link to={`/guilds/${g.id}`} className="window window--link guild-card">
                     <h3>{g.name}</h3>
-                    <p className="muted guild-card__desc">{g.description || 'Be aprašymo'}</p>
+                    <p className="muted guild-card__desc">{g.description || 'No description'}</p>
                     <span className={`badge ${role === 'DUNGEON_MASTER' ? 'badge--plum' : role ? 'badge--info' : ''}`}>
-                      {role ? GUILD_ROLE_INFO[role].name : 'Administratoriaus peržiūra'}
+                      {role ? GUILD_ROLE_INFO[role].name : 'Admin view'}
                     </span>
                   </Link>
                 </li>

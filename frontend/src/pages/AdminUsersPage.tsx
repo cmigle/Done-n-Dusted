@@ -15,7 +15,7 @@ export function AdminUsersPage() {
   const toast = useToast()
   const [search, setSearch] = useState('')
   const [page, setPage] = useState(0)
-  useTitle('Administravimas')
+  useTitle('Admin')
   const list = useQuery({
     queryKey: ['users', search, page],
     queryFn: () => users.list({ username: search || undefined, page }),
@@ -26,7 +26,7 @@ export function AdminUsersPage() {
     mutationFn: ({ id, input }: { id: number; input: { role?: UserRole; enabled?: boolean } }) => users.update(id, input),
     onSuccess: async (u) => {
       await queryClient.invalidateQueries({ queryKey: ['users'] })
-      toast('success', `${u.username}: ${USER_ROLE_INFO[u.role].toLowerCase()}, ${u.enabled ? 'aktyvus' : 'užblokuotas'}`)
+      toast('success', `${u.username}: ${USER_ROLE_INFO[u.role].toLowerCase()}, ${u.enabled ? 'active' : 'blocked'}`)
     },
     onError: (err) => toast('error', err.message),
   })
@@ -34,12 +34,12 @@ export function AdminUsersPage() {
   return (
     <>
       <div className="page-head">
-        <h1>Administravimas</h1>
-        <p>Naudotojų rolės ir paskyrų blokavimas. Užblokuotas naudotojas atjungiamas nuo visų įrenginių.</p>
+        <h1>Admin</h1>
+        <p>User roles and account blocking. A blocked user is signed out on every device.</p>
       </div>
       <Window>
         <div className="row row--between admin-tools">
-          <Field label="Ieškoti pagal vardą">
+          <Field label="Search by username">
             {(p) => (
               <span className="input-icon">
                 <Search size={20} aria-hidden="true" />
@@ -56,20 +56,20 @@ export function AdminUsersPage() {
               </span>
             )}
           </Field>
-          {list.data && <span className="muted">Iš viso: {list.data.totalElements}</span>}
+          {list.data && <span className="muted">Total: {list.data.totalElements}</span>}
         </div>
         {list.isPending && <Loading />}
         {list.isError && <ErrorNote error={list.error} />}
         {list.data && (
           <div className="table-wrap">
             <table className="table">
-              <caption className="visually-hidden">Naudotojai</caption>
+              <caption className="visually-hidden">Users</caption>
               <thead>
                 <tr>
-                  <th scope="col">Naudotojas</th>
-                  <th scope="col">Rolė</th>
-                  <th scope="col">Aktyvus</th>
-                  <th scope="col">Užsiregistravo</th>
+                  <th scope="col">User</th>
+                  <th scope="col">Role</th>
+                  <th scope="col">Active</th>
+                  <th scope="col">Joined</th>
                 </tr>
               </thead>
               <tbody>
@@ -84,7 +84,7 @@ export function AdminUsersPage() {
                       </td>
                       <td>
                         <label>
-                          <span className="visually-hidden">{u.username} rolė</span>
+                          <span className="visually-hidden">{u.username}'s role</span>
                           <select
                             className="select select--small"
                             value={u.role}
@@ -104,8 +104,8 @@ export function AdminUsersPage() {
                             disabled={self}
                             onChange={(e) => update.mutate({ id: u.id, input: { enabled: e.target.checked } })}
                           />
-                          <span className="visually-hidden">{u.username} aktyvus</span>
-                          <span aria-hidden="true">{u.enabled ? 'Taip' : 'Ne'}</span>
+                          <span className="visually-hidden">{u.username} active</span>
+                          <span aria-hidden="true">{u.enabled ? 'Yes' : 'No'}</span>
                         </label>
                       </td>
                       <td>{formatDate(u.createdAt)}</td>
@@ -117,15 +117,15 @@ export function AdminUsersPage() {
           </div>
         )}
         {list.data && list.data.page.totalPages > 1 && (
-          <nav className="pager" aria-label="Puslapiai">
+          <nav className="pager" aria-label="Pages">
             <button type="button" className="btn btn--ghost btn--small" disabled={!list.data.links.prev} onClick={() => setPage((p) => p - 1)}>
-              Atgal
+              Previous
             </button>
             <span>
               {list.data.page.number + 1} / {list.data.page.totalPages}
             </span>
             <button type="button" className="btn btn--ghost btn--small" disabled={!list.data.links.next} onClick={() => setPage((p) => p + 1)}>
-              Toliau
+              Next
             </button>
           </nav>
         )}
