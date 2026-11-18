@@ -4,139 +4,139 @@ const PASSWORD = 'Demo123!'
 const unique = (prefix: string) => `${prefix} ${Date.now().toString(36)}`
 
 async function login(page: Page, username: string) {
-  await page.goto('/prisijungti')
-  await page.getByLabel('Naudotojo vardas').fill(username)
-  await page.getByLabel('Slaptažodis', { exact: true }).fill(PASSWORD)
-  await page.getByRole('button', { name: 'Prisijungti' }).click()
-  await expect(page).toHaveURL(/\/taverna$/)
-  await expect(page).toHaveTitle('Taverna – Done n Dusted')
+  await page.goto('/login')
+  await page.getByLabel('Username').fill(username)
+  await page.getByLabel('Password', { exact: true }).fill(PASSWORD)
+  await page.getByRole('button', { name: 'Log in' }).click()
+  await expect(page).toHaveURL(/\/tavern$/)
+  await expect(page).toHaveTitle('Tavern – Done n Dusted')
 }
 
 async function logout(page: Page) {
-  await page.getByRole('button', { name: /Atsijungti/ }).click()
-  await expect(page.getByRole('link', { name: /Prisijungti/ })).toBeVisible()
+  await page.getByRole('button', { name: /Log out/ }).click()
+  await expect(page.getByRole('link', { name: /Log in/ })).toBeVisible()
 }
 
-test('svecias mato taisykliu modalini langa ir uzdaro ji Esc', async ({ page }) => {
+test('guest opens the XP rules modal and closes it with Esc', async ({ page }) => {
   await page.goto('/')
-  await expect(page.getByRole('heading', { level: 1 })).toHaveText('Tavo veikėjas auga tarp žaidimų')
-  await page.getByRole('button', { name: 'Kaip skaičiuojama patirtis?' }).click()
-  const dialog = page.getByRole('dialog', { name: 'Kaip skaičiuojama patirtis' })
+  await expect(page.getByRole('heading', { level: 1 })).toHaveText('Your character grows between sessions')
+  await page.getByRole('button', { name: 'How does XP work?' }).click()
+  const dialog = page.getByRole('dialog', { name: 'How XP works' })
   await expect(dialog).toBeVisible()
-  await expect(dialog.getByRole('cell', { name: 'Legendinė' })).toBeVisible()
+  await expect(dialog.getByRole('cell', { name: 'Legendary' })).toBeVisible()
   await page.keyboard.press('Escape')
   await expect(dialog).toBeHidden()
 })
 
-test('neprisijungus apsaugotas puslapis veda i prisijungima', async ({ page }) => {
-  await page.goto('/taverna')
-  await expect(page).toHaveURL(/\/prisijungti$/)
+test('a protected page sends a guest to the login form', async ({ page }) => {
+  await page.goto('/tavern')
+  await expect(page).toHaveURL(/\/login$/)
 })
 
-test('neteisingas slaptazodis rodo serverio klaida', async ({ page }) => {
-  await page.goto('/prisijungti')
-  await expect(page).toHaveTitle('Prisijungimas – Done n Dusted')
-  await page.getByLabel('Naudotojo vardas').fill('jonas')
-  await page.getByLabel('Slaptažodis', { exact: true }).fill('blogas-slaptazodis')
-  await page.getByRole('button', { name: 'Prisijungti' }).click()
-  await expect(page.getByRole('alert')).toContainText(/Neteisingas naudotojo vardas arba slapta[zž]odis/)
+test('a wrong password shows the server error', async ({ page }) => {
+  await page.goto('/login')
+  await expect(page).toHaveTitle('Log in – Done n Dusted')
+  await page.getByLabel('Username').fill('jonas')
+  await page.getByLabel('Password', { exact: true }).fill('wrong-password')
+  await page.getByRole('button', { name: 'Log in' }).click()
+  await expect(page.getByRole('alert')).toContainText('Invalid username or password')
 })
 
-test('zaidejas registruoja zygi, DM ji patvirtina, XP matosi korteleje', async ({ page }) => {
-  const note = unique('E2E bėgimas')
+test('a player logs progress, the game master approves it, XP shows on the sheet', async ({ page }) => {
+  const note = unique('E2E run')
   await login(page, 'jonas')
-  await page.goto('/grupes/2/uzduotys/4')
-  await page.getByLabel('Ką padarei?').fill(note)
-  await page.getByLabel('Įrodymo nuoroda').fill('https://example.org/e2e.png')
-  await page.getByRole('button', { name: 'Užregistruoti' }).click()
-  await expect(page.getByText('Įrašas užregistruotas – laukia žaidimo vedėjo patvirtinimo')).toBeVisible()
+  await page.goto('/guilds/2/quests/4')
+  await page.getByLabel('What did you do?').fill(note)
+  await page.getByLabel('Evidence link').fill('https://example.org/e2e.png')
+  await page.getByRole('button', { name: 'Log entry' }).click()
+  await expect(page.getByText('Entry logged – waiting for the game master to approve it')).toBeVisible()
   const entry = page.getByRole('listitem').filter({ hasText: note })
-  await expect(entry.getByText('Laukia vedėjo')).toBeVisible()
+  await expect(entry.getByText('Awaiting GM')).toBeVisible()
   await logout(page)
 
   await login(page, 'rokas')
-  await page.goto('/grupes/2?skirtukas=perziura')
+  await page.goto('/guilds/2?tab=review')
   const pending = page.getByRole('listitem').filter({ hasText: note })
-  await pending.getByRole('button', { name: 'Peržiūrėti' }).click()
-  const dialog = page.getByRole('dialog', { name: 'Peržiūrėti įrašą' })
-  await dialog.getByLabel(/Patirtis/).fill('60')
-  await dialog.getByLabel('Įkvėpimas').fill('1')
-  await dialog.getByLabel('Pastaba žaidėjui').fill('Puikus tempas!')
-  await dialog.getByRole('button', { name: /Patvirtinti ir skirti 60\sPT/ }).click()
-  await expect(page.getByText(/jonas gauna 60\sPT/)).toBeVisible()
+  await pending.getByRole('button', { name: 'Review' }).click()
+  const dialog = page.getByRole('dialog', { name: 'Review entry' })
+  await dialog.getByLabel(/Experience/).fill('60')
+  await dialog.getByLabel('Inspiration').fill('1')
+  await dialog.getByLabel('Note to the player').fill('Great pace!')
+  await dialog.getByRole('button', { name: /Approve and award 60\sXP/ }).click()
+  await expect(page.getByText(/jonas earns 60\sXP/)).toBeVisible()
 
-  await page.goto('/grupes/2/nariai/4')
-  const sheet = page.getByRole('article', { name: 'jonas veikėjo kortelė' })
+  await page.goto('/guilds/2/members/4')
+  const sheet = page.getByRole('article', { name: "jonas's character sheet" })
   await expect(sheet.getByRole('heading', { name: 'jonas' })).toBeVisible()
-  await expect(sheet.getByText('Paskutiniai patvirtinti žygiai')).toBeVisible()
-  await expect(sheet.getByRole('progressbar', { name: /Ištvermė/ })).toBeVisible()
+  await expect(sheet.getByText('Recently approved entries')).toBeVisible()
+  await expect(sheet.getByRole('progressbar', { name: /Constitution/ })).toBeVisible()
 })
 
-test('DM kuria kaupiamaja uzduoti per modalini langa', async ({ page }) => {
-  const title = unique('Plaukti')
+test('the game master creates a grind quest in the modal', async ({ page }) => {
+  const title = unique('Swim')
   await login(page, 'rokas')
-  await page.goto('/grupes/2')
-  await page.getByRole('button', { name: 'Nauja užduotis' }).click()
-  const dialog = page.getByRole('dialog', { name: 'Nauja užduotis' })
-  await dialog.getByLabel('Pavadinimas').fill(title)
-  await dialog.getByLabel('Aprašymas').fill('Kiekvieną savaitę po kilometrą')
-  await dialog.getByLabel('Charakteristika').selectOption('CON')
-  await dialog.getByLabel('Tipas').selectOption('GRIND')
-  await dialog.getByLabel('Legendinė').check()
-  await dialog.getByLabel(/Tikslas/).fill('12')
-  await dialog.getByRole('button', { name: 'Paskelbti užduotį' }).click()
-  await expect(page.getByText(`Užduotis „${title}“ paskelbta`)).toBeVisible()
+  await page.goto('/guilds/2')
+  await page.getByRole('button', { name: 'New quest' }).click()
+  const dialog = page.getByRole('dialog', { name: 'New quest' })
+  await dialog.getByLabel('Title').fill(title)
+  await dialog.getByLabel('Description').fill('One more kilometre every week')
+  await dialog.getByLabel('Stat').selectOption('CON')
+  await dialog.getByLabel('Type').selectOption('GRIND')
+  await dialog.getByLabel('Legendary').check()
+  await dialog.getByLabel(/Target/).fill('12')
+  await dialog.getByRole('button', { name: 'Post quest' }).click()
+  await expect(page.getByText(`Quest “${title}” posted`)).toBeVisible()
   await expect(page.getByRole('link', { name: new RegExp(title) })).toBeVisible()
 })
 
-test('uzimtas grupes pavadinimas rodomas prie lauko', async ({ page }) => {
+test('a taken guild name is shown next to the field', async ({ page }) => {
   await login(page, 'jonas')
-  await page.getByRole('button', { name: 'Įkurti grupę' }).click()
-  const dialog = page.getByRole('dialog', { name: 'Įkurti grupę' })
-  await dialog.getByLabel('Pavadinimas').fill('Iron Vow')
-  await dialog.getByRole('button', { name: 'Įkurti grupę' }).click()
+  await page.getByRole('button', { name: 'Found a guild' }).click()
+  const dialog = page.getByRole('dialog', { name: 'Found a guild' })
+  await dialog.getByLabel('Name').fill('Iron Vow')
+  await dialog.getByRole('button', { name: 'Found guild' }).click()
   await expect(dialog.getByRole('alert')).toContainText(/Iron Vow/)
 })
 
-test('draugas mato vieša kortele, o ne irasus', async ({ page }) => {
+test('a friend sees the public sheet, not the log entries', async ({ page }) => {
   await login(page, 'ieva')
-  await page.goto('/draugai')
+  await page.goto('/friends')
   const friend = page.getByRole('listitem').filter({ hasText: 'jonas' })
-  await friend.getByRole('button', { name: 'Kortelė' }).click()
-  const dialog = page.getByRole('dialog', { name: 'jonas kortelė' })
-  await expect(dialog.getByText(/Viešas vaizdas/)).toBeVisible()
-  await expect(dialog.getByText('Paskutiniai patvirtinti žygiai')).toHaveCount(0)
+  await friend.getByRole('button', { name: 'Sheet' }).click()
+  const dialog = page.getByRole('dialog', { name: "jonas's sheet" })
+  await expect(dialog.getByText(/Public view/)).toBeVisible()
+  await expect(dialog.getByText('Recently approved entries')).toHaveCount(0)
 })
 
-test('administravimas pasiekiamas tik administratoriui', async ({ page }) => {
+test('only an administrator can open the admin page', async ({ page }) => {
   await login(page, 'jonas')
-  await expect(page.getByRole('link', { name: /Administravimas/ })).toHaveCount(0)
-  await page.goto('/administravimas')
-  await expect(page).toHaveURL(/\/taverna$/)
+  await expect(page.getByRole('link', { name: /Admin/ })).toHaveCount(0)
+  await page.goto('/admin')
+  await expect(page).toHaveURL(/\/tavern$/)
   await logout(page)
 
   await login(page, 'admin')
-  await page.getByRole('link', { name: /Administravimas/ }).click()
+  await page.getByRole('link', { name: /Admin/ }).click()
   await expect(page.getByRole('cell', { name: 'rokas', exact: true })).toBeVisible()
 })
 
-test('nezinomas kelias rodo 404', async ({ page }) => {
-  await page.goto('/nera-tokio')
-  await expect(page.getByRole('heading', { name: 'Šis kelias veda niekur' })).toBeVisible()
-  await expect(page).toHaveTitle('Puslapis nerastas – Done n Dusted')
+test('an unknown path shows the 404 page', async ({ page }) => {
+  await page.goto('/no-such-page')
+  await expect(page.getByRole('heading', { name: 'This road leads nowhere' })).toBeVisible()
+  await expect(page).toHaveTitle('Page not found – Done n Dusted')
 })
 
-test.describe('telefonas', () => {
+test.describe('phone', () => {
   test.use({ viewport: { width: 390, height: 844 } })
 
-  test('hamburger meniu atsidaro ir uzsidaro pasirinkus punkta', async ({ page }) => {
+  test('the hamburger menu opens and closes after picking a link', async ({ page }) => {
     await login(page, 'rokas')
-    const toggle = page.getByRole('button', { name: 'Atidaryti meniu' })
+    const toggle = page.getByRole('button', { name: 'Open menu' })
     await expect(toggle).toBeVisible()
-    await expect(page.getByRole('link', { name: /Draugai/ })).toBeHidden()
+    await expect(page.getByRole('link', { name: /Friends/ })).toBeHidden()
     await toggle.click()
-    await page.getByRole('link', { name: /Draugai/ }).click()
-    await expect(page).toHaveURL(/\/draugai$/)
-    await expect(page.getByRole('button', { name: 'Atidaryti meniu' })).toBeVisible()
+    await page.getByRole('link', { name: /Friends/ }).click()
+    await expect(page).toHaveURL(/\/friends$/)
+    await expect(page.getByRole('button', { name: 'Open menu' })).toBeVisible()
   })
 })
