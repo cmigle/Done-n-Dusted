@@ -1,0 +1,257 @@
+/* ---------- Tinklelis ---------- */
+.container {
+  width: 100%;
+  max-width: var(--container);
+  margin: 0 auto;
+  padding: 0 var(--s2);
+}
+@media (min-width: 768px) {
+  .container {
+    padding: 0 var(--s3);
+  }
+}
+
+.grid {
+  display: grid;
+  gap: var(--s3);
+  grid-template-columns: 1fr;
+}
+@media (min-width: 768px) {
+  .grid--2 {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  .grid--3 {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  .grid--sidebar {
+    grid-template-columns: 4fr 8fr;
+    align-items: start;
+  }
+}
+@media (min-width: 1024px) {
+  .grid--3 {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+.stack > * + * {
+  margin-top: var(--s3);
+}
+.row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--s2);
+}
+.row--between {
+  justify-content: space-between;
+}
+
+/* ---------- Header: akmens siena, auksinis logotipas, skirtukai ---------- */
+.site-header {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  background-color: var(--shadow);
+  /* Pikseliniai akmenys: dvi plytu eiles */
+  background-image:
+    linear-gradient(var(--midnight) 4px, transparent 4px),
+    linear-gradient(90deg, var(--midnight) 4px, transparent 4px);
+  background-size: 64px 24px;
+  border-bottom: var(--px) solid var(--midnight);
+  box-shadow: 0 var(--px) 0 var(--slate);
+}
+.site-header__bar {
+  display: flex;
+  align-items: center;
+  gap: var(--s2);
+  min-height: var(--header-h);
+}
+.brand {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--s1);
+  color: var(--gold);
+  font-size: var(--fs-md);
+  font-weight: 700;
+  text-decoration: none;
+  text-shadow: 3px 3px 0 var(--midnight);
+}
+.brand:hover {
+  color: var(--lime);
+}
+.brand img {
+  width: 40px;
+  height: 40px;
+}
+
+.nav {
+  margin-left: auto;
+}
+.nav__list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  gap: var(--s1);
+}
+.nav__link {
+  font: inherit;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px var(--s2);
+  color: var(--frost);
+  text-decoration: none;
+  background: var(--midnight);
+  border: 3px solid var(--slate);
+  clip-path: var(--notch);
+  transition:
+    background-color var(--speed) var(--ease),
+    border-color var(--speed) var(--ease);
+}
+.nav__link:hover {
+  color: var(--frost);
+  border-color: var(--steel);
+}
+.nav__link.active {
+  background: var(--gold);
+  border-color: var(--gold);
+  color: var(--midnight);
+}
+
+.header-user {
+  display: none;
+  align-items: center;
+  gap: var(--s1);
+}
+@media (min-width: 1024px) {
+  .header-user {
+    display: flex;
+  }
+}
+
+/* .site-header prefiksas - kad .btn (display: inline-flex) neuzrasytu */
+.site-header .menu-toggle {
+  display: none;
+}
+
+/* Mobilus meniu: iki 767 px - hamburger ir isskleidziamas sarasas */
+@media (max-width: 767px) {
+  .site-header .menu-toggle {
+    display: inline-flex;
+    margin-left: auto;
+  }
+  .nav {
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 100%;
+    background: var(--shadow);
+    border-bottom: var(--px) solid var(--midnight);
+    max-height: 0;
+    overflow: hidden;
+    visibility: hidden;
+    transition:
+      max-height 240ms var(--ease),
+      visibility 0s linear 240ms;
+  }
+  .nav.is-open {
+    max-height: 480px;
+    visibility: visible;
+    transition: max-height 240ms var(--ease);
+  }
+  .nav__list {
+    flex-direction: column;
+    padding: var(--s2);
+  }
+  .nav__link {
+    width: 100%;
+    justify-content: flex-start;
+    padding: var(--s1) var(--s2);
+  }
+}
+
+/* ---------- Content ---------- */
+.site-main {
+  flex: 1;
+  padding: var(--s4) 0 var(--s8);
+}
+.page-head {
+  margin-bottom: var(--s4);
+}
+.page-head h1 {
+  text-shadow: 4px 4px 0 var(--shadow);
+}
+.page-head p {
+  color: var(--text-muted);
+}
+
+/* ---------- Footer: zole ir zeme ---------- */
+.site-footer {
+  position: relative;
+  margin-top: auto;
+  color: var(--frost);
+  background: var(--teal);
+  border-top: 8px solid var(--leaf);
+  padding: var(--s4) 0 var(--s3);
+  font-size: var(--fs-sm);
+}
+.site-footer::before {
+  /* Pikseliniai zoles kuokstai virs ribos */
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: -16px;
+  height: 8px;
+  background: repeating-linear-gradient(
+    90deg,
+    var(--leaf) 0 8px,
+    transparent 8px 24px,
+    var(--lime) 24px 28px,
+    transparent 28px 40px
+  );
+}
+.site-footer__grid {
+  display: grid;
+  gap: var(--s2);
+}
+@media (min-width: 768px) {
+  .site-footer__grid {
+    grid-template-columns: 2fr 1fr 1fr;
+    align-items: start;
+  }
+}
+.site-footer h2 {
+  font-size: var(--fs-base);
+  color: var(--lime);
+  margin-bottom: var(--s1);
+}
+.site-footer ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.site-footer li + li {
+  margin-top: 4px;
+}
+.site-footer a {
+  color: var(--frost);
+  text-decoration: underline dotted var(--lime);
+}
+.site-footer a:hover {
+  color: var(--lime);
+}
+.site-footer p {
+  margin: 0;
+  color: var(--frost);
+}
+.site-footer__legal {
+  max-width: none;
+  margin-top: var(--s3);
+  padding-top: var(--s2);
+  border-top: 2px dashed var(--leaf);
+  color: var(--frost); /* steel ant teal per mazas kontrastas */
+}

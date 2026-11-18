@@ -1,0 +1,527 @@
+/* ---------- RPG meniu langas (pagrindinis turinio elementas) ---------- */
+.window {
+  position: relative;
+  background: var(--window);
+  color: var(--text);
+  padding: var(--s3);
+  border: var(--px) solid var(--window-edge);
+  clip-path: var(--notch);
+  box-shadow:
+    inset 0 0 0 var(--px) var(--royal),
+    inset 0 0 0 calc(var(--px) * 2) var(--navy);
+}
+.window--compact {
+  padding: var(--s2);
+}
+.window__title {
+  display: flex;
+  align-items: center;
+  gap: var(--s1);
+  font-size: var(--fs-md);
+  margin-bottom: var(--s2);
+}
+.window__title svg {
+  color: var(--gold);
+  flex: none;
+}
+.window--link {
+  display: block;
+  text-decoration: none;
+  color: var(--text);
+}
+.window--link:hover {
+  color: var(--text);
+  border-color: var(--gold);
+}
+.window--link:focus-visible {
+  outline-offset: -8px;
+}
+.muted {
+  color: var(--text-muted);
+}
+
+/* ---------- Mygtukai ---------- */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--s1);
+  min-height: 44px;
+  padding: 6px var(--s3);
+  font: inherit;
+  font-weight: 600;
+  line-height: 1.2;
+  color: var(--midnight);
+  background: var(--gold);
+  border: 3px solid var(--midnight);
+  clip-path: var(--notch);
+  box-shadow:
+    inset -4px -4px 0 0 rgb(0 0 0 / 25%),
+    inset 4px 4px 0 0 rgb(255 255 255 / 35%);
+  cursor: pointer;
+  text-decoration: none;
+  transition:
+    transform var(--speed) var(--ease),
+    filter var(--speed) var(--ease);
+}
+.btn:hover {
+  filter: brightness(1.08);
+  color: var(--midnight);
+}
+.btn:active {
+  transform: translateY(2px);
+  box-shadow:
+    inset 4px 4px 0 0 rgb(0 0 0 / 25%),
+    inset -4px -4px 0 0 rgb(255 255 255 / 20%);
+}
+.btn:disabled {
+  cursor: not-allowed;
+  filter: grayscale(0.8);
+  opacity: 0.6;
+}
+.btn--secondary {
+  background: var(--steel);
+}
+.btn--danger {
+  background: var(--ruby);
+  color: var(--frost);
+}
+.btn--danger:hover {
+  color: var(--frost);
+}
+.btn--success {
+  background: var(--leaf);
+}
+.btn--ghost {
+  background: transparent;
+  color: var(--frost);
+  border-color: var(--steel);
+  box-shadow: none;
+}
+.btn--ghost:hover {
+  color: var(--gold);
+  border-color: var(--gold);
+}
+.btn--small {
+  min-height: 36px;
+  padding: 2px var(--s2);
+  font-size: var(--fs-sm);
+}
+.btn--icon {
+  padding: 6px;
+  min-width: 44px;
+}
+
+/* ---------- Formos ---------- */
+.form {
+  display: grid;
+  gap: var(--s2);
+}
+.form__row {
+  display: grid;
+  gap: var(--s2);
+}
+@media (min-width: 768px) {
+  .form__row--2 {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+.field {
+  display: grid;
+  gap: 6px;
+}
+.field__label {
+  font-weight: 600;
+}
+.field__hint {
+  font-size: var(--fs-sm);
+  color: var(--text-muted);
+}
+.field__error {
+  font-size: var(--fs-sm);
+  color: var(--gold);
+}
+.field__error::before {
+  content: '! ';
+  color: var(--ruby);
+  font-weight: 700;
+}
+.input,
+.select,
+.textarea {
+  width: 100%;
+  min-height: 44px;
+  padding: var(--s1) 12px;
+  font: inherit;
+  color: var(--frost);
+  background: var(--midnight);
+  border: 3px solid var(--steel);
+  border-radius: 0;
+  transition: border-color var(--speed) var(--ease);
+}
+.textarea {
+  min-height: 96px;
+  resize: vertical;
+}
+.input:focus,
+.select:focus,
+.textarea:focus {
+  outline: none;
+  border-color: var(--gold);
+  box-shadow: 0 0 0 3px var(--shadow);
+}
+.input[aria-invalid='true'],
+.select[aria-invalid='true'],
+.textarea[aria-invalid='true'] {
+  border-color: var(--ruby);
+}
+.input::placeholder,
+.textarea::placeholder {
+  color: var(--slate);
+}
+.select {
+  appearance: none;
+  background-image:
+    linear-gradient(45deg, transparent 50%, var(--gold) 50%),
+    linear-gradient(135deg, var(--gold) 50%, transparent 50%);
+  background-position:
+    calc(100% - 18px) 55%,
+    calc(100% - 12px) 55%;
+  background-size: 6px 6px;
+  background-repeat: no-repeat;
+  padding-right: 36px;
+}
+
+/* Pikseliniai checkbox ir radio */
+.choice {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--s1);
+  cursor: pointer;
+  min-height: 32px;
+}
+.choice input {
+  appearance: none;
+  width: 22px;
+  height: 22px;
+  margin: 0;
+  background: var(--midnight);
+  border: 3px solid var(--steel);
+  display: grid;
+  place-content: center;
+  cursor: pointer;
+}
+.choice input[type='radio'] {
+  clip-path: var(--notch);
+}
+.choice input::after {
+  content: '';
+  width: 10px;
+  height: 10px;
+  background: var(--gold);
+  transform: scale(0);
+  transition: transform var(--speed) var(--ease);
+}
+.choice input:checked::after {
+  transform: scale(1);
+}
+.choice input:focus-visible {
+  outline: 3px dashed var(--focus);
+  outline-offset: 2px;
+}
+.choices {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--s1) var(--s3);
+  border: 0;
+  margin: 0;
+  padding: 0;
+}
+.choices legend {
+  font-weight: 600;
+  padding: 0;
+  margin-bottom: 6px;
+}
+
+/* Slankiklis (range) */
+.range {
+  width: 100%;
+  appearance: none;
+  height: 12px;
+  background: var(--midnight);
+  border: 3px solid var(--steel);
+}
+.range::-webkit-slider-thumb {
+  appearance: none;
+  width: 20px;
+  height: 24px;
+  background: var(--gold);
+  border: 3px solid var(--midnight);
+  cursor: pointer;
+}
+.range::-moz-range-thumb {
+  width: 16px;
+  height: 20px;
+  background: var(--gold);
+  border: 3px solid var(--midnight);
+  border-radius: 0;
+  cursor: pointer;
+}
+
+.form__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--s2);
+  justify-content: flex-end;
+  margin-top: var(--s1);
+}
+
+/* ---------- Zenkleliai ---------- */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 0 var(--s1);
+  font-size: var(--fs-sm);
+  font-weight: 600;
+  line-height: 1.6;
+  color: var(--midnight);
+  background: var(--steel);
+  clip-path: var(--notch);
+  white-space: nowrap;
+}
+.badge--gold {
+  background: var(--gold);
+}
+.badge--success {
+  background: var(--leaf);
+}
+.badge--danger {
+  background: var(--ruby);
+  color: var(--frost);
+}
+.badge--info {
+  background: var(--sky);
+}
+.badge--plum {
+  background: var(--plum);
+  color: var(--frost);
+}
+
+/* ---------- Juostos (XP ir charakteristikos) ---------- */
+.bar {
+  --value: 0%;
+  --fill: var(--gold);
+  position: relative;
+  height: 20px;
+  background: var(--midnight);
+  border: 3px solid var(--frost);
+  overflow: hidden;
+}
+.bar__fill {
+  height: 100%;
+  width: var(--value);
+  background-color: var(--fill);
+  /* Segmentai kas 8 px - "pikselinis" uzpildas */
+  background-image: linear-gradient(90deg, transparent 6px, rgb(0 0 0 / 25%) 6px);
+  background-size: 8px 100%;
+  transition: width 900ms steps(12, end);
+}
+.bar--animate .bar__fill {
+  animation: bar-fill 900ms steps(12, end) both;
+}
+@keyframes bar-fill {
+  from {
+    width: 0;
+  }
+}
+
+/* ---------- Modalinis langas ---------- */
+.modal {
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--text);
+  max-width: min(560px, calc(100vw - 32px));
+  width: 100%;
+  overflow: visible;
+}
+.modal::backdrop {
+  background: rgb(26 28 44 / 80%);
+  backdrop-filter: none;
+}
+.modal[open] .window {
+  animation: modal-pop 200ms steps(4, end);
+}
+@keyframes modal-pop {
+  from {
+    transform: scale(0.85);
+    opacity: 0;
+  }
+}
+.modal__head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--s2);
+  margin-bottom: var(--s2);
+}
+.modal__head h2 {
+  margin: 0;
+  font-size: var(--fs-lg);
+}
+.modal__body {
+  max-height: min(70vh, 640px);
+  overflow-y: auto;
+  padding-right: 4px;
+}
+
+/* ---------- Pranesimai (toast) ---------- */
+.toasts {
+  position: fixed;
+  right: var(--s2);
+  bottom: var(--s2);
+  z-index: 50;
+  display: grid;
+  gap: var(--s1);
+  width: min(380px, calc(100vw - 32px));
+}
+.toast {
+  display: flex;
+  gap: var(--s1);
+  align-items: flex-start;
+  padding: 12px var(--s2);
+  background: var(--midnight);
+  border: 3px solid var(--leaf);
+  clip-path: var(--notch);
+  animation: toast-in 240ms steps(4, end);
+}
+.toast--error {
+  border-color: var(--ruby);
+}
+.toast--info {
+  border-color: var(--sky);
+}
+@keyframes toast-in {
+  from {
+    transform: translateX(24px);
+    opacity: 0;
+  }
+}
+
+/* ---------- Skirtukai ---------- */
+.tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--s1);
+  margin-bottom: var(--s3);
+  border-bottom: var(--px) solid var(--slate);
+}
+.tab {
+  padding: var(--s1) var(--s2);
+  font: inherit;
+  font-weight: 600;
+  color: var(--steel);
+  background: transparent;
+  border: 0;
+  border-bottom: var(--px) solid transparent;
+  margin-bottom: calc(var(--px) * -1);
+  cursor: pointer;
+  text-decoration: none;
+}
+.tab:hover {
+  color: var(--frost);
+}
+.tab[aria-selected='true'],
+.tab.active {
+  color: var(--gold);
+  border-bottom-color: var(--gold);
+}
+
+/* ---------- Sarasai ir lentele ---------- */
+.list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.list > li {
+  padding: 12px 0;
+  border-bottom: 2px dashed var(--slate);
+}
+.list > li:last-child {
+  border-bottom: 0;
+}
+.table-wrap {
+  overflow-x: auto;
+}
+.table {
+  width: 100%;
+  border-collapse: collapse;
+}
+.table th,
+.table td {
+  text-align: left;
+  padding: 10px 12px;
+  border-bottom: 2px dashed var(--slate);
+  vertical-align: middle;
+}
+.table th {
+  color: var(--gold);
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+/* ---------- Pikselinis avataras ---------- */
+.avatar {
+  display: inline-block;
+  flex: none;
+  background: var(--midnight);
+  border: 3px solid var(--frost);
+  image-rendering: pixelated;
+}
+.avatar svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+/* ---------- Busenos ---------- */
+.empty {
+  display: grid;
+  justify-items: center;
+  gap: var(--s1);
+  padding: var(--s4) var(--s2);
+  text-align: center;
+  color: var(--text-muted);
+}
+.empty svg {
+  color: var(--slate);
+}
+.spinner {
+  display: inline-flex;
+  gap: 4px;
+}
+.spinner span {
+  width: 8px;
+  height: 8px;
+  background: var(--gold);
+  animation: blink 900ms steps(2, end) infinite;
+}
+.spinner span:nth-child(2) {
+  animation-delay: 300ms;
+}
+.spinner span:nth-child(3) {
+  animation-delay: 600ms;
+}
+@keyframes blink {
+  50% {
+    opacity: 0.2;
+  }
+}
+.pager {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: var(--s2);
+  margin-top: var(--s3);
+}

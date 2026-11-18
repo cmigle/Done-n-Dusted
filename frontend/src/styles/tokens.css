@@ -1,0 +1,79 @@
+/*
+ * Dizaino zetonai. Spalvos - "Sweetie-16" pikseliu palete (CC0), kad visos derintusi tarpusavyje.
+ * Tarpai - 8 px tinklelis, "pikselio" vienetas - 4 px (remeliai, seselis, kampai).
+ */
+:root {
+  /* Palete */
+  --midnight: #1a1c2c; /* puslapio fonas */
+  --plum: #5d275d;
+  --ruby: #b13e53; /* klaidos, STR */
+  --ember: #ef7d57; /* CON */
+  --gold: #ffcd75; /* XP, pagrindiniai veiksmai */
+  --lime: #a7f070;
+  --leaf: #38b764; /* patvirtinta, DEX */
+  --teal: #257179; /* pagrindo zeme */
+  --navy: #29366f; /* langu fonas */
+  --royal: #3b5dc9; /* langu sviesus krastas */
+  --sky: #41a6f6; /* nuorodos, INT */
+  --aqua: #73eff7; /* WIS */
+  --frost: #f4f4f4; /* tekstas ant tamsaus fono */
+  --steel: #94b0c2;
+  --slate: #566c86;
+  --shadow: #333c57;
+
+  /* Semantika */
+  --bg: var(--midnight);
+  --text: var(--frost);
+  --text-muted: var(--steel);
+  --window: var(--navy);
+  --window-edge: var(--frost);
+  --accent: var(--gold);
+  --danger: var(--ruby);
+  --success: var(--leaf);
+  --info: var(--sky);
+  --focus: var(--gold);
+
+  /* Tipografija: viena seima, skale 1.25 */
+  --font: 'Pixelify Sans', 'Courier New', monospace;
+  --fs-sm: 0.8rem;
+  --fs-base: 1rem;
+  --fs-md: 1.25rem;
+  --fs-lg: 1.563rem;
+  --fs-xl: 1.953rem;
+  --fs-2xl: 2.441rem;
+  --lh: 1.5;
+
+  /* Tarpai (8 px tinklelis) */
+  --px: 4px;
+  --s1: 8px;
+  --s2: 16px;
+  --s3: 24px;
+  --s4: 32px;
+  --s5: 40px;
+  --s6: 48px;
+  --s8: 64px;
+
+  --container: 1120px;
+  --header-h: 72px;
+
+  /* Pikseliniai kampai: iskirpti 4 px kampai vietoj border-radius */
+  --notch: polygon(
+    var(--px) 0,
+    calc(100% - var(--px)) 0,
+    100% var(--px),
+    100% calc(100% - var(--px)),
+    calc(100% - var(--px)) 100%,
+    var(--px) 100%,
+    0 calc(100% - var(--px)),
+    0 var(--px)
+  );
+
+  --speed: 160ms;
+  --ease: steps(4, end); /* "pikselinis" judesys - laiptais, ne sklandziai */
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --speed: 0ms;
+  }
+}
