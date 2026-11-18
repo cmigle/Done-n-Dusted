@@ -2,7 +2,7 @@ import { Coin, Hidden, Zap } from '@nsmr/pixelart-react'
 import type { CharacterSheet } from '../api/types'
 import { GUILD_ROLE_INFO, STAT_INFO, formatDate, plural, xp } from '../lib/game'
 import { StatTile } from './StatIcon'
-import { Bar, PixelAvatar } from './ui'
+import { Bar, PixelAvatar, WithDigits } from './ui'
 
 /** Character sheet: level, XP, the six stats, inspiration and streak. */
 export function CharacterSheetView({ sheet }: { sheet: CharacterSheet }) {
@@ -11,7 +11,9 @@ export function CharacterSheetView({ sheet }: { sheet: CharacterSheet }) {
       <header className="sheet__head">
         <PixelAvatar name={sheet.username} size={112} />
         <div className="sheet__who">
-          <h2 className="sheet__name">{sheet.username}</h2>
+          <h2 className="sheet__name">
+            <WithDigits text={sheet.username} />
+          </h2>
           <p className="muted">
             {sheet.guildName
               ? `${sheet.role ? GUILD_ROLE_INFO[sheet.role].name : 'Member'} in “${sheet.guildName}”`

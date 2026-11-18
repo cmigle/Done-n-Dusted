@@ -10,7 +10,7 @@ import { QuestFormModal } from '../components/QuestFormModal'
 import { ConfirmModal, ReviewModal } from '../components/ReviewModal'
 import { StatTile } from '../components/StatIcon'
 import { useToast } from '../components/toast'
-import { Empty, ErrorNote, Field, Loading, PixelAvatar, Window } from '../components/ui'
+import { Empty, ErrorNote, Field, Loading, PixelAvatar, Window, WithDigits } from '../components/ui'
 import {
   DIFFICULTY_INFO,
   QUEST_TYPE_INFO,
@@ -98,7 +98,9 @@ export function QuestPage() {
             <div className="quest-detail__icon">
               <StatTile stat={q.stat} size="lg" />
             </div>
-            <h1 className="quest-detail__title">{q.title}</h1>
+            <h1 className="quest-detail__title">
+              <WithDigits text={q.title} />
+            </h1>
             {q.description && <p>{q.description}</p>}
             <dl className="facts">
               <div>

@@ -162,6 +162,12 @@ export function Field({
   )
 }
 
+/* ---------- Digits in pixel-font text ---------- */
+/** User-written titles in the pixel font: letters stay pixelated, digits switch to Nunito (Pixelify's 5 looks like S). */
+export function WithDigits({ text }: { text: string }) {
+  return <>{text.split(/(\d+)/).map((part, i) => (i % 2 ? <span key={i} className="digits">{part}</span> : part))}</>
+}
+
 /* ---------- States ---------- */
 export function Spinner({ label = 'Loading' }: { label?: string }) {
   return (

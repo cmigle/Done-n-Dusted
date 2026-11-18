@@ -11,7 +11,7 @@ import { ConfirmModal, ReviewModal } from '../components/ReviewModal'
 import { QuestCard } from '../components/QuestCard'
 import { StatTile } from '../components/StatIcon'
 import { useToast } from '../components/toast'
-import { Empty, ErrorNote, Field, Loading, PixelAvatar, Window } from '../components/ui'
+import { Empty, ErrorNote, Field, Loading, PixelAvatar, Window, WithDigits } from '../components/ui'
 import {
   DIFFICULTIES,
   DIFFICULTY_INFO,
@@ -86,7 +86,9 @@ export function GuildPage() {
       </nav>
       <div className="page-head row row--between">
         <div>
-          <h1>{g.name}</h1>
+          <h1>
+            <WithDigits text={g.name} />
+          </h1>
           <p>{g.description || 'This guild has no description.'}</p>
           <div className="row">
             {role && <span className={`badge ${isDm ? 'badge--plum' : 'badge--info'}`}>{GUILD_ROLE_INFO[role].name}</span>}
