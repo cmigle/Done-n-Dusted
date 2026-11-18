@@ -10,7 +10,7 @@ Full-stack project: **Spring Boot 4 REST API** with JWT auth and role-based acce
 TypeScript** client. Built for the KTU course *Web Application Design* (T120B165) in three labs.
 
 **Live demo: <https://done-n-dusted.azurewebsites.net>** · API docs: [Swagger UI](https://done-n-dusted.azurewebsites.net/swagger-ui.html) ·
-demo accounts `rokas`, `jonas`, `ieva`, `admin` (password `Demo123!`)
+demo accounts `rokas` (DM), `jonas` (player), `ieva` (password `Demo123!`); the admin password on the live demo is private
 
 ![Character sheet](docs/screenshots/05-sheet-desktop.png)
 

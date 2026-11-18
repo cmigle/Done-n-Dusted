@@ -13,3 +13,4 @@ app:
     secret: ${JWT_SECRET}   # be numatytosios reiksmes: nenurodzius programa nepasileis
   cors:
     allowed-origins: ${CORS_ORIGINS:http://localhost:5173}   # kliento adresai per kableli
+  admin-password: ${ADMIN_PASSWORD:}   # viesame diegime seed admin slaptazodis pakeiciamas siuo (min. 12 simboliu)
