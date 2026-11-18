@@ -1,0 +1,112 @@
+$kind: collection
+name: Done n Dusted API
+description: |-
+  # Done n Dusted API
+
+  A productivity system that works like a D&D campaign: a player logs real-life progress, the guild's Dungeon Master approves it, and only approved log entries give XP.
+
+  Resource hierarchy: **Guild (1:N) → Quest (1:N) → LogEntry**. A child object is reachable only through its parent, so a wrong chain returns `404`.
+
+  Authentication and authorization: JWT access and refresh tokens, the guild roles `PLAYER` / `DUNGEON_MASTER` and the global role `ADMIN`.
+
+  ## How to run
+
+  1. Start the API (`./mvnw spring-boot:run`). It runs at `http://localhost:8080/api`.
+  2. In the Postman app, run the whole collection with **Run collection**. Run the folders and requests in order, because later requests use IDs and tokens created by earlier ones.
+
+  The collection registers a new user on every run, creates its own data and cleans up after itself, so it can be run any number of times.
+
+  ## Authorization
+
+  *Bearer Token* `{{accessToken}}` is set at the collection level and inherited by every request. When a request is sent by another user, its *Authorization* tab names a different token:
+
+  | Token | User | Used for |
+  | --- | --- | --- |
+  | `accessToken` | `postman_<time>`, registered by the collection | Guild owner and DM |
+  | `playerToken` | `jonas` | Guild player (`PLAYER`) |
+  | `adminToken` | `admin` | Administrator (`ADMIN`) |
+
+  The demo users (`admin`, `rokas`, `ieva`, `jonas`) have the password `Demo123!`.
+
+  ## Folders
+
+  | Folder | What is checked |
+  | --- | --- |
+  | 0. Autentifikacija | Registration, login, JWT contents, `/auth/me`, token rotation, logout, `401` |
+  | 1. Suvestinė | How many guilds, quests and log entries are in the database (with IDs), and whether child IDs point to the right parent |
+  | 2. Grupės | Guild CRUD, paging via `links.next`, `400`, `404`, `409`, `415` errors |
+  | 3. Nariai | Adding members, roles, one DM per guild (`409`), `403`, `422` |
+  | 4. Užduotys | Creating quests, filters, XP calculation, `422` and parent-chain `404` |
+  | 5. Progreso įrašai | A player logs progress, the DM approves it, XP rules, frozen content |
+  | 6. Rolės ir teisės | Who can do what: `403` for a non-member, a player, a DM with their own entry, a non-admin |
+  | 7. Išvalymas | Deleting the created data (`204`, also by the administrator) and checking that it is gone |
+  | 8. Administravimas | User list, blocking and unblocking |
+
+  Every update is a `PATCH` (partial): only the fields sent are changed, so an omitted description is not lost. A resource created without `description` is saved as `""`.
+
+  ## Collection variables
+
+  | Variable | Value |
+  | --- | --- |
+  | `baseUrl` | API address, `http://localhost:8080/api` by default |
+  | `username`, `password`, `userId` | The user registered by the collection; the password is shared with the demo users |
+  | `accessToken`, `refreshToken`, `oldRefreshToken` | The collection user's tokens and a used refresh token for the rotation test |
+  | `playerToken`, `playerId` | Token and ID of the player `jonas` |
+  | `adminToken`, `adminId` | Token and ID of the administrator |
+  | `guildName` | Unique guild name, generated in the create-guild request |
+  | `guildA`, `guildB` | IDs of the created guilds |
+  | `questId`, `logId` | IDs of the created quest and log entry |
+  | `logPlayer`, `logDm` | The player's and the DM's log entries for permission checks |
+  | `occurredAt` | Event time (an hour ago), used for log entries |
+  | `nextPage`, `pageIds` | For the paging demo: the `links.next` link and the first page's IDs |
+
+  ## Error format
+
+  Every error is returned in the same `ApiError` shape:
+
+  ```json
+  {
+    "timestamp": "2026-09-21T09:15:30.123Z",
+    "status": 403,
+    "error": "Forbidden",
+    "message": "You cannot review your own log entry.",
+    "path": "/api/guilds/4/quests/10/logs/14",
+    "details": [ { "field": "title", "message": "Must not be blank" } ]
+  }
+  ```
+
+  `details` is present only when the error concerns specific fields.
+
+  **401 or 403?** `401`: the server does not know who you are (no token, a broken or expired token, wrong login details). `403`: it knows, but you lack permission (not a guild member, the wrong guild role, not `ADMIN`, a blocked account).
+
+  **400 or 422?** `400` means the error is visible from the request alone (bad JSON, type, field constraint, unknown field). `422` means the request is well-formed but breaks a domain rule.
+
+  Every request has a saved example response (*Examples*) recorded from a real API run.
+variables:
+  baseUrl: http://localhost:8080/api
+  username: ""
+  password: Demo123!
+  userId: ""
+  accessToken: ""
+  refreshToken: ""
+  oldRefreshToken: ""
+  playerToken: ""
+  playerId: ""
+  adminToken: ""
+  adminId: ""
+  guildName: ""
+  guildA: ""
+  guildB: ""
+  questId: ""
+  logId: ""
+  logPlayer: ""
+  logDm: ""
+  occurredAt: ""
+  nextPage: ""
+  pageIds: ""
+auth:
+  - id: 11060e8c-98d2-4042-8363-a288778d7b20
+    type: bearer
+    name: bearer auth
+    credentials:
+      token: "{{accessToken}}"
