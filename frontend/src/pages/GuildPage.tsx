@@ -86,7 +86,7 @@ export function GuildPage() {
           <h1>{g.name}</h1>
           <p>{g.description || 'Grupė be aprašymo.'}</p>
           <div className="row">
-            {role && <span className={`badge ${isDm ? 'badge--gold' : 'badge--info'}`}>{GUILD_ROLE_INFO[role].name}</span>}
+            {role && <span className={`badge ${isDm ? 'badge--plum' : 'badge--info'}`}>{GUILD_ROLE_INFO[role].name}</span>}
             {!role && isAdmin && <span className="badge badge--plum">Administratoriaus peržiūra</span>}
             {owner && <span className="muted">Savininkas: {owner.username}</span>}
           </div>
@@ -390,7 +390,7 @@ function MembersTab({
                     </select>
                   </label>
                 ) : (
-                  <span className={`badge ${m.role === 'DUNGEON_MASTER' ? 'badge--gold' : 'badge--info'}`}>
+                  <span className={`badge ${m.role === 'DUNGEON_MASTER' ? 'badge--plum' : 'badge--info'}`}>
                     {GUILD_ROLE_INFO[m.role].short}
                   </span>
                 )}

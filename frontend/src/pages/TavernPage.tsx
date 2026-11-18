@@ -77,7 +77,7 @@ export function TavernPage() {
                   <Link to={`/grupes/${g.id}`} className="window window--link guild-card">
                     <h3>{g.name}</h3>
                     <p className="muted guild-card__desc">{g.description || 'Be aprašymo'}</p>
-                    <span className={`badge ${role === 'DUNGEON_MASTER' ? 'badge--gold' : role ? 'badge--info' : ''}`}>
+                    <span className={`badge ${role === 'DUNGEON_MASTER' ? 'badge--plum' : role ? 'badge--info' : ''}`}>
                       {role ? GUILD_ROLE_INFO[role].name : 'Administratoriaus peržiūra'}
                     </span>
                   </Link>

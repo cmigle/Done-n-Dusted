@@ -18,7 +18,7 @@ export function QuestCard({ quest }: { quest: Quest }) {
         <h3>{quest.title}</h3>
       </div>
       <div className="row quest-card__meta">
-        <span className="badge" style={{ background: stat.color }}>
+        <span className="badge badge--outline" style={{ borderColor: stat.color }}>
           {stat.name}
         </span>
         <span className="badge badge--gold">{quest.xpPerCompletion} XP</span>
