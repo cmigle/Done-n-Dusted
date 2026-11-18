@@ -12,7 +12,8 @@
     "test:watch": "vitest",
     "test:e2e": "playwright test",
     "screenshots": "node scripts/screenshots.mjs",
-    "pixel-art": "node scripts/pixel-art.mjs"
+    "pixel-art": "node scripts/pixel-art.mjs",
+    "contrast": "node scripts/contrast.mjs"
   },
   "dependencies": {
     "@nsmr/pixelart-react": "^2.0.0",
