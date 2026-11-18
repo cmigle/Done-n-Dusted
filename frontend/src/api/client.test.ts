@@ -7,7 +7,7 @@ const json = (status: number, body: unknown) =>
 const tokens = (n: number) => ({ accessToken: `access-${n}`, tokenType: 'Bearer', expiresIn: 900, refreshToken: `refresh-${n}` })
 
 describe('buildUrl', () => {
-  it('praleidzia tuscius parametrus', () => {
+  it('skips empty parameters', () => {
     expect(buildUrl('/guilds', { name: '', size: 20, stat: undefined, active: null, sort: 'name,asc' })).toBe(
       '/api/guilds?size=20&sort=name%2Casc',
     )
@@ -22,24 +22,24 @@ describe('api', () => {
     vi.unstubAllGlobals()
   })
 
-  it('ApiError turi statusa ir lauku klaidas', async () => {
+  it('ApiError carries the status and field errors', async () => {
     vi.stubGlobal(
       'fetch',
       vi.fn().mockResolvedValue(
-        json(400, { status: 400, message: 'Neteisingas uzklausos turinys', details: [{ field: 'name', message: 'per trumpas' }] }),
+        json(400, { status: 400, message: 'Invalid request body', details: [{ field: 'name', message: 'too short' }] }),
       ),
     )
     const error = (await api('/guilds', { method: 'POST', body: { name: 'x' } }).catch((e: unknown) => e)) as ApiError
     expect(error).toBeInstanceOf(ApiError)
     expect(error.status).toBe(400)
-    expect(error.errorFor('name')).toBe('per trumpas')
+    expect(error.errorFor('name')).toBe('too short')
   })
 
-  it('pasibaigus access zetonui viena karta atnaujina ir pakartoja uzklausa', async () => {
+  it('refreshes once and retries the request when the access token expires', async () => {
     storeTokens(tokens(1))
     const fetchMock = vi
       .fn()
-      .mockResolvedValueOnce(json(401, { status: 401, message: 'Access zetonas pasibaiges' }))
+      .mockResolvedValueOnce(json(401, { status: 401, message: 'Access token expired' }))
       .mockResolvedValueOnce(json(200, tokens(2)))
       .mockResolvedValueOnce(json(200, { id: 1 }))
     vi.stubGlobal('fetch', fetchMock)
@@ -50,7 +50,7 @@ describe('api', () => {
     expect(readRefreshToken()).toBe('refresh-2')
   })
 
-  it('lygiagretus 401 sukelia tik viena refresh (rotacija + pakartotinio panaudojimo apsauga)', async () => {
+  it('parallel 401s trigger a single refresh (rotation + reuse detection)', async () => {
     storeTokens(tokens(1))
     let refreshCalls = 0
     vi.stubGlobal(
@@ -69,14 +69,14 @@ describe('api', () => {
     expect(refreshCalls).toBe(1)
   })
 
-  it('nepavykus atnaujinti - isvalo sesija', async () => {
+  it('clears the session when the refresh fails', async () => {
     storeTokens(tokens(1))
     vi.stubGlobal(
       'fetch',
       vi
         .fn()
         .mockResolvedValueOnce(json(401, { status: 401 }))
-        .mockResolvedValueOnce(json(401, { status: 401, message: 'Refresh zetonas nebegalioja' })),
+        .mockResolvedValueOnce(json(401, { status: 401, message: 'Refresh token is no longer valid' })),
     )
     await expect(api('/auth/me')).rejects.toMatchObject({ status: 401 })
     expect(readRefreshToken()).toBeNull()

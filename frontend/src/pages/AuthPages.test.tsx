@@ -22,31 +22,31 @@ function renderPage(page: React.ReactNode) {
 afterEach(() => vi.unstubAllGlobals())
 
 describe('LoginPage', () => {
-  it('parodo serverio klaida prie formos', async () => {
+  it('shows the server error next to the form', async () => {
     vi.stubGlobal(
       'fetch',
       vi.fn().mockResolvedValue(
-        new Response(JSON.stringify({ status: 401, message: 'Neteisingas naudotojo vardas arba slaptazodis' }), { status: 401 }),
+        new Response(JSON.stringify({ status: 401, message: 'Invalid username or password' }), { status: 401 }),
       ),
     )
     renderPage(<LoginPage />)
-    await userEvent.type(screen.getByLabelText('Naudotojo vardas'), 'jonas')
-    await userEvent.type(screen.getByLabelText('Slaptažodis'), 'blogas')
-    await userEvent.click(screen.getByRole('button', { name: 'Prisijungti' }))
-    expect(await screen.findByRole('alert')).toHaveTextContent('Neteisingas naudotojo vardas arba slaptazodis')
+    await userEvent.type(screen.getByLabelText('Username'), 'jonas')
+    await userEvent.type(screen.getByLabelText('Password'), 'wrong')
+    await userEvent.click(screen.getByRole('button', { name: 'Log in' }))
+    expect(await screen.findByRole('alert')).toHaveTextContent('Invalid username or password')
   })
 })
 
 describe('RegisterPage', () => {
-  it('tikrina formą dar prieš siunčiant', async () => {
+  it('validates the form before sending it', async () => {
     const fetchMock = vi.fn()
     vi.stubGlobal('fetch', fetchMock)
     renderPage(<RegisterPage />)
-    await userEvent.type(screen.getByLabelText('Naudotojo vardas'), 'ab')
-    await userEvent.type(screen.getByLabelText('Slaptažodis'), 'Demo123!')
-    await userEvent.type(screen.getByLabelText('Pakartok slaptažodį'), 'Kitas123!')
-    await userEvent.click(screen.getByRole('button', { name: 'Sukurti veikėją' }))
-    expect(screen.getByText('Slaptažodžiai nesutampa')).toBeInTheDocument()
+    await userEvent.type(screen.getByLabelText('Username'), 'ab')
+    await userEvent.type(screen.getByLabelText('Password'), 'Demo123!')
+    await userEvent.type(screen.getByLabelText('Repeat password'), 'Other123!')
+    await userEvent.click(screen.getByRole('button', { name: 'Create character' }))
+    expect(screen.getByText('Passwords do not match')).toBeInTheDocument()
     expect(fetchMock).not.toHaveBeenCalled()
   })
 })
