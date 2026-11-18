@@ -72,7 +72,7 @@ export function LoginPage() {
           </div>
         </form>
         <p className="muted auth__hint">
-          Demonstraciniai naudotojai: <code>rokas</code>, <code>ieva</code>, <code>jonas</code>, <code>admin</code> –
+          Demonstraciniai naudotojai: <code>rokas</code> (DM), <code>jonas</code> (žaidėjas), <code>ieva</code> –
           slaptažodis <code>Demo123!</code>. Neturi paskyros? <Link to="/registracija">Registruokis</Link>.
         </p>
       </Window>
