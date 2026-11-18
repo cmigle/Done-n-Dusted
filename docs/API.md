@@ -413,4 +413,4 @@ deployment are described in [`LD3.md`](LD3.md).
 
 ---
 
-Author: **Miglė Cirtautaitė** · Lecturer: Tomas Blažauskas · Kaunas, 2026
+Author: **Miglė Cirtautaitė** · Kaunas, 2026
