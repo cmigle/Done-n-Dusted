@@ -52,3 +52,5 @@ app:
     secret: ${JWT_SECRET:dev-only-jwt-secret-change-me-0123456789}
     access-token-ttl: 15m   # trumpas: atsijungus access zetonas dar galioja iki exp
     refresh-token-ttl: 7d
+  cors:
+    allowed-origins: http://localhost:5173   # React (Vite) kurimo serveris; keli adresai - per kableli

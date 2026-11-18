@@ -10,6 +10,7 @@ import org.springframework.boot.context.properties.EnableConfigurationProperties
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
+import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
@@ -48,6 +49,8 @@ public class SecurityConfig {
                 // CSRF reikalingas cookie sesijoms. Cia zetonas siunciamas antrasteje, kurios narsykle
                 // pati neprideda, todel svetima svetaine negali atlikti uzklausos naudotojo vardu.
                 .csrf(csrf -> csrf.disable())
+                // CORS taisykles is CorsConfig bean: preflight OPTIONS atsakomas pries autentifikacija (be zetono).
+                .cors(Customizer.withDefaults())
                 .sessionManagement(s -> s.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(HttpMethod.POST, PUBLIC_AUTH).permitAll()
