@@ -60,6 +60,11 @@ public class User {
         return passwordHash;
     }
 
+    /** Priima tik jau suskaiciuota BCrypt maisa - atviro slaptazodzio entity niekada nemato. */
+    public void changePassword(String passwordHash) {
+        this.passwordHash = passwordHash;
+    }
+
     public UserRole getRole() {
         return role;
     }
