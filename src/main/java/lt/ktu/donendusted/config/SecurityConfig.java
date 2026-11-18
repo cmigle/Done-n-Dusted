@@ -58,8 +58,10 @@ public class SecurityConfig {
                         // Debesu platformos (Azure App Service) sveikatos patikra - be zetono, tik UP/DOWN be detaliu.
                         .requestMatchers(HttpMethod.GET, "/actuator/health").permitAll()
                         .requestMatchers("/api/users/**").hasRole("ADMIN")
-                        // Visa kita - tik prisijungus. Grupiu teises (narys, DM, savininkas) tikrina servisai.
-                        .anyRequest().authenticated())
+                        // Visas kitas API - tik prisijungus. Grupiu teises (narys, DM, savininkas) tikrina servisai.
+                        .requestMatchers("/api/**").authenticated()
+                        // Ne API keliai - React sasajos failai ir jos puslapiai (index.html), jie vieši.
+                        .anyRequest().permitAll())
                 .oauth2ResourceServer(rs -> rs
                         .bearerTokenResolver(publicAuthIgnoresToken())
                         .jwt(jwt -> jwt.jwtAuthenticationConverter(jwtAuthenticationConverter()))

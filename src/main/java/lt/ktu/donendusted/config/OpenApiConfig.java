@@ -27,7 +27,7 @@ public class OpenApiConfig {
         return new OpenAPI()
                 .info(new Info()
                         .title("Done n Dusted API")
-                        .version("0.2.0")
+                        .version("0.3.0")
                         .description("""
                                 DnD principu veikianti produktyvumo sistema.
 
