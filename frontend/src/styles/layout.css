@@ -1,4 +1,4 @@
-/* ---------- Tinklelis ---------- */
+/* ---------- Grid ---------- */
 .container {
   width: 100%;
   max-width: var(--container);
@@ -21,24 +21,24 @@
 }
 @media (min-width: 768px) {
   .grid--2 {
-    grid-template-columns: repeat(2, 1fr);
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
   .grid--3 {
-    grid-template-columns: repeat(2, 1fr);
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
   .grid--sidebar {
-    grid-template-columns: 4fr 8fr;
+    grid-template-columns: minmax(0, 4fr) minmax(0, 8fr);
     align-items: start;
   }
 }
 @media (min-width: 1024px) {
   .grid--3 {
-    grid-template-columns: repeat(3, 1fr);
+    grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 }
 
 .stack > * + * {
-  margin-top: var(--s3);
+  margin-top: var(--s4);
 }
 .row {
   display: flex;
@@ -50,19 +50,13 @@
   justify-content: space-between;
 }
 
-/* ---------- Header: akmens siena, auksinis logotipas, skirtukai ---------- */
+/* ---------- Header ---------- */
 .site-header {
   position: sticky;
   top: 0;
   z-index: 20;
-  background-color: var(--shadow);
-  /* Pikseliniai akmenys: dvi plytu eiles */
-  background-image:
-    linear-gradient(var(--midnight) 4px, transparent 4px),
-    linear-gradient(90deg, var(--midnight) 4px, transparent 4px);
-  background-size: 64px 24px;
-  border-bottom: var(--px) solid var(--midnight);
-  box-shadow: 0 var(--px) 0 var(--slate);
+  background: var(--surface);
+  border-bottom: var(--border);
 }
 .site-header__bar {
   display: flex;
@@ -74,61 +68,80 @@
   display: inline-flex;
   align-items: center;
   gap: var(--s1);
-  color: var(--frost);
+  color: var(--text);
   font-family: var(--font-display);
   font-size: var(--fs-md);
   font-weight: 700;
   text-decoration: none;
-  text-shadow: 3px 3px 0 var(--midnight);
+  white-space: nowrap;
 }
 .brand:hover {
-  color: var(--gold);
+  color: var(--text);
 }
 .brand img {
   width: 40px;
   height: 40px;
+  image-rendering: pixelated;
 }
-
-.nav {
+.header-tools {
+  display: flex;
+  align-items: center;
+  gap: var(--s1);
   margin-left: auto;
 }
+
 .nav__list {
   list-style: none;
   margin: 0;
   padding: 0;
   display: flex;
-  gap: var(--s1);
+  gap: 4px;
 }
 .nav__link {
-  font: inherit;
-  cursor: pointer;
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  padding: 6px var(--s2);
-  color: var(--frost);
+  min-height: 44px;
+  padding: 6px 12px;
+  font: inherit;
+  font-weight: 700;
+  color: var(--text);
   text-decoration: none;
-  background: var(--midnight);
-  border: 3px solid var(--slate);
-  clip-path: var(--notch);
-  transition:
-    background-color var(--speed) var(--ease),
-    border-color var(--speed) var(--ease);
+  background: transparent;
+  border: 3px solid transparent;
+  cursor: pointer;
+  transition: border-color var(--speed) var(--ease);
 }
 .nav__link:hover {
-  color: var(--frost);
-  border-color: var(--steel);
+  color: var(--text);
+  border-color: var(--ink);
 }
 .nav__link.active {
-  background: var(--slate);
-  border-color: var(--frost);
-  color: var(--frost);
+  background: var(--surface-2);
+  border-color: var(--ink);
+  box-shadow: var(--shadow-sm);
 }
 
 .header-user {
   display: none;
   align-items: center;
   gap: var(--s1);
+  font-weight: 700;
+}
+
+/* Desktop: logo | menu | theme toggle, user */
+@media (min-width: 768px) {
+  .nav {
+    order: 1;
+    margin-left: auto;
+  }
+  .header-tools {
+    order: 2;
+    margin-left: 0;
+  }
+  .header-user {
+    order: 3;
+  }
 }
 @media (min-width: 1024px) {
   .header-user {
@@ -136,35 +149,36 @@
   }
 }
 
-/* .site-header prefiksas - kad .btn (display: inline-flex) neuzrasytu */
+/* The .site-header prefix keeps .btn (display: inline-flex) from winning */
 .site-header .menu-toggle {
   display: none;
 }
 
-/* Mobilus meniu: iki 767 px - hamburger ir isskleidziamas sarasas */
+/* Mobile menu, up to 767 px: a hamburger and a panel that drops below the header */
+.nav-backdrop {
+  display: none;
+}
 @media (max-width: 767px) {
   .site-header .menu-toggle {
     display: inline-flex;
-    margin-left: auto;
   }
-  /* Atidarius meniu - turinys po juo pritemdomas, kad meniu neplaukiotu virs H1 */
+  /* While the menu is open, the page under it is covered so the menu never floats over the content */
   .nav-backdrop {
+    display: block;
     position: fixed;
     inset: var(--header-h) 0 0 0;
     z-index: 15;
-    background: rgb(26 28 44 / 80%);
-    border: 0;
-    padding: 0;
+    background: var(--overlay);
     animation: fade-in var(--speed) var(--ease);
   }
   .nav {
     position: absolute;
-    z-index: 16; /* virs .nav-backdrop */
+    z-index: 16; /* above .nav-backdrop */
     left: 0;
     right: 0;
     top: 100%;
-    background: var(--shadow);
-    border-bottom: var(--px) solid var(--midnight);
+    background: var(--surface);
+    border-bottom: var(--border);
     max-height: 0;
     overflow: hidden;
     visibility: hidden;
@@ -179,21 +193,13 @@
   }
   .nav__list {
     flex-direction: column;
+    gap: var(--s1);
     padding: var(--s2);
   }
   .nav__link {
     width: 100%;
     justify-content: flex-start;
     padding: var(--s1) var(--s2);
-  }
-}
-
-.nav-backdrop {
-  display: none;
-}
-@media (max-width: 767px) {
-  .nav-backdrop {
-    display: block;
   }
 }
 @keyframes fade-in {
@@ -206,42 +212,32 @@
 .site-main {
   flex: 1;
   padding: var(--s4) 0 var(--s8);
+  overflow-x: clip; /* the full-bleed landing scene must not cause sideways scrolling */
 }
 .page-head {
   margin-bottom: var(--s4);
 }
 .page-head h1 {
-  text-shadow: 3px 3px 0 var(--ruby);
+  text-shadow: 3px 3px 0 var(--surface-2);
 }
 .page-head p {
   color: var(--text-muted);
 }
 
-/* ---------- Footer: tamsi juosta su zoles skirtuku virsuje ---------- */
+/* ---------- Footer: a grass strip on top, one compact row ---------- */
 .site-footer {
   position: relative;
-  margin-top: auto;
-  color: var(--frost);
-  background: var(--night);
-  border-top: var(--px) solid var(--leaf);
-  padding: var(--s3) 0;
+  margin-top: var(--s4);
+  color: var(--text);
+  background: var(--surface-2);
+  border-top: var(--border);
+  padding: var(--s2) 0;
   font-size: var(--fs-sm);
 }
-.site-footer::before {
-  /* Pikseliniai zoles kuokstai virs ribos */
-  content: '';
+.site-footer__grass {
   position: absolute;
   left: 0;
-  right: 0;
-  top: -12px;
-  height: 8px;
-  background: repeating-linear-gradient(
-    90deg,
-    var(--leaf) 0 8px,
-    transparent 8px 24px,
-    var(--lime) 24px 28px,
-    transparent 28px 40px
-  );
+  bottom: calc(100% + 3px); /* sits on the border */
 }
 .site-footer__bar {
   display: flex;
@@ -266,14 +262,6 @@
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  color: var(--frost);
-  text-decoration: underline dotted var(--leaf);
-  text-underline-offset: 4px;
-}
-.site-footer a:hover {
-  color: var(--lime);
-}
-/* Pixelify Sans neturi aiskaus (c) zenklo - jis is sistemos srifto */
-.legal-sign {
-  font-family: system-ui, sans-serif;
+  min-height: 32px;
+  color: var(--link-2);
 }

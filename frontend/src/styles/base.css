@@ -14,21 +14,32 @@ body {
   min-height: 100vh;
   font-family: var(--font);
   font-size: var(--fs-base);
+  font-weight: 500;
   line-height: var(--lh);
   color: var(--text);
-  background-color: var(--bg);
-  /* Retos pikseliu "zvaigzdes" - vientisas fonas be gradientu */
-  background-image:
-    radial-gradient(var(--shadow) 1px, transparent 1px),
-    radial-gradient(var(--slate) 1px, transparent 1px);
-  background-size:
-    48px 48px,
-    112px 112px;
-  background-position:
-    0 0,
-    24px 56px;
-  /* Visi skaitmenys vienodo plocio - XP, lygiai ir lenteles lygiuojasi */
+  background: var(--bg);
+  /* Every digit has the same width, so XP, levels and table columns line up */
   font-variant-numeric: tabular-nums;
+}
+@media (max-width: 767px) {
+  body {
+    font-size: 1.0625rem;
+  }
+}
+
+/* Cross-fade colours when the visitor switches the theme (theme.ts adds the class for 250 ms) */
+@media (prefers-reduced-motion: no-preference) {
+  html.theme-switching,
+  html.theme-switching *,
+  html.theme-switching *::before,
+  html.theme-switching *::after {
+    transition:
+      background-color 200ms linear,
+      color 200ms linear,
+      border-color 200ms linear,
+      box-shadow 200ms linear,
+      fill 200ms linear !important;
+  }
 }
 
 #root {
@@ -43,31 +54,29 @@ h3,
 h4 {
   margin: 0 0 var(--s2);
   line-height: 1.2;
-  font-weight: 700;
   text-wrap: balance;
 }
-/* Pikselinis sriftas - tik didelems antrastems, kur jo raides aiskios */
+/* The pixel font only for big headings, where its letters stay clear */
 h1,
 h2 {
   font-family: var(--font-display);
   font-weight: 700;
-  -webkit-font-smoothing: none;
 }
 h3,
 h4 {
-  font-weight: 600;
+  font-weight: 800;
 }
 h1 {
-  font-size: clamp(2rem, 1.4rem + 2.6vw, var(--fs-2xl));
+  font-size: clamp(2rem, 1.55rem + 1.9vw, 2.75rem);
 }
 h2 {
-  font-size: var(--fs-xl);
+  font-size: clamp(1.5rem, 1.35rem + 0.6vw, var(--fs-xl));
 }
 h3 {
-  font-size: var(--fs-lg);
+  font-size: var(--fs-md);
 }
 h4 {
-  font-size: var(--fs-md);
+  font-size: 1.125rem;
 }
 
 p {
@@ -76,15 +85,16 @@ p {
 }
 
 a {
-  color: var(--sky);
+  color: var(--link);
+  font-weight: 700;
   text-underline-offset: 3px;
   text-decoration-thickness: 2px;
 }
 a:hover {
-  color: var(--aqua);
+  text-decoration-thickness: 3px;
 }
 
-/* Paveikslai mazeja kartu su konteineriu ir neislipa is jo */
+/* Images shrink with their container and never overflow it */
 img,
 svg {
   max-width: 100%;
@@ -96,13 +106,19 @@ img.pixel,
 }
 
 :focus-visible {
-  outline: 3px dashed var(--focus);
-  outline-offset: 3px;
+  outline: 3px solid var(--focus);
+  outline-offset: 2px;
 }
 
 ::selection {
-  background: var(--gold);
-  color: var(--midnight);
+  background: var(--primary);
+  color: var(--on-primary);
+}
+
+/* Digits inside pixel-font text (buttons, headings) switch to Nunito: in Pixelify 5/S and 8/B look alike */
+.digits {
+  font-family: var(--font);
+  font-weight: 800;
 }
 
 .visually-hidden {
@@ -123,9 +139,10 @@ img.pixel,
   top: -100px;
   z-index: 100;
   padding: var(--s1) var(--s2);
-  background: var(--gold);
-  color: var(--midnight);
-  font-weight: 700;
+  background: var(--primary);
+  color: var(--on-primary);
+  border: var(--border);
+  box-shadow: var(--shadow);
 }
 .skip-link:focus {
   top: var(--s1);
