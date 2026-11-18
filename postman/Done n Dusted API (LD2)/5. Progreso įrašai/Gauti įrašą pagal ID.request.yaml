@@ -2,7 +2,7 @@ $kind: http-request
 description: |-
   Grąžina vieną progreso įrašą per užduotį ir grupę.
 
-  README lentelės metodas **#12**.
+  docs/API.md lentelės metodas **#12**.
 url: "{{baseUrl}}/guilds/{{guildA}}/quests/{{questId}}/logs/{{logId}}"
 method: GET
 scripts:

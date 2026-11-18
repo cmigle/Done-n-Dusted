@@ -622,7 +622,7 @@ Kiekvienam failui: **Rodyk** (į kurią vietą užvesti pelę) ir **Sakyk** (1�
   automatinės patikros. Kolekcija pati susikuria duomenis ir po savęs išsivalo. Pirmas aplankas
   *0. Suvestinė* parodo, kiek DB yra grupių, užduočių ir įrašų (pvz. `grupiu: 3, uzduociu: 9,
   irasu: 12`) su visais ID ir patikrina, ar vaikų `guildId` / `questId` rodo į teisingą tėvą.“
-- **[README.md](../../README.md)** — paleidimas, metodų lentelė, klaidų kodai.
+- **[API.md](../API.md)** — paleidimas, metodų lentelė, klaidų kodai.
 
 ---
 

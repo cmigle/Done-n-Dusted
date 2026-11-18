@@ -4,7 +4,7 @@ description: |-
 
   `xpPerCompletion` apskaičiuoja serveris: 10 × 5 (`HARD`) = **50**.
 
-  README lentelės metodas **#8**.
+  docs/API.md lentelės metodas **#8**.
 url: "{{baseUrl}}/guilds/{{guildA}}/quests"
 method: POST
 headers:

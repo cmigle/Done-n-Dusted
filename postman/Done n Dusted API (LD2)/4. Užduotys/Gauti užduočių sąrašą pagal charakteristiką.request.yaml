@@ -4,7 +4,7 @@ description: |-
 
   Galimi filtrai: `stat`, `type`, `difficulty`, `active`. Čia filtruojama pagal `stat=CON`.
 
-  README lentelės metodas **#6**.
+  docs/API.md lentelės metodas **#6**.
 url: "{{baseUrl}}/guilds/{{guildA}}/quests?stat=CON"
 method: GET
 scripts:

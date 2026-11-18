@@ -1,8 +1,8 @@
-# Done n Dusted — REST API su autentifikacija (LD2)
+# Done n Dusted — API dokumentacija
 
-KTU T120B165 *Saityno taikomųjų programų projektavimas*. Antras laboratorinis darbas: LD1 REST API
-papildyta **autentifikacija ir autorizacija** — JWT access ir refresh žetonai, naudotojų rolės ir
-LD0 ataskaitoje aprašytos teisių taisyklės.
+KTU T120B165 *Saityno taikomųjų programų projektavimas*. Šis dokumentas aprašo REST API: paleidimą,
+autentifikaciją, roles, visus metodus, atsakymų ir klaidų struktūrą. Angliška projekto apžvalga —
+[`README.md`](../README.md), naudotojo sąsaja (LD3) — [`LD3.md`](LD3.md).
 
 **Done n Dusted** — DnD žaidimo principu veikianti produktyvumo sistema. Žaidėjas registruoja
 realaus gyvenimo progresą, grupės Dungeon Master jį patvirtina, o tik patvirtinti įrašai keičia
@@ -11,10 +11,11 @@ veikėjo charakteristikas.
 Resursų hierarchija: **Guild (1:N) → Quest (1:N) → LogEntry**. Naudotojai grupėms priklauso per
 **GuildMembership** su role `PLAYER` arba `DUNGEON_MASTER`.
 
-Versijos — Git žymos: `v0.1.0` (LD1) ir `v0.2.0` (LD2). Kas pridėta LD2 ir kaip tai apginti —
-[`docs/LD2.md`](docs/LD2.md) ir interaktyvus gynimo puslapis su diagramomis
-[`docs/gynimas/LD2_gynimas.html`](docs/gynimas/LD2_gynimas.html) (atidaryti naršyklėje).
-Ką ir kokia tvarka rodyti gynime — [`docs/DEMO_PLANAS.md`](docs/DEMO_PLANAS.md).
+| Darbas | Šaka / žyma | Gynimo medžiaga |
+| --- | --- | --- |
+| LD1 — REST API | `ld1`, `v0.1.0` | [`visual/GYNIMO_GIDAS.md`](visual/GYNIMO_GIDAS.md), [`visual/DEMO_KOMANDOS.txt`](visual/DEMO_KOMANDOS.txt) |
+| LD2 — autentifikacija ir autorizacija | `ld2`, `v0.2.1` | [`LD2.md`](LD2.md), [`DEMO_PLANAS.md`](DEMO_PLANAS.md), [`gynimas/LD2_gynimas.html`](gynimas/LD2_gynimas.html) |
+| LD3 — naudotojo sąsaja ir diegimas | `ld3`, `v0.3.0` | [`LD3.md`](LD3.md) |
 
 ---
 
@@ -206,7 +207,7 @@ peržiūros laukai (`xpAwarded`, `inspirationAwarded`, `reviewerNote`) priimami 
 tuščias tekstas `""`, todėl atsakyme laukas visada yra. Tą užtikrina ir duomenų bazė (`NOT NULL
 DEFAULT ''`, migracija `V3`).
 
-Pilna specifikacija kiekvienam metodui — [`docs/openapi.json`](docs/openapi.json) arba gyvai
+Pilna specifikacija kiekvienam metodui — [`docs/openapi.json`](openapi.json) arba gyvai
 Swagger UI. Kiekvienas apsaugotas metodas dokumentuotas su `401`, o konkrečios grupės
 (`/guilds/{guildId}/...`) ir naudotojų metodai — ir su `403`.
 
@@ -245,6 +246,7 @@ Rikiuoti galima tik pagal paprastus sąrašo laukus — kitaip `400` su leidžia
 | Įrašai | `id`, `occurredAt`, `createdAt`, `status`, `xpAwarded`, `reviewedAt` |
 | Nariai | `joinedAt`, `role` |
 | Naudotojai | `id`, `username`, `role`, `enabled`, `createdAt` |
+| Draugystės | `createdAt`, `status` |
 
 Nuorodos (`links`) yra hypermedia elementas: klientas pats nekonstruoja kito puslapio URL, o tiesiog
 eina serverio duota `links.next` nuoroda, kol jos nebėra. Taip veikia ir Postman suvestinės testas.
@@ -290,7 +292,7 @@ turinio keitimas, nežinomas naudotojas pridedant narį).
 
 ## Demonstracija su Postman
 
-[`postman/DoneNDusted.postman_collection.json`](postman/DoneNDusted.postman_collection.json) —
+[`postman/DoneNDusted.postman_collection.json`](../postman/DoneNDusted.postman_collection.json) —
 78 užklausos, 176 patikros (švariai paleistoje DB). Kolekcija kaskart užregistruoja naują
 naudotoją, pati susikuria duomenis ir po savęs išsivalo, todėl ją galima paleisti kiek nori kartų
 iš eilės.
@@ -302,7 +304,7 @@ npx newman run postman/DoneNDusted.postman_collection.json
 Arba Postman programoje: *Import* → *Runner* → *Run*. Trukmė — apie **10 sekundžių**.
 
 Ta pati kolekcija Postman v3 formatu (atskiri YAML failai) yra
-[`postman/Done n Dusted API (LD2)/`](postman/Done%20n%20Dusted%20API%20%28LD2%29/); JSON failas
+[`postman/Done n Dusted API (LD2)/`](../postman/Done%20n%20Dusted%20API%20%28LD2%29/); JSON failas
 sugeneruotas iš tų pačių šaltinių. Ją galima paleisti ir Postman CLI:
 `postman collection run "postman/Done n Dusted API (LD2)"`.
 
@@ -321,7 +323,7 @@ Kolekcijos lygyje nustatyta *Bearer Token* `{{accessToken}}`. Užklausos, kurias
 | 7. Išvalymas | Ištrynimas `204`, antrą grupę trina `admin`, `404` po ištrynimo |
 | 8. Administravimas | Naudotojų sąrašas, `422` bandant užblokuoti save, užblokavimas → prisijungti `403` → atblokavimas |
 
-Komandos be Postman (curl) — [`docs/visual/DEMO_KOMANDOS.txt`](docs/visual/DEMO_KOMANDOS.txt).
+Komandos be Postman (curl) — [`docs/visual/DEMO_KOMANDOS.txt`](visual/DEMO_KOMANDOS.txt).
 
 ---
 
@@ -378,8 +380,14 @@ src/main/resources/db/migration/
 src/test/java/lt/ktu/donendusted/
   *IntegrationTest      MockMvc testai su įterptine PostgreSQL (vienas Spring kontekstas): ./mvnw test
   service/              veikėjo kortelės formulių vienetų testai
+.github/workflows/      CI: backend testai, frontend lint/testai/build, Postman ir Playwright
 demo/                   Windows paleidimo skriptai demonstracijai (API, newman, curl, psql)
+frontend/               React + TypeScript + Vite klientas (LD3), Vitest ir Playwright testai
 docs/
+  API.md                šis dokumentas
+  LD3.md                LD3 reikalavimai, sąsaja, diegimas ir gynimas
+  wireframes/           LD3 langų wireframe'ai (SVG) ir jų generatorius
+  screenshots/          programos ekrano nuotraukos
   LD2.md                LD2 pakeitimai ir gynimo klausimai
   DEMO_PLANAS.md        ką ir kokia tvarka rodyti gynime
   gynimas/              LD2 gynimo puslapis (HTML) ir jo šaltiniai (Archify)
@@ -390,12 +398,10 @@ postman/
   DoneNDusted.postman_collection.json   ta pati kolekcija v2.1 JSON (newman)
 ```
 
-## Ko šiame darbe dar nėra
+## Naudotojo sąsaja (LD3)
 
-LD0 ataskaitoje aprašyta sistema yra platesnė nei LD2 apimtis. Sąmoningai **neįgyvendinta**:
-
-* `Friendship` (draugystės kvietimai) ir veikėjo kortelė (character sheet) su pilnu / viešu pjūviu;
-* React.js kliento pusė ir diegimas (LD3).
+React klientas yra kataloge [`frontend/`](../frontend/), jo reikalavimai, wireframe'ai ir diegimas į
+debesį aprašyti [`LD3.md`](LD3.md).
 
 ---
 

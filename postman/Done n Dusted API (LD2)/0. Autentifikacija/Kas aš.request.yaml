@@ -2,7 +2,7 @@ $kind: http-request
 description: |-
   Pirma užklausa su žetonu (kolekcijos *Bearer Token* `{{accessToken}}`). Grąžina prisijungusį naudotoją ir jo grupes su rolėmis — naujas naudotojas dar niekur nepriklauso.
 
-  README lentelės metodas **#20**.
+  docs/API.md lentelės metodas **#20**.
 url: "{{baseUrl}}/auth/me"
 method: GET
 scripts:

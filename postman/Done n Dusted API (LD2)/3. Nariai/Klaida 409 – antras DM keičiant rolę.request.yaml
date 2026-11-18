@@ -2,7 +2,7 @@ $kind: http-request
 description: |-
   Rolės keitimas (`PATCH`) tikrina tą pačią taisyklę: kol grupėje yra DM, kito paskirti negalima.
 
-  README lentelės metodas **#24**.
+  docs/API.md lentelės metodas **#24**.
 url: "{{baseUrl}}/guilds/{{guildA}}/members/{{playerId}}"
 method: PATCH
 headers:

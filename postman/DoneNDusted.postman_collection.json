@@ -30,7 +30,7 @@
               }
             ],
             "url": "{{baseUrl}}/auth/register",
-            "description": "Sukuria naują naudotoją. Prieš užklausą sugeneruojamas unikalus vardas `postman_<laikas>`, kad kolekciją būtų galima leisti kartotinai.\n\nRegistracija visada suteikia rolę `USER` ir žetonų negrąžina — po jos reikia prisijungti. Slaptažodis DB saugomas tik kaip BCrypt maiša, atsakyme jo nėra.\n\nREADME lentelės metodas **#16**.",
+            "description": "Sukuria naują naudotoją. Prieš užklausą sugeneruojamas unikalus vardas `postman_<laikas>`, kad kolekciją būtų galima leisti kartotinai.\n\nRegistracija visada suteikia rolę `USER` ir žetonų negrąžina — po jos reikia prisijungti. Slaptažodis DB saugomas tik kaip BCrypt maiša, atsakyme jo nėra.\n\ndocs/API.md lentelės metodas **#16**.",
             "auth": {
               "type": "noauth"
             },
@@ -212,7 +212,7 @@
               }
             ],
             "url": "{{baseUrl}}/auth/login",
-            "description": "Grąžina žetonų porą:\n\n* `accessToken` — pasirašytas JWT (HS256), galioja **15 min** (`expiresIn: 900`). Jame: `sub` (naudotojo ID), `username`, `role`, `iss`, `iat`, `exp`.\n* `refreshToken` — atsitiktinė eilutė, ne JWT. DB saugoma tik jos SHA-256 maiša.\n\nTestas iškoduoja JWT ir patikrina jo turinį. Abu žetonai išsaugomi kintamuosiuose.\n\nREADME lentelės metodas **#17**.",
+            "description": "Grąžina žetonų porą:\n\n* `accessToken` — pasirašytas JWT (HS256), galioja **15 min** (`expiresIn: 900`). Jame: `sub` (naudotojo ID), `username`, `role`, `iss`, `iat`, `exp`.\n* `refreshToken` — atsitiktinė eilutė, ne JWT. DB saugoma tik jos SHA-256 maiša.\n\nTestas iškoduoja JWT ir patikrina jo turinį. Abu žetonai išsaugomi kintamuosiuose.\n\ndocs/API.md lentelės metodas **#17**.",
             "auth": {
               "type": "noauth"
             },
@@ -262,7 +262,7 @@
             "method": "GET",
             "header": [],
             "url": "{{baseUrl}}/auth/me",
-            "description": "Pirma užklausa su žetonu (kolekcijos *Bearer Token* `{{accessToken}}`). Grąžina prisijungusį naudotoją ir jo grupes su rolėmis — naujas naudotojas dar niekur nepriklauso.\n\nREADME lentelės metodas **#20**."
+            "description": "Pirma užklausa su žetonu (kolekcijos *Bearer Token* `{{accessToken}}`). Grąžina prisijungusį naudotoją ir jo grupes su rolėmis — naujas naudotojas dar niekur nepriklauso.\n\ndocs/API.md lentelės metodas **#20**."
           },
           "event": [
             {
@@ -351,7 +351,7 @@
               }
             ],
             "url": "{{baseUrl}}/auth/refresh",
-            "description": "Kai access žetonas pasibaigia, klientas nauja pora gauna be slaptažodžio — už refresh žetoną. Senasis refresh žetonas atšaukiamas (rotacija) ir išsaugomas `oldRefreshToken` kitai patikrai.\n\nREADME lentelės metodas **#18**.",
+            "description": "Kai access žetonas pasibaigia, klientas nauja pora gauna be slaptažodžio — už refresh žetoną. Senasis refresh žetonas atšaukiamas (rotacija) ir išsaugomas `oldRefreshToken` kitai patikrai.\n\ndocs/API.md lentelės metodas **#18**.",
             "auth": {
               "type": "noauth"
             },
@@ -513,7 +513,7 @@
               }
             ],
             "url": "{{baseUrl}}/auth/logout",
-            "description": "Atšaukia refresh žetoną. Access žetonas galioja iki savo `exp` (serveris jų nesaugo), todėl jis trumpas — 15 min.\n\nREADME lentelės metodas **#19**.",
+            "description": "Atšaukia refresh žetoną. Access žetonas galioja iki savo `exp` (serveris jų nesaugo), todėl jis trumpas — 15 min.\n\ndocs/API.md lentelės metodas **#19**.",
             "auth": {
               "type": "noauth"
             },
@@ -821,7 +821,7 @@
               }
             ],
             "url": "{{baseUrl}}/guilds",
-            "description": "Sukuria naują grupę. Ją sukūręs naudotojas tampa grupės **savininku** (`ownerId`) ir jos **DM**.\n\nPrieš užklausą sugeneruojamas unikalus pavadinimas `Postman Guild <laikas>`, kad kolekciją būtų galima leisti kartotinai. Atsakymas yra `201 Created` su `Location` antrašte, o naujos grupės ID išsaugomas kintamajame `guildA`.\n\nREADME lentelės metodas **#3**.",
+            "description": "Sukuria naują grupę. Ją sukūręs naudotojas tampa grupės **savininku** (`ownerId`) ir jos **DM**.\n\nPrieš užklausą sugeneruojamas unikalus pavadinimas `Postman Guild <laikas>`, kad kolekciją būtų galima leisti kartotinai. Atsakymas yra `201 Created` su `Location` antrašte, o naujos grupės ID išsaugomas kintamajame `guildA`.\n\ndocs/API.md lentelės metodas **#3**.",
             "body": {
               "mode": "raw",
               "raw": "{\n  \"name\": \"{{guildName}}\",\n  \"description\": \"Postman demonstracijai sukurta grupe\"\n}",
@@ -912,7 +912,7 @@
             "method": "GET",
             "header": [],
             "url": "{{baseUrl}}/guilds",
-            "description": "Grąžina grupes, kurių narys yra prisijungęs naudotojas — naujas naudotojas mato tik dvi savo sukurtas. Administratorius mato visas (žr. `1. Suvestinė`). Numatytieji parametrai (iki 20 grupių puslapyje, rikiuojama pagal pavadinimą).\n\n* `name` filtruoja pagal pavadinimo dalį.\n* `page`, `size` ir `sort` (pvz. `sort=name,asc`) valdo puslapiavimą. Didžiausias `size` yra 100.\n\nPuslapiavimas atskirai parodomas dviejose kitose užklausose.\n\nREADME lentelės metodas **#1**."
+            "description": "Grąžina grupes, kurių narys yra prisijungęs naudotojas — naujas naudotojas mato tik dvi savo sukurtas. Administratorius mato visas (žr. `1. Suvestinė`). Numatytieji parametrai (iki 20 grupių puslapyje, rikiuojama pagal pavadinimą).\n\n* `name` filtruoja pagal pavadinimo dalį.\n* `page`, `size` ir `sort` (pvz. `sort=name,asc`) valdo puslapiavimą. Didžiausias `size` yra 100.\n\nPuslapiavimas atskirai parodomas dviejose kitose užklausose.\n\ndocs/API.md lentelės metodas **#1**."
           },
           "event": [
             {
@@ -1037,7 +1037,7 @@
             "method": "GET",
             "header": [],
             "url": "{{baseUrl}}/guilds/{{guildA}}",
-            "description": "Grąžina vieną grupę pagal ID.\n\nREADME lentelės metodas **#2**."
+            "description": "Grąžina vieną grupę pagal ID.\n\ndocs/API.md lentelės metodas **#2**."
           },
           "event": [
             {
@@ -1063,7 +1063,7 @@
               }
             ],
             "url": "{{baseUrl}}/guilds/{{guildA}}",
-            "description": "Dalinai atnaujina grupę (`PATCH`): siunčiamas tik `description`. Neatsiųsti laukai (`name`) lieka nepakeisti.\n\nREADME lentelės metodas **#4**.",
+            "description": "Dalinai atnaujina grupę (`PATCH`): siunčiamas tik `description`. Neatsiųsti laukai (`name`) lieka nepakeisti.\n\ndocs/API.md lentelės metodas **#4**.",
             "body": {
               "mode": "raw",
               "raw": "{\n  \"description\": \"Aprasymas po redagavimo\"\n}",
@@ -1271,7 +1271,7 @@
             "method": "GET",
             "header": [],
             "url": "{{baseUrl}}/guilds/{{guildA}}/members",
-            "description": "Grupės kūrėjas automatiškai tampa jos nariu su role `DUNGEON_MASTER`.\n\nREADME lentelės metodas **#21**."
+            "description": "Grupės kūrėjas automatiškai tampa jos nariu su role `DUNGEON_MASTER`.\n\ndocs/API.md lentelės metodas **#21**."
           },
           "event": [
             {
@@ -1302,7 +1302,7 @@
               }
             ],
             "url": "{{baseUrl}}/guilds/{{guildA}}/members",
-            "description": "Savininkas prideda naudotoją `jonas` kaip žaidėją. Naudotojas nurodomas vardu.\n\nREADME lentelės metodas **#23**.",
+            "description": "Savininkas prideda naudotoją `jonas` kaip žaidėją. Naudotojas nurodomas vardu.\n\ndocs/API.md lentelės metodas **#23**.",
             "body": {
               "mode": "raw",
               "raw": "{\n  \"username\": \"jonas\",\n  \"role\": \"PLAYER\"\n}",
@@ -1338,7 +1338,7 @@
             "method": "GET",
             "header": [],
             "url": "{{baseUrl}}/guilds/{{guildA}}/members/{{playerId}}",
-            "description": "Vienas narys pagal naudotojo ID.\n\nREADME lentelės metodas **#22**."
+            "description": "Vienas narys pagal naudotojo ID.\n\ndocs/API.md lentelės metodas **#22**."
           },
           "event": [
             {
@@ -1518,7 +1518,7 @@
               }
             ],
             "url": "{{baseUrl}}/guilds/{{guildA}}/members/{{playerId}}",
-            "description": "Rolės keitimas (`PATCH`) tikrina tą pačią taisyklę: kol grupėje yra DM, kito paskirti negalima.\n\nREADME lentelės metodas **#24**.",
+            "description": "Rolės keitimas (`PATCH`) tikrina tą pačią taisyklę: kol grupėje yra DM, kito paskirti negalima.\n\ndocs/API.md lentelės metodas **#24**.",
             "body": {
               "mode": "raw",
               "raw": "{\n  \"role\": \"DUNGEON_MASTER\"\n}",
@@ -1595,7 +1595,7 @@
               }
             ],
             "url": "{{baseUrl}}/guilds/{{guildA}}/quests",
-            "description": "Sukuria `MILESTONE` tipo `HARD` sudėtingumo užduotį A grupėje ir išsaugo jos ID kintamajame `questId`.\n\n`xpPerCompletion` apskaičiuoja serveris: 10 × 5 (`HARD`) = **50**.\n\nREADME lentelės metodas **#8**.",
+            "description": "Sukuria `MILESTONE` tipo `HARD` sudėtingumo užduotį A grupėje ir išsaugo jos ID kintamajame `questId`.\n\n`xpPerCompletion` apskaičiuoja serveris: 10 × 5 (`HARD`) = **50**.\n\ndocs/API.md lentelės metodas **#8**.",
             "body": {
               "mode": "raw",
               "raw": "{\n  \"title\": \"Run 10 kilometers\",\n  \"description\": \"Postman demonstracijai sukurta uzduotis\",\n  \"stat\": \"CON\",\n  \"type\": \"MILESTONE\",\n  \"difficulty\": \"HARD\"\n}",
@@ -1664,7 +1664,7 @@
             "method": "GET",
             "header": [],
             "url": "{{baseUrl}}/guilds/{{guildA}}/quests?stat=CON",
-            "description": "Grąžina grupės užduočių sąrašą.\n\nGalimi filtrai: `stat`, `type`, `difficulty`, `active`. Čia filtruojama pagal `stat=CON`.\n\nREADME lentelės metodas **#6**."
+            "description": "Grąžina grupės užduočių sąrašą.\n\nGalimi filtrai: `stat`, `type`, `difficulty`, `active`. Čia filtruojama pagal `stat=CON`.\n\ndocs/API.md lentelės metodas **#6**."
           },
           "event": [
             {
@@ -1691,7 +1691,7 @@
             "method": "GET",
             "header": [],
             "url": "{{baseUrl}}/guilds/{{guildA}}/quests/{{questId}}",
-            "description": "Grąžina vieną užduotį per jos tėvinę grupę.\n\nREADME lentelės metodas **#7**."
+            "description": "Grąžina vieną užduotį per jos tėvinę grupę.\n\ndocs/API.md lentelės metodas **#7**."
           },
           "event": [
             {
@@ -1738,7 +1738,7 @@
               }
             ],
             "url": "{{baseUrl}}/guilds/{{guildA}}/quests/{{questId}}",
-            "description": "Dalinai atnaujina užduotį (`PATCH`): siunčiamas tik `difficulty = LEGENDARY`. Pavadinimas ir aprašymas lieka tokie, kokie buvo — nedingsta.\n\nServeris perskaičiuoja `xpPerCompletion`: 10 × 8 = **80**. Jau patvirtintų įrašų XP nesikeičia.\n\nREADME lentelės metodas **#9**.",
+            "description": "Dalinai atnaujina užduotį (`PATCH`): siunčiamas tik `difficulty = LEGENDARY`. Pavadinimas ir aprašymas lieka tokie, kokie buvo — nedingsta.\n\nServeris perskaičiuoja `xpPerCompletion`: 10 × 8 = **80**. Jau patvirtintų įrašų XP nesikeičia.\n\ndocs/API.md lentelės metodas **#9**.",
             "body": {
               "mode": "raw",
               "raw": "{\n  \"difficulty\": \"LEGENDARY\"\n}",
@@ -1787,7 +1787,7 @@
               }
             ],
             "url": "{{baseUrl}}/guilds/{{guildA}}/quests/{{questId}}/logs",
-            "description": "Žaidėjas `jonas` (`playerToken`) užregistruoja progresą užduočiai ir išsaugo įrašo ID kintamajame `logId`.\n\nNaujas įrašas visada yra `PENDING` būsenos, su `xpAwarded = 0` ir `inspirationAwarded = 0`. Laukas `occurredAt` negali būti ateityje.\n\nREADME lentelės metodas **#13**.",
+            "description": "Žaidėjas `jonas` (`playerToken`) užregistruoja progresą užduočiai ir išsaugo įrašo ID kintamajame `logId`.\n\nNaujas įrašas visada yra `PENDING` būsenos, su `xpAwarded = 0` ir `inspirationAwarded = 0`. Laukas `occurredAt` negali būti ateityje.\n\ndocs/API.md lentelės metodas **#13**.",
             "body": {
               "mode": "raw",
               "raw": "{\n  \"note\": \"Nubegau 10 km per 52 minutes\",\n  \"evidenceUrl\": \"https://example.org/evidence/run.png\",\n  \"occurredAt\": \"{{occurredAt}}\"\n}",
@@ -1881,7 +1881,7 @@
             "method": "GET",
             "header": [],
             "url": "{{baseUrl}}/guilds/{{guildA}}/quests/{{questId}}/logs?status=PENDING",
-            "description": "Grąžina užduoties įrašų sąrašą.\n\nFiltras `status` gali būti `PENDING`, `APPROVED` arba `REJECTED`. Čia ieškoma įrašų, kurie dar laukia peržiūros.\n\nREADME lentelės metodas **#11**.\n\nSiunčia grupės DM — jis mato visų žaidėjų įrašus. Žaidėjas matytų tik savo (žr. `6. Rolės ir teisės`)."
+            "description": "Grąžina užduoties įrašų sąrašą.\n\nFiltras `status` gali būti `PENDING`, `APPROVED` arba `REJECTED`. Čia ieškoma įrašų, kurie dar laukia peržiūros.\n\ndocs/API.md lentelės metodas **#11**.\n\nSiunčia grupės DM — jis mato visų žaidėjų įrašus. Žaidėjas matytų tik savo (žr. `6. Rolės ir teisės`)."
           },
           "event": [
             {
@@ -1908,7 +1908,7 @@
             "method": "GET",
             "header": [],
             "url": "{{baseUrl}}/guilds/{{guildA}}/quests/{{questId}}/logs/{{logId}}",
-            "description": "Grąžina vieną progreso įrašą per užduotį ir grupę.\n\nREADME lentelės metodas **#12**."
+            "description": "Grąžina vieną progreso įrašą per užduotį ir grupę.\n\ndocs/API.md lentelės metodas **#12**."
           },
           "event": [
             {
@@ -1934,7 +1934,7 @@
               }
             ],
             "url": "{{baseUrl}}/guilds/{{guildA}}/quests/{{questId}}/logs/{{logId}}",
-            "description": "Grupės Dungeon Master (kolekcijos naudotojas) patvirtina žaidėjo įrašą (`PATCH`): siunčiami tik peržiūros laukai `status = APPROVED`, `inspirationAwarded = 1` ir `reviewerNote`. Įrašo turinys (`note`, `evidenceUrl`, `occurredAt`) lieka nepakeistas.\n\n`xpAwarded` nesiunčiamas, todėl serveris jį paima iš užduoties sudėtingumo (`LEGENDARY` = **80**). Užpildomi `reviewedAt` ir `reviewerId`. Peržiūros laukus keisti gali tik grupės DM.\n\nREADME lentelės metodas **#14**.",
+            "description": "Grupės Dungeon Master (kolekcijos naudotojas) patvirtina žaidėjo įrašą (`PATCH`): siunčiami tik peržiūros laukai `status = APPROVED`, `inspirationAwarded = 1` ir `reviewerNote`. Įrašo turinys (`note`, `evidenceUrl`, `occurredAt`) lieka nepakeistas.\n\n`xpAwarded` nesiunčiamas, todėl serveris jį paima iš užduoties sudėtingumo (`LEGENDARY` = **80**). Užpildomi `reviewedAt` ir `reviewerId`. Peržiūros laukus keisti gali tik grupės DM.\n\ndocs/API.md lentelės metodas **#14**.",
             "body": {
               "mode": "raw",
               "raw": "{\n  \"status\": \"APPROVED\",\n  \"inspirationAwarded\": 1,\n  \"reviewerNote\": \"Uzskaitau, nuotrauka aiski\"\n}",
@@ -2058,7 +2058,7 @@
             "method": "DELETE",
             "header": [],
             "url": "{{baseUrl}}/guilds/{{guildA}}/quests/{{questId}}/logs/{{logId}}",
-            "description": "Ištrina progreso įrašą. Atsakymas yra `204 No Content` — atsakymas be turinio.\n\nREADME lentelės metodas **#15**."
+            "description": "Ištrina progreso įrašą. Atsakymas yra `204 No Content` — atsakymas be turinio.\n\ndocs/API.md lentelės metodas **#15**."
           },
           "event": [
             {
@@ -2525,7 +2525,7 @@
             "method": "DELETE",
             "header": [],
             "url": "{{baseUrl}}/guilds/{{guildA}}/members/{{playerId}}",
-            "description": "Narys gali pašalinti pats save (išeiti). Kitus narius šalina tik savininkas arba administratorius.\n\nREADME lentelės metodas **#25**.",
+            "description": "Narys gali pašalinti pats save (išeiti). Kitus narius šalina tik savininkas arba administratorius.\n\ndocs/API.md lentelės metodas **#25**.",
             "auth": {
               "type": "bearer",
               "bearer": [
@@ -2592,7 +2592,7 @@
             "method": "DELETE",
             "header": [],
             "url": "{{baseUrl}}/guilds/{{guildA}}/quests/{{questId}}",
-            "description": "Ištrina užduotį kartu su visais jos įrašais (`204 No Content`).\n\nREADME lentelės metodas **#10**."
+            "description": "Ištrina užduotį kartu su visais jos įrašais (`204 No Content`).\n\ndocs/API.md lentelės metodas **#10**."
           },
           "event": [
             {
@@ -2612,7 +2612,7 @@
             "method": "DELETE",
             "header": [],
             "url": "{{baseUrl}}/guilds/{{guildA}}",
-            "description": "Ištrina grupę A kartu su visu jos turiniu (`204 No Content`).\n\nREADME lentelės metodas **#5**."
+            "description": "Ištrina grupę A kartu su visu jos turiniu (`204 No Content`).\n\ndocs/API.md lentelės metodas **#5**."
           },
           "event": [
             {
@@ -2699,7 +2699,7 @@
             "method": "GET",
             "header": [],
             "url": "{{baseUrl}}/users?username={{username}}",
-            "description": "Puslapiuotas sąrašas su filtru pagal vardo dalį. Slaptažodžių maišos negrąžinamos.\n\nREADME lentelės metodas **#26**."
+            "description": "Puslapiuotas sąrašas su filtru pagal vardo dalį. Slaptažodžių maišos negrąžinamos.\n\ndocs/API.md lentelės metodas **#26**."
           },
           "event": [
             {
@@ -2725,7 +2725,7 @@
             "method": "GET",
             "header": [],
             "url": "{{baseUrl}}/users/{{userId}}",
-            "description": "README lentelės metodas **#27**."
+            "description": "docs/API.md lentelės metodas **#27**."
           },
           "event": [
             {
@@ -2786,7 +2786,7 @@
               }
             ],
             "url": "{{baseUrl}}/users/{{userId}}",
-            "description": "Užblokuojama kolekcijos naudotojo paskyra: atšaukiami visi jo refresh žetonai.\n\nREADME lentelės metodas **#28**.",
+            "description": "Užblokuojama kolekcijos naudotojo paskyra: atšaukiami visi jo refresh žetonai.\n\ndocs/API.md lentelės metodas **#28**.",
             "body": {
               "mode": "raw",
               "raw": "{\n  \"enabled\": false\n}",

@@ -2,7 +2,7 @@ $kind: http-request
 description: |-
   Vienas narys pagal naudotojo ID.
 
-  README lentelės metodas **#22**.
+  docs/API.md lentelės metodas **#22**.
 url: "{{baseUrl}}/guilds/{{guildA}}/members/{{playerId}}"
 method: GET
 scripts:

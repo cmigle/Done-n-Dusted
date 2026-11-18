@@ -1,5 +1,5 @@
 $kind: http-request
-description: README lentelės metodas **#27**.
+description: docs/API.md lentelės metodas **#27**.
 url: "{{baseUrl}}/users/{{userId}}"
 method: GET
 scripts:

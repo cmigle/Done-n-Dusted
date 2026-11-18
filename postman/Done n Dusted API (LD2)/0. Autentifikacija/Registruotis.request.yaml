@@ -4,7 +4,7 @@ description: |-
 
   Registracija visada suteikia rolę `USER` ir žetonų negrąžina — po jos reikia prisijungti. Slaptažodis DB saugomas tik kaip BCrypt maiša, atsakyme jo nėra.
 
-  README lentelės metodas **#16**.
+  docs/API.md lentelės metodas **#16**.
 url: "{{baseUrl}}/auth/register"
 method: POST
 headers:

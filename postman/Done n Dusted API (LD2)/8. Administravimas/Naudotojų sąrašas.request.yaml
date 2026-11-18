@@ -2,7 +2,7 @@ $kind: http-request
 description: |-
   Puslapiuotas sąrašas su filtru pagal vardo dalį. Slaptažodžių maišos negrąžinamos.
 
-  README lentelės metodas **#26**.
+  docs/API.md lentelės metodas **#26**.
 url: "{{baseUrl}}/users?username={{username}}"
 method: GET
 scripts:

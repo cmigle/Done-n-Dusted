@@ -4,7 +4,7 @@ description: |-
 
   Serveris perskaičiuoja `xpPerCompletion`: 10 × 8 = **80**. Jau patvirtintų įrašų XP nesikeičia.
 
-  README lentelės metodas **#9**.
+  docs/API.md lentelės metodas **#9**.
 url: "{{baseUrl}}/guilds/{{guildA}}/quests/{{questId}}"
 method: PATCH
 headers:

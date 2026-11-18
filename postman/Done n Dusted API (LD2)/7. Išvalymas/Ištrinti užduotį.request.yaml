@@ -2,7 +2,7 @@ $kind: http-request
 description: |-
   Ištrina užduotį kartu su visais jos įrašais (`204 No Content`).
 
-  README lentelės metodas **#10**.
+  docs/API.md lentelės metodas **#10**.
 url: "{{baseUrl}}/guilds/{{guildA}}/quests/{{questId}}"
 method: DELETE
 scripts:

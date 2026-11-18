@@ -2,7 +2,7 @@ $kind: http-request
 description: |-
   Dalinai atnaujina grupę (`PATCH`): siunčiamas tik `description`. Neatsiųsti laukai (`name`) lieka nepakeisti.
 
-  README lentelės metodas **#4**.
+  docs/API.md lentelės metodas **#4**.
 url: "{{baseUrl}}/guilds/{{guildA}}"
 method: PATCH
 headers:

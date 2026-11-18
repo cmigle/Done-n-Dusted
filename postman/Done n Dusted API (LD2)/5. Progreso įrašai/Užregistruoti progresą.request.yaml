@@ -4,7 +4,7 @@ description: |-
 
   Naujas įrašas visada yra `PENDING` būsenos, su `xpAwarded = 0` ir `inspirationAwarded = 0`. Laukas `occurredAt` negali būti ateityje.
 
-  README lentelės metodas **#13**.
+  docs/API.md lentelės metodas **#13**.
 url: "{{baseUrl}}/guilds/{{guildA}}/quests/{{questId}}/logs"
 method: POST
 headers:

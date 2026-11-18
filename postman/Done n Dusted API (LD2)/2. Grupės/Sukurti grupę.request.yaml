@@ -4,7 +4,7 @@ description: |-
 
   Prieš užklausą sugeneruojamas unikalus pavadinimas `Postman Guild <laikas>`, kad kolekciją būtų galima leisti kartotinai. Atsakymas yra `201 Created` su `Location` antrašte, o naujos grupės ID išsaugomas kintamajame `guildA`.
 
-  README lentelės metodas **#3**.
+  docs/API.md lentelės metodas **#3**.
 url: "{{baseUrl}}/guilds"
 method: POST
 headers:
