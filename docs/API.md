@@ -44,7 +44,7 @@ creates the schema and fills it with demo data (4 users, 3 guilds, 9 quests, 12 
 
 ### Demo users
 
-The password for all of them is `Demo123!`.
+The password for all of them is `Demo123!` (the live demo uses a private admin password). On the live demo all data goes back to this seed every night at 04:00 Vilnius time, and accounts created there are removed.
 
 | ID | Username | Global role | Guilds |
 | --- | --- | --- | --- |

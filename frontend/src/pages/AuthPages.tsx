@@ -86,6 +86,7 @@ export function LoginPage() {
               <code>ieva</code> / <code>Demo123!</code> – game master in one guild, player in the others
             </li>
           </ul>
+          <p>Try anything: the demo data, new accounts included, resets every night.</p>
           <p>
             No account yet? <Link to="/register">Sign up</Link>.
           </p>
@@ -183,9 +184,12 @@ export function RegisterPage() {
             </button>
           </div>
         </form>
-        <p className="muted auth__hint">
-          Already have an account? <Link to="/login">Log in</Link>.
-        </p>
+        <div className="muted auth__hint">
+          <p>This is a demo: new accounts are removed when the demo data resets every night.</p>
+          <p>
+            Already have an account? <Link to="/login">Log in</Link>.
+          </p>
+        </div>
       </Window>
     </div>
   )
