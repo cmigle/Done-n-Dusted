@@ -309,8 +309,8 @@ npx newman run postman/DoneNDusted.postman_collection.json
 Or in the Postman app: *Import* -> *Runner* -> *Run*. It takes about **10 seconds**.
 
 The same collection in the Postman v3 format (separate YAML files) is in
-[`postman/Done n Dusted API (LD2)/`](../postman/Done%20n%20Dusted%20API%20%28LD2%29/); the JSON file
-is generated from the same sources. It can also be run with the Postman CLI:
+[`postman/Done n Dusted API (LD2)/`](../postman/Done%20n%20Dusted%20API%20%28LD2%29/), generated
+from the JSON file with `postman collection migrate`. It can also be run with the Postman CLI:
 `postman collection run "postman/Done n Dusted API (LD2)"`.
 
 The collection sets *Bearer Token* `{{accessToken}}` at the collection level. Requests sent by the
@@ -318,15 +318,15 @@ player `jonas` or by `admin` have their own *Authorization* (`{{playerToken}}`, 
 
 | Folder | What it shows |
 | --- | --- |
-| 0. Autentifikacija | Registration, `409`, `400`, login and JWT claims, `/auth/me`, `401` without a token and with a broken token, refresh rotation and reuse detection, logout |
-| 1. Suvestinė | As `admin`: how many guilds, quests and log entries are in the database, with all IDs (`Is viso - grupiu: 3, uzduociu: 9, irasu: 12`) |
-| 2. Grupės | LD1 guild CRUD, the creator becomes the owner, a user sees only their own guilds, paging via `links.next` |
-| 3. Nariai | Adding a player, `409` for an existing member and a second game master, `422` for an unknown user, `403` for a player |
-| 4. Užduotys | LD1 quest tests, `createdBy` |
-| 5. Progreso įrašai | A player logs progress, the game master approves it; XP from difficulty; an approved log entry's content is frozen (`422`) |
-| 6. Rolės ir teisės | `403`: non-member, player approves, game master edits someone else's content, game master approves their own log entry, player views someone else's log entry, `SIDE_QUEST`, guild edit, `/api/users`; a player sees only their own log entries; leaving a guild |
-| 7. Išvalymas | Deletion `204`, `admin` deletes the second guild, `404` after deletion |
-| 8. Administravimas | User list, `422` when blocking yourself, block -> login `403` -> unblock |
+| 0. Authentication | Registration, `409`, `400`, login and JWT claims, `/auth/me`, `401` without a token and with a broken token, refresh rotation and reuse detection, logout |
+| 1. Overview | As `admin`: how many guilds, quests and log entries are in the database, with all IDs (`Total - guilds: 3, quests: 9, log entries: 12`) |
+| 2. Guilds | Guild CRUD, the creator becomes the owner, a user sees only their own guilds, paging via `links.next` |
+| 3. Members | Adding a player, `409` for an existing member and a second game master, `422` for an unknown user, `403` for a player |
+| 4. Quests | Quest CRUD, filters, XP from difficulty, `createdBy` |
+| 5. Log entries | A player logs progress, the game master approves it; XP from difficulty; an approved log entry's content is frozen (`422`) |
+| 6. Roles and permissions | `403`: non-member, player approves, game master edits someone else's content, game master approves their own log entry, player views someone else's log entry, `SIDE_QUEST`, guild edit, `/api/users`; a player sees only their own log entries; leaving a guild |
+| 7. Cleanup | Deletion `204`, `admin` deletes the second guild, `404` after deletion |
+| 8. Administration | User list, `422` when blocking yourself, block -> login `403` -> unblock |
 
 Commands without Postman (curl) - [`docs/visual/DEMO_KOMANDOS.txt`](visual/DEMO_KOMANDOS.txt).
 

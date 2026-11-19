@@ -1,0 +1,30 @@
+$kind: http-request
+description: |-
+  Creates a second guild **without a description** and saves its ID to `guildB`.
+
+  A `description` that is not sent is stored as an empty string `""`, so the field stays in the response.
+
+  The guild is also needed for the parent-chain test: later the collection tries to reach a quest of guild A through guild B.
+url: "{{baseUrl}}/guilds"
+method: POST
+headers:
+  Content-Type: application/json
+body:
+  type: json
+  content: |-
+    {
+      "name": "{{guildName}} (B)"
+    }
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test('201 Created', () => pm.response.to.have.status(201));
+      const body = pm.response.json();
+      pm.test('A missing description is saved as empty and the field stays', () => {
+        pm.expect(body).to.have.property('description');
+        pm.expect(body.description).to.eql('');
+      });
+      pm.collectionVariables.set('guildB', body.id);
+    language: text/javascript
+examples: ./.resources/Create second guild without description.resources/examples
+order: 2000

@@ -1,0 +1,17 @@
+$kind: http-request
+description: The body is sent as `text/plain`. The API accepts only `application/json`, so it returns `415 Unsupported Media Type`.
+url: "{{baseUrl}}/guilds"
+method: POST
+headers:
+  Content-Type: text/plain
+body:
+  type: text
+  content: hello
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test('415 Unsupported Media Type', () => pm.response.to.have.status(415));
+      pm.test('ApiError names the supported type', () => pm.expect(pm.response.json().message).to.include('application/json'));
+    language: text/javascript
+examples: ./.resources/Error 415 – body is not JSON.resources/examples
+order: 10000

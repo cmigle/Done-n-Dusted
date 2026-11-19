@@ -1,0 +1,15 @@
+$kind: http-request
+description: |-
+  Returns one log entry through its quest and guild.
+
+  Method **#12** in the docs/API.md table.
+url: "{{baseUrl}}/guilds/{{guildA}}/quests/{{questId}}/logs/{{logId}}"
+method: GET
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test('200 OK', () => pm.response.to.have.status(200));
+      pm.test('The same log entry', () => pm.expect(pm.response.json().id).to.eql(Number(pm.collectionVariables.get('logId'))));
+    language: text/javascript
+examples: ./.resources/Get log entry by ID.resources/examples
+order: 4000

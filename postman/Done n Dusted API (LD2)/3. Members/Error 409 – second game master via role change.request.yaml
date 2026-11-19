@@ -1,0 +1,23 @@
+$kind: http-request
+description: |-
+  Changing a role (`PATCH`) checks the same rule: while the guild has a game master, another one cannot be appointed.
+
+  Method **#24** in the docs/API.md table.
+url: "{{baseUrl}}/guilds/{{guildA}}/members/{{playerId}}"
+method: PATCH
+headers:
+  Content-Type: application/json
+body:
+  type: json
+  content: |-
+    {
+      "role": "DUNGEON_MASTER"
+    }
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test('409 Conflict', () => pm.response.to.have.status(409));
+      pm.test('A second game master is not allowed', () => pm.expect(pm.response.json().message).to.include('already has a game master'));
+    language: text/javascript
+examples: ./.resources/Error 409 – second game master via role change.resources/examples
+order: 8000

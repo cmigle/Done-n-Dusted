@@ -1,0 +1,10 @@
+$kind: collection
+description: |-
+  Guild members: `/guilds/{guildId}/members/{userId}`. A member is identified by their user ID.
+
+  * In a guild a user is either `PLAYER` or `DUNGEON_MASTER`; the role can differ from guild to guild.
+  * A guild has **one game master**. Trying to appoint a second one returns `409`.
+  * Only the guild owner or an administrator adds members and changes roles.
+
+  Here the player `jonas` is added to `guildA`: `jonas` logs progress and the collection user (the game master) approves it.
+order: 4000

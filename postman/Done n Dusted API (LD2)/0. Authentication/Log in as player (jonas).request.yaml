@@ -1,0 +1,28 @@
+$kind: http-request
+description: The demo user `jonas`. The `playerToken` is used for the requests a guild player (`PLAYER`) makes.
+url: "{{baseUrl}}/auth/login"
+method: POST
+headers:
+  Content-Type: application/json
+body:
+  type: json
+  content: |-
+    {
+      "username": "jonas",
+      "password": "{{password}}"
+    }
+auth:
+  type: noauth
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test('200 OK', () => pm.response.to.have.status(200));
+      const body = pm.response.json();
+      const b64 = body.accessToken.split('.')[1].replace(/-/g, '+').replace(/_/g, '/');
+      const claims = JSON.parse(atob(b64 + '==='.slice((b64.length + 3) % 4)));
+      pm.test('jonas - a regular user (USER)', () => pm.expect(claims.role).to.eql('USER'));
+      pm.collectionVariables.set('playerToken', body.accessToken);
+      pm.collectionVariables.set('playerId', Number(claims.sub));
+    language: text/javascript
+examples: ./.resources/Log in as player (jonas).resources/examples
+order: 16000

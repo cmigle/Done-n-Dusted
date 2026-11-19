@@ -1,0 +1,21 @@
+$kind: http-request
+description: The user is named in the request body, not in the path, so a missing user is a content error (`422`), not a `404`.
+url: "{{baseUrl}}/guilds/{{guildA}}/members"
+method: POST
+headers:
+  Content-Type: application/json
+body:
+  type: json
+  content: |-
+    {
+      "username": "no_such_user",
+      "role": "PLAYER"
+    }
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test('422 Unprocessable Entity', () => pm.response.to.have.status(422));
+      pm.test('Message about the unknown user', () => pm.expect(pm.response.json().message).to.include('not found'));
+    language: text/javascript
+examples: ./.resources/Error 422 – user not found.resources/examples
+order: 6000

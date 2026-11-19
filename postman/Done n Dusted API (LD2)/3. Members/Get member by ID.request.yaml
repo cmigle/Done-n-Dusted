@@ -1,0 +1,19 @@
+$kind: http-request
+description: |-
+  One member by user ID.
+
+  Method **#22** in the docs/API.md table.
+url: "{{baseUrl}}/guilds/{{guildA}}/members/{{playerId}}"
+method: GET
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test('200 OK', () => pm.response.to.have.status(200));
+      pm.test('The same member with their role', () => {
+        const body = pm.response.json();
+        pm.expect(body.username).to.eql('jonas');
+        pm.expect(body.role).to.eql('PLAYER');
+      });
+    language: text/javascript
+examples: ./.resources/Get member by ID.resources/examples
+order: 3000

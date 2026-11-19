@@ -1,7 +1,7 @@
 {
   "info": {
     "name": "Done n Dusted API (LD2)",
-    "description": "# Done n Dusted API (LD2)\n\nDnD principu veikianti produktyvumo sistema: žaidėjas registruoja realaus gyvenimo progresą, grupės Dungeon Master jį patvirtina, ir tik patvirtinti įrašai suteikia XP.\n\nResursų hierarchija: **Guild (1:N) → Quest (1:N) → LogEntry**. Vaikinis objektas pasiekiamas tik per tėvinį, todėl neteisinga grandinė grąžina `404`.\n\nLD2 prideda **autentifikaciją ir autorizaciją**: JWT access ir refresh žetonai, grupės rolės `PLAYER` / `DUNGEON_MASTER` ir globali rolė `ADMIN`.\n\n## Kaip paleisti\n\n1. Paleiskite API (`./mvnw spring-boot:run`). Ji veikia adresu `http://localhost:8080/api`.\n2. Postman programoje paleiskite visą kolekciją su **Run collection**. Aplankus ir užklausas leiskite iš eilės, nes vėlesnės užklausos naudoja ankstesnių sukurtus ID ir žetonus.\n\nKolekcija kaskart užregistruoja naują naudotoją, pati susikuria duomenis ir po savęs išsivalo, todėl ją galima leisti kiek norima kartų.\n\n## Autorizacija\n\nKolekcijos lygyje nustatyta *Bearer Token* `{{accessToken}}` — ją paveldi visos užklausos. Kai užklausą siunčia kitas naudotojas, jos *Authorization* skiltyje nurodytas kitas žetonas:\n\n| Žetonas | Naudotojas | Kam naudojamas |\n| --- | --- | --- |\n| `accessToken` | `postman_<laikas>`, užregistruotas kolekcijos | Grupių savininkas ir DM |\n| `playerToken` | `jonas` | Grupės žaidėjas (`PLAYER`) |\n| `adminToken` | `admin` | Administratorius (`ADMIN`) |\n\nDemonstracinių naudotojų (`admin`, `rokas`, `ieva`, `jonas`) slaptažodis — `Demo123!`.\n\n## Aplankai\n\n| Aplankas | Kas tikrinama |\n| --- | --- |\n| 0. Autentifikacija | Registracija, prisijungimas, JWT turinys, `/auth/me`, žetonų rotacija, atsijungimas, `401` |\n| 1. Suvestinė | Kiek DB yra grupių, užduočių ir įrašų (su ID), ar vaikų ID rodo į teisingą tėvą |\n| 2. Grupės | Grupių CRUD, puslapiavimas per `links.next`, `400`, `404`, `409`, `415` klaidos |\n| 3. Nariai | Narių pridėjimas, rolės, vienas DM grupėje (`409`), `403`, `422` |\n| 4. Užduotys | Užduočių kūrimas, filtrai, XP skaičiavimas, `422` ir tėvinės grandinės `404` |\n| 5. Progreso įrašai | Žaidėjas registruoja, DM patvirtina, XP taisyklės, užšaldytas turinys |\n| 6. Rolės ir teisės | Kas ką gali: `403` ne nariui, žaidėjui, DM su savo įrašu, ne administratoriui |\n| 7. Išvalymas | Sukurtų duomenų ištrynimas (`204`, taip pat administratoriaus) ir patikra, kad jų nebėra |\n| 8. Administravimas | Naudotojų sąrašas, užblokavimas ir atblokavimas |\n\nAtnaujinimas visur yra `PATCH` (dalinis): keičiami tik atsiųsti laukai, todėl neatsiųstas aprašymas nedingsta. Sukūrus resursą be `description`, jis išsaugomas kaip `\"\"`.\n\n## Kolekcijos kintamieji\n\n| Kintamasis | Reikšmė |\n| --- | --- |\n| `baseUrl` | API adresas, numatytai `http://localhost:8080/api` |\n| `username`, `password`, `userId` | Kolekcijos užregistruotas naudotojas; slaptažodis bendras ir demonstraciniams naudotojams |\n| `accessToken`, `refreshToken`, `oldRefreshToken` | Kolekcijos naudotojo žetonai ir panaudotas refresh žetonas rotacijos testui |\n| `playerToken`, `playerId` | Žaidėjo `jonas` žetonas ir ID |\n| `adminToken`, `adminId` | Administratoriaus žetonas ir ID |\n| `guildName` | Unikalus grupės pavadinimas, generuojamas grupės kūrimo užklausoje |\n| `guildA`, `guildB` | Sukurtų grupių ID |\n| `questId`, `logId` | Sukurtos užduoties ir įrašo ID |\n| `logPlayer`, `logDm` | Žaidėjo ir DM įrašai teisių patikroms |\n| `occurredAt` | Įvykio laikas (prieš valandą), naudojamas įrašams |\n| `nextPage`, `pageIds` | Puslapiavimo demonstracijai: `links.next` nuoroda ir pirmo puslapio ID |\n\n## Klaidų formatas\n\nKiekviena klaida grąžinama vienoda `ApiError` struktūra:\n\n```json\n{\n  \"timestamp\": \"2026-09-21T09:15:30.123Z\",\n  \"status\": 403,\n  \"error\": \"Forbidden\",\n  \"message\": \"You cannot review your own log entry.\",\n  \"path\": \"/api/guilds/4/quests/10/logs/14\",\n  \"details\": [ { \"field\": \"title\", \"message\": \"Must not be blank\" } ]\n}\n```\n\n`details` pateikiamas tik tada, kai klaida susijusi su konkrečiais laukais.\n\n**401 ar 403?** `401` — serveris nežino, kas jūs: nėra žetono, jis sugadintas ar pasibaigęs, blogi prisijungimo duomenys. `403` — žino, bet teisių neužtenka: ne grupės narys, netinkama rolė grupėje, ne `ADMIN`, užblokuota paskyra.\n\n**400 ar 422?** `400` reiškia, kad klaidą matyti vien iš užklausos (blogas JSON, tipas, lauko apribojimas, nežinomas laukas). `422` reiškia, kad užklausa teisinga, bet pažeidžia dalykinės srities taisyklę.\n\nKiekviena užklausa turi išsaugotą pavyzdinį atsakymą (*Examples*), įrašytą iš tikro API paleidimo.",
+    "description": "# Done n Dusted API (LD2)\n\nA productivity system that plays like a tabletop RPG: a player logs real-life progress, the guild's game master approves it, and only approved log entries award XP.\n\nResource hierarchy: **Guild (1:N) → Quest (1:N) → LogEntry**. A child is reachable only through its parent, so a wrong chain returns `404`.\n\nAccess is controlled with **authentication and authorization**: JWT access and refresh tokens, the guild roles `PLAYER` / `DUNGEON_MASTER` and the global `ADMIN` role.\n\n## How to run\n\n1. Start the API (`./mvnw spring-boot:run`). It runs at `http://localhost:8080/api`.\n2. In Postman, run the whole collection with **Run collection**. Keep the folders and requests in order: later requests use the IDs and tokens that earlier ones created.\n\nEvery run registers a new user, creates its own data and cleans up after itself, so the collection can be run any number of times.\n\n## Authorization\n\nThe collection sets *Bearer Token* `{{accessToken}}`, which every request inherits. When another user sends a request, its *Authorization* tab names a different token:\n\n| Token | User | Used for |\n| --- | --- | --- |\n| `accessToken` | `postman_<time>`, registered by the collection | Guild owner and game master |\n| `playerToken` | `jonas` | Guild player (`PLAYER`) |\n| `adminToken` | `admin` | Administrator (`ADMIN`) |\n\nThe demo users (`admin`, `rokas`, `ieva`, `jonas`) share the password `Demo123!`.\n\n## Folders\n\n| Folder | What it checks |\n| --- | --- |\n| 0. Authentication | Registration, login, JWT claims, `/auth/me`, token rotation, logout, `401` |\n| 1. Overview | How many guilds, quests and log entries the database holds (with IDs), and whether child IDs point to the right parent |\n| 2. Guilds | Guild CRUD, pagination via `links.next`, `400`, `404`, `409` and `415` errors |\n| 3. Members | Adding members, roles, one game master per guild (`409`), `403`, `422` |\n| 4. Quests | Creating quests, filters, XP calculation, `422` and the parent-chain `404` |\n| 5. Log entries | A player logs progress, the game master approves it, XP rules, frozen content |\n| 6. Roles and permissions | Who can do what: `403` for a non-member, a player, a game master with their own entry, a non-admin |\n| 7. Cleanup | Deleting the created data (`204`, also by an administrator) and checking that it is gone |\n| 8. Administration | User list, blocking and unblocking |\n\nEvery update is a `PATCH` (partial): only the fields sent change, so a description that is not sent is kept. A resource created without `description` stores it as `\"\"`.\n\n## Collection variables\n\n| Variable | Value |\n| --- | --- |\n| `baseUrl` | API address, `http://localhost:8080/api` by default |\n| `username`, `password`, `userId` | The user the collection registers; the demo users share the same password |\n| `accessToken`, `refreshToken`, `oldRefreshToken` | The collection user's tokens and a used refresh token for the rotation test |\n| `playerToken`, `playerId` | Token and ID of the player `jonas` |\n| `adminToken`, `adminId` | Token and ID of the administrator |\n| `guildName` | Unique guild name, generated by the create-guild request |\n| `guildA`, `guildB` | IDs of the created guilds |\n| `questId`, `logId` | IDs of the created quest and log entry |\n| `logPlayer`, `logDm` | The player's and the game master's log entries for the permission checks |\n| `occurredAt` | Event time (an hour ago) used for log entries |\n| `nextPage`, `pageIds` | For the pagination demo: the `links.next` link and the first page's IDs |\n\n## Error format\n\nEvery error comes back in the same `ApiError` shape:\n\n```json\n{\n  \"timestamp\": \"2026-09-21T09:15:30.123Z\",\n  \"status\": 403,\n  \"error\": \"Forbidden\",\n  \"message\": \"You cannot review your own log entry.\",\n  \"path\": \"/api/guilds/4/quests/10/logs/14\",\n  \"details\": [ { \"field\": \"title\", \"message\": \"Must not be blank\" } ]\n}\n```\n\n`details` is included only when the error concerns specific fields.\n\n**401 or 403?** `401`: the server does not know who you are (no token, a broken or expired token, wrong login details). `403`: it knows, but you lack the rights (not a guild member, the wrong guild role, not `ADMIN`, a blocked account).\n\n**400 or 422?** `400` means the error is visible from the request alone (bad JSON, a wrong type, a field constraint, an unknown field). `422` means the request is well-formed but breaks a domain rule.\n\nEvery request has a saved example response (*Examples*) recorded from a real API run.",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "auth": {
@@ -16,11 +16,11 @@
   },
   "item": [
     {
-      "name": "0. Autentifikacija",
-      "description": "Registracija, prisijungimas ir JWT žetonų gyvavimo ciklas.\n\n* Kolekcija kaskart užregistruoja naują naudotoją `postman_<laikas>`. Jis sukurs grupes, todėl bus jų **savininkas ir DM**.\n* `accessToken` (JWT, galioja 15 min) siunčiamas visose tolesnėse užklausose: kolekcijos *Authorization* → *Bearer Token* `{{accessToken}}`.\n* `refreshToken` vienkartinis: panaudotas `/auth/refresh` jis atšaukiamas ir išduodama nauja pora (rotacija). Pakartotinai panaudotas laikomas pavogtu — atšaukiamos visos naudotojo sesijos.\n* Pabaigoje prisijungiama kaip demonstraciniai naudotojai `jonas` (žaidėjas) ir `admin` (administratorius). Jų slaptažodis — `Demo123!`.",
+      "name": "0. Authentication",
+      "description": "Registration, login and the JWT token lifecycle.\n\n* Every run registers a new user `postman_<time>`. This user creates the guilds, so it becomes their **owner and game master**.\n* `accessToken` (a JWT valid for 15 min) is sent with every later request: collection *Authorization* → *Bearer Token* `{{accessToken}}`.\n* `refreshToken` is single-use: once used at `/auth/refresh` it is revoked and a new pair is issued (rotation). A reused one is treated as stolen, and all of the user's sessions are revoked.\n* At the end the collection logs in as the demo users `jonas` (player) and `admin` (administrator). Their password is `Demo123!`.",
       "item": [
         {
-          "name": "Registruotis",
+          "name": "Register",
           "request": {
             "method": "POST",
             "header": [
@@ -30,7 +30,7 @@
               }
             ],
             "url": "{{baseUrl}}/auth/register",
-            "description": "Sukuria naują naudotoją. Prieš užklausą sugeneruojamas unikalus vardas `postman_<laikas>`, kad kolekciją būtų galima leisti kartotinai.\n\nRegistracija visada suteikia rolę `USER` ir žetonų negrąžina — po jos reikia prisijungti. Slaptažodis DB saugomas tik kaip BCrypt maiša, atsakyme jo nėra.\n\ndocs/API.md lentelės metodas **#16**.",
+            "description": "Creates a new user. A pre-request script generates a unique name `postman_<time>` so the collection can be run again and again.\n\nRegistration always grants the `USER` role and returns no tokens, so log in afterwards. The password is stored only as a BCrypt hash and never appears in the response.\n\nMethod **#16** in the docs/API.md table.",
             "auth": {
               "type": "noauth"
             },
@@ -61,13 +61,13 @@
                 "exec": [
                   "pm.test('201 Created', () => pm.response.to.have.status(201));",
                   "const body = pm.response.json();",
-                  "pm.test('Location nurodo naujo naudotojo adresa', () => pm.expect(pm.response.headers.get('Location')).to.include('/api/users/' + body.id));",
-                  "pm.test('Naujas naudotojas visada USER', () => {",
+                  "pm.test('Location points to the new user', () => pm.expect(pm.response.headers.get('Location')).to.include('/api/users/' + body.id));",
+                  "pm.test('A new user is always USER', () => {",
                   "  pm.expect(body.username).to.eql(pm.collectionVariables.get('username'));",
                   "  pm.expect(body.role).to.eql('USER');",
                   "  pm.expect(body.enabled).to.eql(true);",
                   "});",
-                  "pm.test('Slaptazodis ir jo maisa negrazinami', () => {",
+                  "pm.test('Neither the password nor its hash is returned', () => {",
                   "  pm.expect(body).to.not.have.property('password');",
                   "  pm.expect(body).to.not.have.property('passwordHash');",
                   "});",
@@ -78,7 +78,7 @@
           ]
         },
         {
-          "name": "Klaida 409 – vardas jau užimtas",
+          "name": "Error 409 – username taken",
           "request": {
             "method": "POST",
             "header": [
@@ -88,7 +88,7 @@
               }
             ],
             "url": "{{baseUrl}}/auth/register",
-            "description": "Tas pats vardas didžiosiomis raidėmis. Vardai unikalūs neatsižvelgiant į raidžių dydį, todėl `409 Conflict`.",
+            "description": "The same name in upper case. Usernames are unique regardless of case, so the response is `409 Conflict`.",
             "auth": {
               "type": "noauth"
             },
@@ -118,14 +118,14 @@
                 "type": "text/javascript",
                 "exec": [
                   "pm.test('409 Conflict', () => pm.response.to.have.status(409));",
-                  "pm.test('Vardas uzimtas, nors parasytas kitokiomis raidemis', () => pm.expect(pm.response.json().message).to.include('already taken'));"
+                  "pm.test('The name is taken even in a different case', () => pm.expect(pm.response.json().message).to.include('already taken'));"
                 ]
               }
             }
           ]
         },
         {
-          "name": "Klaida 400 – per trumpas slaptažodis",
+          "name": "Error 400 – password too short",
           "request": {
             "method": "POST",
             "header": [
@@ -135,7 +135,7 @@
               }
             ],
             "url": "{{baseUrl}}/auth/register",
-            "description": "Slaptažodis turi būti 8–72 simbolių. Lauko apribojimas, todėl `400` su konkrečiu lauku `details`.",
+            "description": "The password must be 8–72 characters. This is a field constraint, so the response is `400` with the field named in `details`.",
             "auth": {
               "type": "noauth"
             },
@@ -156,14 +156,14 @@
                 "type": "text/javascript",
                 "exec": [
                   "pm.test('400 Bad Request', () => pm.response.to.have.status(400));",
-                  "pm.test('Nurodomas laukas password', () => pm.expect(pm.response.json().details.map(d => d.field)).to.include('password'));"
+                  "pm.test('Names the password field', () => pm.expect(pm.response.json().details.map(d => d.field)).to.include('password'));"
                 ]
               }
             }
           ]
         },
         {
-          "name": "Klaida 401 – neteisingas slaptažodis",
+          "name": "Error 401 – wrong password",
           "request": {
             "method": "POST",
             "header": [
@@ -173,7 +173,7 @@
               }
             ],
             "url": "{{baseUrl}}/auth/login",
-            "description": "Ta pati klaida grąžinama ir neteisingam vardui, ir slaptažodžiui — neatskleidžiama, ar toks naudotojas egzistuoja. Antraštė `WWW-Authenticate: Bearer` nurodo, kokio autentifikavimo reikia.",
+            "description": "A wrong username and a wrong password return the same error, so it does not reveal whether the user exists. The `WWW-Authenticate: Bearer` header says which authentication is required.",
             "auth": {
               "type": "noauth"
             },
@@ -194,15 +194,15 @@
                 "type": "text/javascript",
                 "exec": [
                   "pm.test('401 Unauthorized', () => pm.response.to.have.status(401));",
-                  "pm.test('WWW-Authenticate antraste', () => pm.expect(pm.response.headers.get('WWW-Authenticate')).to.eql('Bearer'));",
-                  "pm.test('ApiError su pranesimu', () => pm.expect(pm.response.json().message).to.include('Invalid username or password'));"
+                  "pm.test('WWW-Authenticate header', () => pm.expect(pm.response.headers.get('WWW-Authenticate')).to.eql('Bearer'));",
+                  "pm.test('ApiError with a message', () => pm.expect(pm.response.json().message).to.include('Invalid username or password'));"
                 ]
               }
             }
           ]
         },
         {
-          "name": "Prisijungti",
+          "name": "Log in",
           "request": {
             "method": "POST",
             "header": [
@@ -212,7 +212,7 @@
               }
             ],
             "url": "{{baseUrl}}/auth/login",
-            "description": "Grąžina žetonų porą:\n\n* `accessToken` — pasirašytas JWT (HS256), galioja **15 min** (`expiresIn: 900`). Jame: `sub` (naudotojo ID), `username`, `role`, `iss`, `iat`, `exp`.\n* `refreshToken` — atsitiktinė eilutė, ne JWT. DB saugoma tik jos SHA-256 maiša.\n\nTestas iškoduoja JWT ir patikrina jo turinį. Abu žetonai išsaugomi kintamuosiuose.\n\ndocs/API.md lentelės metodas **#17**.",
+            "description": "Returns a token pair:\n\n* `accessToken`: a signed JWT (HS256), valid for **15 min** (`expiresIn: 900`). It holds `sub` (user ID), `username`, `role`, `iss`, `iat` and `exp`.\n* `refreshToken`: a random string, not a JWT. The database stores only its SHA-256 hash.\n\nThe test decodes the JWT and checks its claims. Both tokens are saved to variables.\n\nMethod **#17** in the docs/API.md table.",
             "auth": {
               "type": "noauth"
             },
@@ -236,19 +236,19 @@
                   "const body = pm.response.json();",
                   "const b64 = body.accessToken.split('.')[1].replace(/-/g, '+').replace(/_/g, '/');",
                   "const claims = JSON.parse(atob(b64 + '==='.slice((b64.length + 3) % 4)));",
-                  "pm.test('Access zetonas - JWT is 3 daliu, tipas Bearer, galioja 15 min', () => {",
+                  "pm.test('Access token - a 3-part JWT, Bearer type, valid for 15 min', () => {",
                   "  pm.expect(body.accessToken.split('.')).to.have.lengthOf(3);",
                   "  pm.expect(body.tokenType).to.eql('Bearer');",
                   "  pm.expect(body.expiresIn).to.eql(900);",
                   "  pm.expect(claims.exp - claims.iat).to.eql(900);",
                   "});",
-                  "pm.test('JWT turinys: sub = naudotojo ID, role USER', () => {",
+                  "pm.test('JWT claims: sub = user ID, role USER', () => {",
                   "  pm.expect(claims.sub).to.eql(String(pm.collectionVariables.get('userId')));",
                   "  pm.expect(claims.username).to.eql(pm.collectionVariables.get('username'));",
                   "  pm.expect(claims.role).to.eql('USER');",
                   "  pm.expect(claims.iss).to.eql('done-n-dusted');",
                   "});",
-                  "pm.test('Refresh zetonas - atsitiktine eilute, ne JWT', () => pm.expect(body.refreshToken).to.be.a('string').and.not.include('.'));",
+                  "pm.test('Refresh token - a random string, not a JWT', () => pm.expect(body.refreshToken).to.be.a('string').and.not.include('.'));",
                   "pm.collectionVariables.set('accessToken', body.accessToken);",
                   "pm.collectionVariables.set('refreshToken', body.refreshToken);"
                 ]
@@ -257,12 +257,12 @@
           ]
         },
         {
-          "name": "Kas aš",
+          "name": "Who am I",
           "request": {
             "method": "GET",
             "header": [],
             "url": "{{baseUrl}}/auth/me",
-            "description": "Pirma užklausa su žetonu (kolekcijos *Bearer Token* `{{accessToken}}`). Grąžina prisijungusį naudotoją ir jo grupes su rolėmis — naujas naudotojas dar niekur nepriklauso.\n\ndocs/API.md lentelės metodas **#20**."
+            "description": "The first request with a token (the collection's *Bearer Token* `{{accessToken}}`). Returns the logged-in user and their guilds with roles; a new user belongs to none yet.\n\nMethod **#20** in the docs/API.md table."
           },
           "event": [
             {
@@ -272,20 +272,20 @@
                 "exec": [
                   "pm.test('200 OK', () => pm.response.to.have.status(200));",
                   "const body = pm.response.json();",
-                  "pm.test('Atpazintas tas pats naudotojas', () => pm.expect(body.id).to.eql(Number(pm.collectionVariables.get('userId'))));",
-                  "pm.test('Naujas naudotojas dar nepriklauso jokiai grupei', () => pm.expect(body.memberships).to.eql([]));"
+                  "pm.test('Recognised as the same user', () => pm.expect(body.id).to.eql(Number(pm.collectionVariables.get('userId'))));",
+                  "pm.test('A new user belongs to no guild yet', () => pm.expect(body.memberships).to.eql([]));"
                 ]
               }
             }
           ]
         },
         {
-          "name": "Klaida 401 – be žetono",
+          "name": "Error 401 – no token",
           "request": {
             "method": "GET",
             "header": [],
             "url": "{{baseUrl}}/guilds",
-            "description": "Be `Authorization` antraštės pasiekiama tik registracija, prisijungimas ir žetonų atnaujinimas. Kitur — `401` ta pačia `ApiError` struktūra.",
+            "description": "Without an `Authorization` header only registration, login and token refresh are reachable. Everything else returns `401` in the same `ApiError` shape.",
             "auth": {
               "type": "noauth"
             }
@@ -298,7 +298,7 @@
                 "exec": [
                   "pm.test('401 Unauthorized', () => pm.response.to.have.status(401));",
                   "pm.test('WWW-Authenticate: Bearer', () => pm.expect(pm.response.headers.get('WWW-Authenticate')).to.eql('Bearer'));",
-                  "pm.test('ApiError paaiskina, ko truksta', () => {",
+                  "pm.test('ApiError explains what is missing', () => {",
                   "  const e = pm.response.json();",
                   "  pm.expect(e.status).to.eql(401);",
                   "  pm.expect(e.message).to.include('Bearer');",
@@ -309,12 +309,12 @@
           ]
         },
         {
-          "name": "Klaida 401 – sugadintas žetonas",
+          "name": "Error 401 – tampered token",
           "request": {
             "method": "GET",
             "header": [],
             "url": "{{baseUrl}}/guilds",
-            "description": "Prie žetono pridėta viena raidė — parašas nebetinka. Serveris kiekvieną žetoną tikrina pats, todėl suklastoto ar pakeisto žetono nepriims.",
+            "description": "One letter is appended to the token, so the signature no longer matches. The server verifies every token itself, so it rejects a forged or altered one.",
             "auth": {
               "type": "bearer",
               "bearer": [
@@ -333,15 +333,15 @@
                 "type": "text/javascript",
                 "exec": [
                   "pm.test('401 Unauthorized', () => pm.response.to.have.status(401));",
-                  "pm.test('WWW-Authenticate nurodo invalid_token', () => pm.expect(pm.response.headers.get('WWW-Authenticate')).to.include('invalid_token'));",
-                  "pm.test('ApiError pranesimas', () => pm.expect(pm.response.json().message).to.include('Invalid access token'));"
+                  "pm.test('WWW-Authenticate says invalid_token', () => pm.expect(pm.response.headers.get('WWW-Authenticate')).to.include('invalid_token'));",
+                  "pm.test('ApiError message', () => pm.expect(pm.response.json().message).to.include('Invalid access token'));"
                 ]
               }
             }
           ]
         },
         {
-          "name": "Atnaujinti žetonus",
+          "name": "Refresh tokens",
           "request": {
             "method": "POST",
             "header": [
@@ -351,7 +351,7 @@
               }
             ],
             "url": "{{baseUrl}}/auth/refresh",
-            "description": "Kai access žetonas pasibaigia, klientas nauja pora gauna be slaptažodžio — už refresh žetoną. Senasis refresh žetonas atšaukiamas (rotacija) ir išsaugomas `oldRefreshToken` kitai patikrai.\n\ndocs/API.md lentelės metodas **#18**.",
+            "description": "When the access token expires, the client gets a new pair without the password, in exchange for the refresh token. The old refresh token is revoked (rotation) and saved to `oldRefreshToken` for the next check.\n\nMethod **#18** in the docs/API.md table.",
             "auth": {
               "type": "noauth"
             },
@@ -374,7 +374,7 @@
                   "pm.test('200 OK', () => pm.response.to.have.status(200));",
                   "const body = pm.response.json();",
                   "const old = pm.collectionVariables.get('refreshToken');",
-                  "pm.test('Isduota nauja pora - refresh zetonas pakeistas nauju', () => {",
+                  "pm.test('A new pair is issued - the refresh token is replaced', () => {",
                   "  pm.expect(body.refreshToken).to.be.a('string').and.not.eql(old);",
                   "  pm.expect(body.accessToken.split('.')).to.have.lengthOf(3);",
                   "});",
@@ -387,7 +387,7 @@
           ]
         },
         {
-          "name": "Klaida 401 – pakartotinai panaudotas refresh žetonas",
+          "name": "Error 401 – reused refresh token",
           "request": {
             "method": "POST",
             "header": [
@@ -397,7 +397,7 @@
               }
             ],
             "url": "{{baseUrl}}/auth/refresh",
-            "description": "Senasis refresh žetonas jau panaudotas. Jei jį kas nors atsiunčia dar kartą, greičiausiai jis pavogtas, todėl serveris atšaukia **visas** naudotojo sesijas.",
+            "description": "The old refresh token has already been used. If someone sends it again, it was most likely stolen, so the server revokes **all** of the user's sessions.",
             "auth": {
               "type": "noauth"
             },
@@ -418,14 +418,14 @@
                 "type": "text/javascript",
                 "exec": [
                   "pm.test('401 Unauthorized', () => pm.response.to.have.status(401));",
-                  "pm.test('Pakartotinis panaudojimas atsaukia visas sesijas', () => pm.expect(pm.response.json().message).to.include('All sessions have been revoked'));"
+                  "pm.test('Reuse revokes all sessions', () => pm.expect(pm.response.json().message).to.include('All sessions have been revoked'));"
                 ]
               }
             }
           ]
         },
         {
-          "name": "Klaida 401 – atšauktas ir naujasis žetonas",
+          "name": "Error 401 – new refresh token revoked too",
           "request": {
             "method": "POST",
             "header": [
@@ -435,7 +435,7 @@
               }
             ],
             "url": "{{baseUrl}}/auth/refresh",
-            "description": "Ankstesnės užklausos pasekmė: net ką tik gautas refresh žetonas nebegalioja. Naudotojas turi prisijungti iš naujo.",
+            "description": "A consequence of the previous request: even the refresh token issued a moment ago is no longer valid. The user has to log in again.",
             "auth": {
               "type": "noauth"
             },
@@ -456,14 +456,14 @@
                 "type": "text/javascript",
                 "exec": [
                   "pm.test('401 Unauthorized', () => pm.response.to.have.status(401));",
-                  "pm.test('Ir naujausias refresh zetonas atsauktas', () => pm.expect(pm.response.json().message).to.include('revoked'));"
+                  "pm.test('Even the newest refresh token is revoked', () => pm.expect(pm.response.json().message).to.include('revoked'));"
                 ]
               }
             }
           ]
         },
         {
-          "name": "Prisijungti iš naujo",
+          "name": "Log in again",
           "request": {
             "method": "POST",
             "header": [
@@ -473,7 +473,7 @@
               }
             ],
             "url": "{{baseUrl}}/auth/login",
-            "description": "Visos sesijos atšauktos, todėl prisijungiama iš naujo. Gauta pora naudojama atsijungimo demonstracijai.",
+            "description": "All sessions were revoked, so the user logs in again. The new pair is used for the logout demo.",
             "auth": {
               "type": "noauth"
             },
@@ -503,7 +503,7 @@
           ]
         },
         {
-          "name": "Atsijungti",
+          "name": "Log out",
           "request": {
             "method": "POST",
             "header": [
@@ -513,7 +513,7 @@
               }
             ],
             "url": "{{baseUrl}}/auth/logout",
-            "description": "Atšaukia refresh žetoną. Access žetonas galioja iki savo `exp` (serveris jų nesaugo), todėl jis trumpas — 15 min.\n\ndocs/API.md lentelės metodas **#19**.",
+            "description": "Revokes the refresh token. The access token stays valid until its `exp` (the server does not store access tokens), which is why it is short-lived: 15 min.\n\nMethod **#19** in the docs/API.md table.",
             "auth": {
               "type": "noauth"
             },
@@ -534,14 +534,14 @@
                 "type": "text/javascript",
                 "exec": [
                   "pm.test('204 No Content', () => pm.response.to.have.status(204));",
-                  "pm.test('Atsakymas be turinio', () => pm.expect(pm.response.text()).to.be.empty);"
+                  "pm.test('Empty response body', () => pm.expect(pm.response.text()).to.be.empty);"
                 ]
               }
             }
           ]
         },
         {
-          "name": "Klaida 401 – refresh po atsijungimo",
+          "name": "Error 401 – refresh after logout",
           "request": {
             "method": "POST",
             "header": [
@@ -551,7 +551,7 @@
               }
             ],
             "url": "{{baseUrl}}/auth/refresh",
-            "description": "Atsijungus refresh žetonu naujos poros gauti nebegalima.",
+            "description": "After logout the refresh token can no longer get a new pair.",
             "auth": {
               "type": "noauth"
             },
@@ -578,7 +578,7 @@
           ]
         },
         {
-          "name": "Prisijungti – žetonas likusiai kolekcijai",
+          "name": "Log in – token for the rest of the collection",
           "request": {
             "method": "POST",
             "header": [
@@ -588,7 +588,7 @@
               }
             ],
             "url": "{{baseUrl}}/auth/login",
-            "description": "Šis `accessToken` naudojamas visose tolesnėse užklausose (kolekcijos *Bearer Token*).",
+            "description": "This `accessToken` is used for every later request (the collection's *Bearer Token*).",
             "auth": {
               "type": "noauth"
             },
@@ -618,7 +618,7 @@
           ]
         },
         {
-          "name": "Prisijungti kaip žaidėjas (jonas)",
+          "name": "Log in as player (jonas)",
           "request": {
             "method": "POST",
             "header": [
@@ -628,7 +628,7 @@
               }
             ],
             "url": "{{baseUrl}}/auth/login",
-            "description": "Demonstracinis naudotojas `jonas`. Jo žetonas `playerToken` naudojamas užklausose, kurias atlieka grupės žaidėjas (`PLAYER`).",
+            "description": "The demo user `jonas`. The `playerToken` is used for the requests a guild player (`PLAYER`) makes.",
             "auth": {
               "type": "noauth"
             },
@@ -652,7 +652,7 @@
                   "const body = pm.response.json();",
                   "const b64 = body.accessToken.split('.')[1].replace(/-/g, '+').replace(/_/g, '/');",
                   "const claims = JSON.parse(atob(b64 + '==='.slice((b64.length + 3) % 4)));",
-                  "pm.test('jonas - iprastas naudotojas (USER)', () => pm.expect(claims.role).to.eql('USER'));",
+                  "pm.test('jonas - a regular user (USER)', () => pm.expect(claims.role).to.eql('USER'));",
                   "pm.collectionVariables.set('playerToken', body.accessToken);",
                   "pm.collectionVariables.set('playerId', Number(claims.sub));"
                 ]
@@ -661,7 +661,7 @@
           ]
         },
         {
-          "name": "Prisijungti kaip administratorius (admin)",
+          "name": "Log in as administrator (admin)",
           "request": {
             "method": "POST",
             "header": [
@@ -671,7 +671,7 @@
               }
             ],
             "url": "{{baseUrl}}/auth/login",
-            "description": "Demonstracinis administratorius. `adminToken` naudojamas suvestinei, puslapiavimui (mato visas grupes) ir aplanke `8. Administravimas`.",
+            "description": "The demo administrator. `adminToken` is used for the overview, for pagination (an administrator sees every guild) and in the `8. Administration` folder.",
             "auth": {
               "type": "noauth"
             },
@@ -706,16 +706,16 @@
       ]
     },
     {
-      "name": "1. Suvestinė",
-      "description": "Duomenų bazės suvestinė: kiek yra grupių, užduočių ir progreso įrašų, su visais jų ID.\n\nDaroma administratoriaus vardu, nes tik jis mato viską. Aplanką galima leisti ir atskirai (*Run folder*) bet kuriuo metu — jis nieko nekeičia, tik skaito.",
+      "name": "1. Overview",
+      "description": "A database overview: how many guilds, quests and log entries there are, with all their IDs.\n\nIt runs as the administrator, because only an administrator sees everything. The folder can also run on its own (*Run folder*) at any time: it only reads and changes nothing.",
       "item": [
         {
-          "name": "Suvestinė – grupės, užduotys ir įrašai",
+          "name": "Overview – guilds, quests and log entries",
           "request": {
             "method": "GET",
             "header": [],
             "url": "{{baseUrl}}/guilds?size=100",
-            "description": "Apibendrina visus duomenis: kiek yra grupių, kiek jose užduočių ir kiek užduotyse progreso įrašų.\n\nAtsakymo pradžioje `totalElements` — kiek iš viso yra grupių, pvz. `{ \"totalElements\": 3, \"content\": [...] }`.\n\nTestas eina per visą hierarchiją **Guild → Quest → LogEntry**: kiekvienai grupei paima jos užduotis, kiekvienai užduočiai — jos įrašus. Jei sąrašas netelpa į vieną puslapį, jis seka serverio grąžinamą `links.next` nuorodą.\n\n*Test Results* skiltyje matyti:\n\n* po eilutę kiekvienai grupei su jos užduočių ir įrašų ID;\n* bendra eilutė, pvz. `Is viso - grupiu: 3, uzduociu: 9, irasu: 12` (taip atrodo švariai paleista DB).\n\nKartu patikrinama, kad kiekvienos užduoties `guildId` ir kiekvieno įrašo `questId` rodo į tikrą tėvinį objektą, o ID nesikartoja.\n\nUžklausa siunčiama **administratoriaus** vardu (`adminToken`): tik jis mato visas grupes ir visus įrašus. Prieš užklausą administratorius prisijungia pats, todėl aplanką galima leisti ir atskirai. Vidinės `pm.sendRequest` užklausos kolekcijos autorizacijos nepaveldi, todėl `Authorization` antraštė joms pridedama ranka.",
+            "description": "Sums up all the data: how many guilds there are, how many quests they hold and how many log entries those quests have.\n\nThe response starts with `totalElements`, the total number of guilds, e.g. `{ \"totalElements\": 3, \"content\": [...] }`.\n\nThe test walks the whole **Guild → Quest → LogEntry** hierarchy: for each guild it fetches the quests, and for each quest its log entries. If a list does not fit on one page, it follows the `links.next` link the server returns.\n\nThe *Test Results* tab shows:\n\n* a line per guild with its quest and log entry IDs;\n* a total line, e.g. `Total - guilds: 3, quests: 9, log entries: 12` (a freshly seeded database).\n\nIt also checks that every quest's `guildId` and every log entry's `questId` point to a real parent and that no ID repeats.\n\nThe request is sent as the **administrator** (`adminToken`): only an administrator sees every guild and log entry. A pre-request script logs the administrator in, so the folder can also run on its own. The inner `pm.sendRequest` calls do not inherit the collection's authorization, so they add the `Authorization` header by hand.",
             "auth": {
               "type": "bearer",
               "bearer": [
@@ -733,8 +733,8 @@
               "script": {
                 "type": "text/javascript",
                 "exec": [
-                  "// Suvestine daroma ADMIN vardu - tik jis mato visas grupes ir visus irasus.",
-                  "// Prisijungiama cia pat, todel aplanka galima leisti ir atskirai.",
+                  "// The overview runs as ADMIN - only an administrator sees every guild and log entry.",
+                  "// It logs in right here, so the folder can also run on its own.",
                   "pm.sendRequest({",
                   "  url: pm.variables.get('baseUrl') + '/auth/login',",
                   "  method: 'POST',",
@@ -756,7 +756,7 @@
                   "const get = url => new Promise((resolve, reject) =>",
                   "  pm.sendRequest({ url, header: [{ key: 'Authorization', value: 'Bearer ' + pm.collectionVariables.get('adminToken') }] }, (err, res) => (err ? reject(err) : resolve(res.json()))));",
                   "",
-                  "// Surenka visus saraso puslapius: eina serverio duota links.next nuoroda, kol jos nebera.",
+                  "// Collects every page of a list by following the server's links.next until there is none.",
                   "async function getAll(firstPage) {",
                   "  const items = [...firstPage.content];",
                   "  for (let next = firstPage.links.next; next; ) {",
@@ -776,29 +776,29 @@
                   "    const quests = await getAll(await get(`${baseUrl}/guilds/${guild.id}/quests?size=100`));",
                   "    const guildLogs = [];",
                   "    const wrongParent = [];",
-                  "    quests.forEach(q => { if (q.guildId !== guild.id) wrongParent.push(`uzduotis ${q.id} rodo i grupe ${q.guildId}`); });",
+                  "    quests.forEach(q => { if (q.guildId !== guild.id) wrongParent.push(`quest ${q.id} points to guild ${q.guildId}`); });",
                   "",
                   "    for (const quest of quests) {",
                   "      const logs = await getAll(await get(`${baseUrl}/guilds/${guild.id}/quests/${quest.id}/logs?size=100`));",
-                  "      logs.forEach(l => { if (l.questId !== quest.id) wrongParent.push(`irasas ${l.id} rodo i uzduoti ${l.questId}`); });",
+                  "      logs.forEach(l => { if (l.questId !== quest.id) wrongParent.push(`log entry ${l.id} points to quest ${l.questId}`); });",
                   "      guildLogs.push(...logs);",
                   "    }",
                   "",
                   "    questIds.push(...quests.map(q => q.id));",
                   "    logIds.push(...guildLogs.map(l => l.id));",
-                  "    const line = `Grupe ${guild.id} \"${guild.name}\" - uzduotys [${sortedIds(quests)}], irasai [${sortedIds(guildLogs)}]`;",
+                  "    const line = `Guild ${guild.id} \"${guild.name}\" - quests [${sortedIds(quests)}], log entries [${sortedIds(guildLogs)}]`;",
                   "    console.log(line);",
-                  "    pm.test(line, () => pm.expect(wrongParent, 'vaikiniai objektai rodo i teisinga tevini ID').to.be.empty);",
+                  "    pm.test(line, () => pm.expect(wrongParent, 'child objects point to the right parent ID').to.be.empty);",
                   "  }",
                   "",
-                  "  const summary = `Is viso - grupiu: ${guilds.length}, uzduociu: ${questIds.length}, irasu: ${logIds.length}`;",
+                  "  const summary = `Total - guilds: ${guilds.length}, quests: ${questIds.length}, log entries: ${logIds.length}`;",
                   "  console.log(summary);",
                   "  pm.test(summary, () => {",
                   "    pm.expect(guilds.length).to.eql(pm.response.json().totalElements);",
-                  "    pm.expect(new Set(questIds).size, 'uzduociu ID nesikartoja').to.eql(questIds.length);",
-                  "    pm.expect(new Set(logIds).size, 'irasu ID nesikartoja').to.eql(logIds.length);",
+                  "    pm.expect(new Set(questIds).size, 'quest IDs are unique').to.eql(questIds.length);",
+                  "    pm.expect(new Set(logIds).size, 'log entry IDs are unique').to.eql(logIds.length);",
                   "  });",
-                  "})().catch(err => pm.test('Suvestine sudaryta be klaidu', () => { throw err; }));"
+                  "})().catch(err => pm.test('The overview ran without errors', () => { throw err; }));"
                 ]
               }
             }
@@ -807,11 +807,11 @@
       ]
     },
     {
-      "name": "2. Grupės",
-      "description": "Grupių (Guild) valdymas: sukūrimas, sąrašas, puslapiavimas, gavimas, dalinis atnaujinimas (`PATCH`) ir validacijos klaidos.\n\nGrupes kuria kolekcijos naudotojas, todėl jis yra abiejų grupių savininkas ir DM. `guildA` naudojama visoje kolekcijoje, o `guildB` sukuriama be aprašymo (parodo, kad `description` tampa `\"\"`, o ne dingsta) ir reikalinga tėvinės grandinės testui.\n\nGrupių sąrašas rodo tik naudotojo grupes, todėl puslapiavimas demonstruojamas administratoriaus vardu.",
+      "name": "2. Guilds",
+      "description": "Guild management: create, list, paginate, get, partial update (`PATCH`) and validation errors.\n\nThe collection user creates the guilds, so it is the owner and game master of both. `guildA` is used throughout the collection; `guildB` is created without a description (showing that `description` becomes `\"\"` instead of disappearing) and is needed for the parent-chain test.\n\nThe guild list shows only the user's own guilds, so pagination is demonstrated as the administrator.",
       "item": [
         {
-          "name": "Sukurti grupę",
+          "name": "Create guild",
           "request": {
             "method": "POST",
             "header": [
@@ -821,10 +821,10 @@
               }
             ],
             "url": "{{baseUrl}}/guilds",
-            "description": "Sukuria naują grupę. Ją sukūręs naudotojas tampa grupės **savininku** (`ownerId`) ir jos **DM**.\n\nPrieš užklausą sugeneruojamas unikalus pavadinimas `Postman Guild <laikas>`, kad kolekciją būtų galima leisti kartotinai. Atsakymas yra `201 Created` su `Location` antrašte, o naujos grupės ID išsaugomas kintamajame `guildA`.\n\ndocs/API.md lentelės metodas **#3**.",
+            "description": "Creates a new guild. The user who creates it becomes its **owner** (`ownerId`) and its **game master**.\n\nA pre-request script generates a unique name `Postman Guild <time>` so the collection can be run again and again. The response is `201 Created` with a `Location` header, and the new guild's ID is saved to `guildA`.\n\nMethod **#3** in the docs/API.md table.",
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"name\": \"{{guildName}}\",\n  \"description\": \"Postman demonstracijai sukurta grupe\"\n}",
+              "raw": "{\n  \"name\": \"{{guildName}}\",\n  \"description\": \"Guild created by the Postman run\"\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -849,17 +849,17 @@
                 "type": "text/javascript",
                 "exec": [
                   "pm.test('201 Created', () => pm.response.to.have.status(201));",
-                  "pm.test('Location antraste nurodo nauja resursa', () => {",
+                  "pm.test('Location header points to the new resource', () => {",
                   "  pm.expect(pm.response.headers.get('Location')).to.include('/api/guilds/');",
                   "});",
-                  "pm.test('JSON turinio tipas', () => pm.expect(pm.response.headers.get('Content-Type')).to.include('application/json'));",
+                  "pm.test('JSON content type', () => pm.expect(pm.response.headers.get('Content-Type')).to.include('application/json'));",
                   "const body = pm.response.json();",
-                  "pm.test('Grazintas sukurtas resursas su id ir createdAt', () => {",
+                  "pm.test('Returns the created resource with id and createdAt', () => {",
                   "  pm.expect(body.id).to.be.a('number');",
                   "  pm.expect(body.name).to.eql(pm.collectionVariables.get('guildName'));",
                   "  pm.expect(body.createdAt).to.be.a('string');",
                   "});",
-                  "pm.test('Kurejas tampa grupes savininku', () => pm.expect(body.ownerId).to.eql(Number(pm.collectionVariables.get('userId'))));",
+                  "pm.test('The creator becomes the guild owner', () => pm.expect(body.ownerId).to.eql(Number(pm.collectionVariables.get('userId'))));",
                   "pm.collectionVariables.set('guildA', body.id);"
                 ]
               }
@@ -867,7 +867,7 @@
           ]
         },
         {
-          "name": "Sukurti antrą grupę be aprašymo",
+          "name": "Create second guild without description",
           "request": {
             "method": "POST",
             "header": [
@@ -877,7 +877,7 @@
               }
             ],
             "url": "{{baseUrl}}/guilds",
-            "description": "Sukuria antrą grupę **be aprašymo** ir išsaugo jos ID kintamajame `guildB`.\n\nNeatsiųstas `description` išsaugomas kaip tuščias tekstas `\"\"`, todėl atsakyme laukas lieka (nedingsta).\n\nGrupė reikalinga ir tėvinės grandinės testui: vėliau bandoma pasiekti A grupės užduotį per B grupę.",
+            "description": "Creates a second guild **without a description** and saves its ID to `guildB`.\n\nA `description` that is not sent is stored as an empty string `\"\"`, so the field stays in the response.\n\nThe guild is also needed for the parent-chain test: later the collection tries to reach a quest of guild A through guild B.",
             "body": {
               "mode": "raw",
               "raw": "{\n  \"name\": \"{{guildName}} (B)\"\n}",
@@ -896,7 +896,7 @@
                 "exec": [
                   "pm.test('201 Created', () => pm.response.to.have.status(201));",
                   "const body = pm.response.json();",
-                  "pm.test('Neatsiustas aprasymas issaugotas kaip tuscias, laukas nedingsta', () => {",
+                  "pm.test('A missing description is saved as empty and the field stays', () => {",
                   "  pm.expect(body).to.have.property('description');",
                   "  pm.expect(body.description).to.eql('');",
                   "});",
@@ -907,12 +907,12 @@
           ]
         },
         {
-          "name": "Gauti grupių sąrašą",
+          "name": "List guilds",
           "request": {
             "method": "GET",
             "header": [],
             "url": "{{baseUrl}}/guilds",
-            "description": "Grąžina grupes, kurių narys yra prisijungęs naudotojas — naujas naudotojas mato tik dvi savo sukurtas. Administratorius mato visas (žr. `1. Suvestinė`). Numatytieji parametrai (iki 20 grupių puslapyje, rikiuojama pagal pavadinimą).\n\n* `name` filtruoja pagal pavadinimo dalį.\n* `page`, `size` ir `sort` (pvz. `sort=name,asc`) valdo puslapiavimą. Didžiausias `size` yra 100.\n\nPuslapiavimas atskirai parodomas dviejose kitose užklausose.\n\ndocs/API.md lentelės metodas **#1**."
+            "description": "Returns the guilds the logged-in user belongs to: a new user sees only the two they created. An administrator sees all of them (see `1. Overview`). Default parameters: up to 20 guilds per page, sorted by name.\n\n* `name` filters by part of the name.\n* `page`, `size` and `sort` (e.g. `sort=name,asc`) control pagination. The largest `size` is 100.\n\nThe next two requests show pagination on its own.\n\nMethod **#1** in the docs/API.md table."
           },
           "event": [
             {
@@ -923,12 +923,12 @@
                   "pm.test('200 OK', () => pm.response.to.have.status(200));",
                   "const guilds = pm.response.json().content;",
                   "const ids = guilds.map(g => g.id);",
-                  "pm.test('Naudotojas mato tik savo grupes, ID: ' + [...ids].sort((a, b) => a - b).join(', '), () => {",
+                  "pm.test('The user sees only their own guilds, IDs: ' + [...ids].sort((a, b) => a - b).join(', '), () => {",
                   "  const mine = [Number(pm.collectionVariables.get('guildA')), Number(pm.collectionVariables.get('guildB'))];",
                   "  pm.expect([...ids].sort((a, b) => a - b)).to.eql(mine.sort((a, b) => a - b));",
                   "  pm.expect(pm.response.json().totalElements).to.eql(2);",
                   "});",
-                  "pm.test('Kiekviena grupe turi id, pavadinima ir aprasyma', () => {",
+                  "pm.test('Every guild has an id, a name and a description', () => {",
                   "  guilds.forEach(g => {",
                   "    pm.expect(g.id).to.be.a('number');",
                   "    pm.expect(g.name).to.be.a('string');",
@@ -941,12 +941,12 @@
           ]
         },
         {
-          "name": "Puslapiavimas – pirmas puslapis",
+          "name": "Pagination – first page",
           "request": {
             "method": "GET",
             "header": [],
             "url": "{{baseUrl}}/guilds?page=0&size=2&sort=id,asc",
-            "description": "Puslapiavimo demonstracija: prašoma tik **2 grupių** puslapyje (`size=2`), rikiuojant pagal ID.\n\nAtsakyme `page` nurodo puslapio numerį, dydį ir kiek iš viso yra grupių bei puslapių, o `links` pateikia `self`, `first`, `next` ir `last` nuorodas. `prev` nėra, nes tai pirmas puslapis.\n\n`links.next` išsaugomas kintamajame `nextPage`.\n\nSiunčiama kaip `admin` (`adminToken`): jis mato visas grupes (3 iš seed + 2 sukurtos), todėl puslapių yra keli.",
+            "description": "A pagination demo: asks for only **2 guilds** per page (`size=2`), sorted by ID.\n\nIn the response, `page` gives the page number, the page size and the total number of guilds and pages, and `links` gives the `self`, `first`, `next` and `last` links. There is no `prev`, because this is the first page.\n\n`links.next` is saved to `nextPage`.\n\nSent as `admin` (`adminToken`): an administrator sees every guild (3 seeded + 2 created), so there are several pages.",
             "auth": {
               "type": "bearer",
               "bearer": [
@@ -967,21 +967,21 @@
                   "pm.test('200 OK', () => pm.response.to.have.status(200));",
                   "const body = pm.response.json();",
                   "const ids = body.content.map(g => g.id);",
-                  "pm.test('Puslapis ' + (body.page.number + 1) + ' is ' + body.page.totalPages + ', ID: ' + ids.join(', '), () => {",
+                  "pm.test('Page ' + (body.page.number + 1) + ' of ' + body.page.totalPages + ', IDs: ' + ids.join(', '), () => {",
                   "  pm.expect(body.page.number).to.eql(0);",
                   "  pm.expect(body.page.size).to.eql(2);",
                   "  pm.expect(body.content).to.have.lengthOf(2);",
                   "  pm.expect(body.page.totalPages).to.eql(Math.ceil(body.page.totalElements / 2));",
                   "});",
-                  "pm.test('Pirmame puslapyje yra next, bet nera prev', () => {",
+                  "pm.test('The first page has next but no prev', () => {",
                   "  pm.expect(body.links.prev).to.be.undefined;",
                   "  pm.expect(body.links.next).to.include('page=1');",
                   "});",
-                  "pm.test('Nuorodose islieka size ir sort', () => {",
+                  "pm.test('The links keep size and sort', () => {",
                   "  pm.expect(body.links.next).to.include('size=2');",
                   "  pm.expect(body.links.next).to.include('sort=id');",
                   "});",
-                  "// Kita uzklausa nekonstruoja URL pati - ji eina serverio duota links.next nuoroda.",
+                  "// The next request does not build the URL itself - it follows the server's links.next.",
                   "pm.collectionVariables.set('nextPage', body.links.next);",
                   "pm.collectionVariables.set('pageIds', JSON.stringify(ids));"
                 ]
@@ -990,12 +990,12 @@
           ]
         },
         {
-          "name": "Puslapiavimas – kitas puslapis pagal links.next",
+          "name": "Pagination – next page via links.next",
           "request": {
             "method": "GET",
             "header": [],
             "url": "{{nextPage}}",
-            "description": "Atidaro kitą puslapį pagal ankstesnio atsakymo nuorodą `links.next` (kintamasis `nextPage`) — klientas pats URL nekonstruoja.\n\nPatikrinama, kad tai 2-as puslapis, jo grupės nesikartoja su 1-uoju, o `links.prev` jau yra.\n\nSiunčiama kaip `admin` (`adminToken`): jis mato visas grupes (3 iš seed + 2 sukurtos), todėl puslapių yra keli.",
+            "description": "Opens the next page from the previous response's `links.next` link (variable `nextPage`); the client does not build the URL itself.\n\nChecks that this is page 2, that none of its guilds repeat page 1, and that `links.prev` is now present.\n\nSent as `admin` (`adminToken`): an administrator sees every guild (3 seeded + 2 created), so there are several pages.",
             "auth": {
               "type": "bearer",
               "bearer": [
@@ -1017,27 +1017,27 @@
                   "const body = pm.response.json();",
                   "const ids = body.content.map(g => g.id);",
                   "const previousIds = JSON.parse(pm.collectionVariables.get('pageIds'));",
-                  "pm.test('Puslapis ' + (body.page.number + 1) + ' is ' + body.page.totalPages + ', ID: ' + ids.join(', '), () => {",
+                  "pm.test('Page ' + (body.page.number + 1) + ' of ' + body.page.totalPages + ', IDs: ' + ids.join(', '), () => {",
                   "  pm.expect(body.page.number).to.eql(1);",
                   "  pm.expect(body.content.length).to.be.within(1, 2);",
                   "});",
-                  "pm.test('Grupes nesikartoja su ankstesniu puslapiu', () => {",
+                  "pm.test('No guild repeats from the previous page', () => {",
                   "  ids.forEach(id => pm.expect(previousIds).to.not.include(id));",
                   "  pm.expect(Math.min(...ids)).to.be.above(Math.max(...previousIds));",
                   "});",
-                  "pm.test('Antrame puslapyje jau yra prev nuoroda', () => pm.expect(body.links.prev).to.include('page=0'));"
+                  "pm.test('The second page has a prev link', () => pm.expect(body.links.prev).to.include('page=0'));"
                 ]
               }
             }
           ]
         },
         {
-          "name": "Gauti grupę pagal ID",
+          "name": "Get guild by ID",
           "request": {
             "method": "GET",
             "header": [],
             "url": "{{baseUrl}}/guilds/{{guildA}}",
-            "description": "Grąžina vieną grupę pagal ID.\n\ndocs/API.md lentelės metodas **#2**."
+            "description": "Returns one guild by ID.\n\nMethod **#2** in the docs/API.md table."
           },
           "event": [
             {
@@ -1046,14 +1046,14 @@
                 "type": "text/javascript",
                 "exec": [
                   "pm.test('200 OK', () => pm.response.to.have.status(200));",
-                  "pm.test('Grazinta ta pati grupe', () => pm.expect(pm.response.json().id).to.eql(Number(pm.collectionVariables.get('guildA'))));"
+                  "pm.test('Returns the same guild', () => pm.expect(pm.response.json().id).to.eql(Number(pm.collectionVariables.get('guildA'))));"
                 ]
               }
             }
           ]
         },
         {
-          "name": "Atnaujinti grupę",
+          "name": "Update guild",
           "request": {
             "method": "PATCH",
             "header": [
@@ -1063,10 +1063,10 @@
               }
             ],
             "url": "{{baseUrl}}/guilds/{{guildA}}",
-            "description": "Dalinai atnaujina grupę (`PATCH`): siunčiamas tik `description`. Neatsiųsti laukai (`name`) lieka nepakeisti.\n\ndocs/API.md lentelės metodas **#4**.",
+            "description": "Partially updates the guild (`PATCH`): only `description` is sent. Fields that are not sent (`name`) stay unchanged.\n\nMethod **#4** in the docs/API.md table.",
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"description\": \"Aprasymas po redagavimo\"\n}",
+              "raw": "{\n  \"description\": \"Description after editing\"\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -1082,15 +1082,15 @@
                 "exec": [
                   "pm.test('200 OK', () => pm.response.to.have.status(200));",
                   "const body = pm.response.json();",
-                  "pm.test('Pakeitimas issaugotas', () => pm.expect(body.description).to.eql('Aprasymas po redagavimo'));",
-                  "pm.test('Neatsiustas pavadinimas nepakito', () => pm.expect(body.name).to.eql(pm.collectionVariables.get('guildName')));"
+                  "pm.test('The change is saved', () => pm.expect(body.description).to.eql('Description after editing'));",
+                  "pm.test('The name that was not sent is unchanged', () => pm.expect(body.name).to.eql(pm.collectionVariables.get('guildName')));"
                 ]
               }
             }
           ]
         },
         {
-          "name": "Klaida 409 – pavadinimas jau užimtas",
+          "name": "Error 409 – name taken",
           "request": {
             "method": "POST",
             "header": [
@@ -1100,7 +1100,7 @@
               }
             ],
             "url": "{{baseUrl}}/guilds",
-            "description": "Grupės pavadinimas turi būti unikalus. Bandant sukurti grupę jau naudojamu pavadinimu, grąžinamas `409 Conflict`.",
+            "description": "Guild names must be unique. Creating a guild with a name already in use returns `409 Conflict`.",
             "body": {
               "mode": "raw",
               "raw": "{\n  \"name\": \"{{guildName}}\"\n}",
@@ -1119,7 +1119,7 @@
                 "exec": [
                   "pm.test('409 Conflict', () => pm.response.to.have.status(409));",
                   "const e = pm.response.json();",
-                  "pm.test('ApiError struktura', () => {",
+                  "pm.test('ApiError structure', () => {",
                   "  pm.expect(e.status).to.eql(409);",
                   "  pm.expect(e.error).to.eql('Conflict');",
                   "  pm.expect(e.path).to.eql('/api/guilds');",
@@ -1131,7 +1131,7 @@
           ]
         },
         {
-          "name": "Klaida 400 – per trumpas pavadinimas",
+          "name": "Error 400 – name too short",
           "request": {
             "method": "POST",
             "header": [
@@ -1141,7 +1141,7 @@
               }
             ],
             "url": "{{baseUrl}}/guilds",
-            "description": "Pavadinimas `ab` pažeidžia lauko apribojimą, todėl grąžinamas `400 Bad Request`. Masyve `details` nurodomas konkretus laukas (`name`).",
+            "description": "The name `ab` breaks a field constraint, so the response is `400 Bad Request`. The `details` array names the exact field (`name`).",
             "body": {
               "mode": "raw",
               "raw": "{\n  \"name\": \"ab\"\n}",
@@ -1160,7 +1160,7 @@
                 "exec": [
                   "pm.test('400 Bad Request', () => pm.response.to.have.status(400));",
                   "const e = pm.response.json();",
-                  "pm.test('Nurodomas konkretus laukas', () => {",
+                  "pm.test('Names the exact field', () => {",
                   "  pm.expect(e.details).to.be.an('array').that.is.not.empty;",
                   "  pm.expect(e.details[0].field).to.eql('name');",
                   "});"
@@ -1170,7 +1170,7 @@
           ]
         },
         {
-          "name": "Klaida 415 – ne JSON turinys",
+          "name": "Error 415 – body is not JSON",
           "request": {
             "method": "POST",
             "header": [
@@ -1180,10 +1180,10 @@
               }
             ],
             "url": "{{baseUrl}}/guilds",
-            "description": "Užklausos turinys siunčiamas `text/plain` tipu. API priima tik `application/json`, todėl grąžinamas `415 Unsupported Media Type`.",
+            "description": "The body is sent as `text/plain`. The API accepts only `application/json`, so it returns `415 Unsupported Media Type`.",
             "body": {
               "mode": "raw",
-              "raw": "sveiki"
+              "raw": "hello"
             }
           },
           "event": [
@@ -1193,14 +1193,14 @@
                 "type": "text/javascript",
                 "exec": [
                   "pm.test('415 Unsupported Media Type', () => pm.response.to.have.status(415));",
-                  "pm.test('ApiError paaiskina palaikoma tipa', () => pm.expect(pm.response.json().message).to.include('application/json'));"
+                  "pm.test('ApiError names the supported type', () => pm.expect(pm.response.json().message).to.include('application/json'));"
                 ]
               }
             }
           ]
         },
         {
-          "name": "Klaida 400 – nežinomas laukas",
+          "name": "Error 400 – unknown field",
           "request": {
             "method": "POST",
             "header": [
@@ -1210,7 +1210,7 @@
               }
             ],
             "url": "{{baseUrl}}/guilds",
-            "description": "Užklausoje yra nedeklaruotas laukas `xpAwarded`. Serveris tokių laukų neignoruoja, o atmeta užklausą su `400 Bad Request`.",
+            "description": "The request has an undeclared field `xpAwarded`. The server does not ignore such fields: it rejects the request with `400 Bad Request`.",
             "body": {
               "mode": "raw",
               "raw": "{\n  \"name\": \"{{guildName}} (C)\",\n  \"xpAwarded\": 9999\n}",
@@ -1228,19 +1228,19 @@
                 "type": "text/javascript",
                 "exec": [
                   "pm.test('400 Bad Request', () => pm.response.to.have.status(400));",
-                  "pm.test('Serveris atmeta nedeklaruotus laukus', () => pm.expect(pm.response.json().message).to.include('xpAwarded'));"
+                  "pm.test('The server rejects undeclared fields', () => pm.expect(pm.response.json().message).to.include('xpAwarded'));"
                 ]
               }
             }
           ]
         },
         {
-          "name": "Klaida 404 – grupė nerasta",
+          "name": "Error 404 – guild not found",
           "request": {
             "method": "GET",
             "header": [],
             "url": "{{baseUrl}}/guilds/999999",
-            "description": "Neegzistuojančiai grupei grąžinamas `404 Not Found`, o pranešime nurodomas ieškotas ID."
+            "description": "A guild that does not exist returns `404 Not Found`, and the message names the ID that was looked up."
           },
           "event": [
             {
@@ -1249,7 +1249,7 @@
                 "type": "text/javascript",
                 "exec": [
                   "pm.test('404 Not Found', () => pm.response.to.have.status(404));",
-                  "pm.test('ApiError su prasmingu pranesimu', () => {",
+                  "pm.test('ApiError with a meaningful message', () => {",
                   "  const e = pm.response.json();",
                   "  pm.expect(e.status).to.eql(404);",
                   "  pm.expect(e.message).to.include('999999');",
@@ -1262,16 +1262,16 @@
       ]
     },
     {
-      "name": "3. Nariai",
-      "description": "Grupės nariai: `/guilds/{guildId}/members/{userId}`. Narys identifikuojamas naudotojo ID.\n\n* Naudotojas grupėje yra `PLAYER` arba `DUNGEON_MASTER`; skirtingose grupėse rolės gali skirtis.\n* Grupėje — **vienas DM**. Bandymas paskirti antrą grąžina `409`.\n* Narius prideda ir roles keičia tik grupės savininkas arba administratorius.\n\nČia į `guildA` pridedamas žaidėjas `jonas` — jis registruos progresą, o kolekcijos naudotojas (DM) jį tvirtins.",
+      "name": "3. Members",
+      "description": "Guild members: `/guilds/{guildId}/members/{userId}`. A member is identified by their user ID.\n\n* In a guild a user is either `PLAYER` or `DUNGEON_MASTER`; the role can differ from guild to guild.\n* A guild has **one game master**. Trying to appoint a second one returns `409`.\n* Only the guild owner or an administrator adds members and changes roles.\n\nHere the player `jonas` is added to `guildA`: `jonas` logs progress and the collection user (the game master) approves it.",
       "item": [
         {
-          "name": "Gauti narių sąrašą",
+          "name": "List members",
           "request": {
             "method": "GET",
             "header": [],
             "url": "{{baseUrl}}/guilds/{{guildA}}/members",
-            "description": "Grupės kūrėjas automatiškai tampa jos nariu su role `DUNGEON_MASTER`.\n\ndocs/API.md lentelės metodas **#21**."
+            "description": "The guild's creator automatically becomes a member with the `DUNGEON_MASTER` role.\n\nMethod **#21** in the docs/API.md table."
           },
           "event": [
             {
@@ -1281,7 +1281,7 @@
                 "exec": [
                   "pm.test('200 OK', () => pm.response.to.have.status(200));",
                   "const members = pm.response.json().content;",
-                  "pm.test('Vienintelis narys - kurejas, jo role DUNGEON_MASTER', () => {",
+                  "pm.test('The only member is the creator, as DUNGEON_MASTER', () => {",
                   "  pm.expect(members).to.have.lengthOf(1);",
                   "  pm.expect(members[0].userId).to.eql(Number(pm.collectionVariables.get('userId')));",
                   "  pm.expect(members[0].role).to.eql('DUNGEON_MASTER');",
@@ -1292,7 +1292,7 @@
           ]
         },
         {
-          "name": "Pridėti narį – žaidėjas",
+          "name": "Add member – player",
           "request": {
             "method": "POST",
             "header": [
@@ -1302,7 +1302,7 @@
               }
             ],
             "url": "{{baseUrl}}/guilds/{{guildA}}/members",
-            "description": "Savininkas prideda naudotoją `jonas` kaip žaidėją. Naudotojas nurodomas vardu.\n\ndocs/API.md lentelės metodas **#23**.",
+            "description": "The owner adds the user `jonas` as a player. The user is given by username.\n\nMethod **#23** in the docs/API.md table.",
             "body": {
               "mode": "raw",
               "raw": "{\n  \"username\": \"jonas\",\n  \"role\": \"PLAYER\"\n}",
@@ -1321,8 +1321,8 @@
                 "exec": [
                   "pm.test('201 Created', () => pm.response.to.have.status(201));",
                   "const body = pm.response.json();",
-                  "pm.test('Location nurodo nauja nari', () => pm.expect(pm.response.headers.get('Location')).to.include('/members/' + pm.collectionVariables.get('playerId')));",
-                  "pm.test('jonas - grupes PLAYER', () => {",
+                  "pm.test('Location points to the new member', () => pm.expect(pm.response.headers.get('Location')).to.include('/members/' + pm.collectionVariables.get('playerId')));",
+                  "pm.test('jonas is a PLAYER in the guild', () => {",
                   "  pm.expect(body.userId).to.eql(Number(pm.collectionVariables.get('playerId')));",
                   "  pm.expect(body.username).to.eql('jonas');",
                   "  pm.expect(body.role).to.eql('PLAYER');",
@@ -1333,12 +1333,12 @@
           ]
         },
         {
-          "name": "Gauti narį pagal ID",
+          "name": "Get member by ID",
           "request": {
             "method": "GET",
             "header": [],
             "url": "{{baseUrl}}/guilds/{{guildA}}/members/{{playerId}}",
-            "description": "Vienas narys pagal naudotojo ID.\n\ndocs/API.md lentelės metodas **#22**."
+            "description": "One member by user ID.\n\nMethod **#22** in the docs/API.md table."
           },
           "event": [
             {
@@ -1347,7 +1347,7 @@
                 "type": "text/javascript",
                 "exec": [
                   "pm.test('200 OK', () => pm.response.to.have.status(200));",
-                  "pm.test('Tas pats narys su role', () => {",
+                  "pm.test('The same member with their role', () => {",
                   "  const body = pm.response.json();",
                   "  pm.expect(body.username).to.eql('jonas');",
                   "  pm.expect(body.role).to.eql('PLAYER');",
@@ -1358,7 +1358,7 @@
           ]
         },
         {
-          "name": "Klaida 409 – jau narys",
+          "name": "Error 409 – already a member",
           "request": {
             "method": "POST",
             "header": [
@@ -1368,7 +1368,7 @@
               }
             ],
             "url": "{{baseUrl}}/guilds/{{guildA}}/members",
-            "description": "Tas pats naudotojas grupėje gali būti tik kartą.",
+            "description": "A user can be in a guild only once.",
             "body": {
               "mode": "raw",
               "raw": "{\n  \"username\": \"jonas\",\n  \"role\": \"PLAYER\"\n}",
@@ -1386,14 +1386,14 @@
                 "type": "text/javascript",
                 "exec": [
                   "pm.test('409 Conflict', () => pm.response.to.have.status(409));",
-                  "pm.test('Pranesimas paaiskina konflikta', () => pm.expect(pm.response.json().message).to.include('already a member'));"
+                  "pm.test('The message explains the conflict', () => pm.expect(pm.response.json().message).to.include('already a member'));"
                 ]
               }
             }
           ]
         },
         {
-          "name": "Klaida 409 – grupėje jau yra DM",
+          "name": "Error 409 – guild already has a game master",
           "request": {
             "method": "POST",
             "header": [
@@ -1403,7 +1403,7 @@
               }
             ],
             "url": "{{baseUrl}}/guilds/{{guildA}}/members",
-            "description": "Grupė jau turi DM (jos kūrėją), todėl antro paskirti negalima.",
+            "description": "The guild already has a game master (its creator), so a second one cannot be appointed.",
             "body": {
               "mode": "raw",
               "raw": "{\n  \"username\": \"ieva\",\n  \"role\": \"DUNGEON_MASTER\"\n}",
@@ -1421,14 +1421,14 @@
                 "type": "text/javascript",
                 "exec": [
                   "pm.test('409 Conflict', () => pm.response.to.have.status(409));",
-                  "pm.test('Vienas DM grupeje', () => pm.expect(pm.response.json().message).to.include('already has a game master'));"
+                  "pm.test('One game master per guild', () => pm.expect(pm.response.json().message).to.include('already has a game master'));"
                 ]
               }
             }
           ]
         },
         {
-          "name": "Klaida 422 – naudotojas nerastas",
+          "name": "Error 422 – user not found",
           "request": {
             "method": "POST",
             "header": [
@@ -1438,10 +1438,10 @@
               }
             ],
             "url": "{{baseUrl}}/guilds/{{guildA}}/members",
-            "description": "Naudotojas nurodomas užklausos turinyje, ne kelyje, todėl jo nebuvimas yra turinio klaida (`422`), o ne `404`.",
+            "description": "The user is named in the request body, not in the path, so a missing user is a content error (`422`), not a `404`.",
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"username\": \"nera_tokio_naudotojo\",\n  \"role\": \"PLAYER\"\n}",
+              "raw": "{\n  \"username\": \"no_such_user\",\n  \"role\": \"PLAYER\"\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -1456,14 +1456,14 @@
                 "type": "text/javascript",
                 "exec": [
                   "pm.test('422 Unprocessable Entity', () => pm.response.to.have.status(422));",
-                  "pm.test('Pranesimas apie nezinoma naudotoja', () => pm.expect(pm.response.json().message).to.include('not found'));"
+                  "pm.test('Message about the unknown user', () => pm.expect(pm.response.json().message).to.include('not found'));"
                 ]
               }
             }
           ]
         },
         {
-          "name": "Klaida 403 – žaidėjas negali pridėti nario",
+          "name": "Error 403 – player cannot add members",
           "request": {
             "method": "POST",
             "header": [
@@ -1473,7 +1473,7 @@
               }
             ],
             "url": "{{baseUrl}}/guilds/{{guildA}}/members",
-            "description": "Žaidėjas `jonas` yra grupės narys, bet ne savininkas — narių pridėti negali.",
+            "description": "The player `jonas` is a guild member but not its owner, so adding members is not allowed.",
             "auth": {
               "type": "bearer",
               "bearer": [
@@ -1501,14 +1501,14 @@
                 "type": "text/javascript",
                 "exec": [
                   "pm.test('403 Forbidden', () => pm.response.to.have.status(403));",
-                  "pm.test('Paaiskinama, kas turi teise', () => pm.expect(pm.response.json().message).to.include('guild owner'));"
+                  "pm.test('Explains who is allowed', () => pm.expect(pm.response.json().message).to.include('guild owner'));"
                 ]
               }
             }
           ]
         },
         {
-          "name": "Klaida 409 – antras DM keičiant rolę",
+          "name": "Error 409 – second game master via role change",
           "request": {
             "method": "PATCH",
             "header": [
@@ -1518,7 +1518,7 @@
               }
             ],
             "url": "{{baseUrl}}/guilds/{{guildA}}/members/{{playerId}}",
-            "description": "Rolės keitimas (`PATCH`) tikrina tą pačią taisyklę: kol grupėje yra DM, kito paskirti negalima.\n\ndocs/API.md lentelės metodas **#24**.",
+            "description": "Changing a role (`PATCH`) checks the same rule: while the guild has a game master, another one cannot be appointed.\n\nMethod **#24** in the docs/API.md table.",
             "body": {
               "mode": "raw",
               "raw": "{\n  \"role\": \"DUNGEON_MASTER\"\n}",
@@ -1536,19 +1536,19 @@
                 "type": "text/javascript",
                 "exec": [
                   "pm.test('409 Conflict', () => pm.response.to.have.status(409));",
-                  "pm.test('Antras DM neleidziamas', () => pm.expect(pm.response.json().message).to.include('already has a game master'));"
+                  "pm.test('A second game master is not allowed', () => pm.expect(pm.response.json().message).to.include('already has a game master'));"
                 ]
               }
             }
           ]
         },
         {
-          "name": "Žaidėjo narystės",
+          "name": "Player memberships",
           "request": {
             "method": "GET",
             "header": [],
             "url": "{{baseUrl}}/auth/me",
-            "description": "`/auth/me` žaidėjo vardu: jonas mato visas savo grupes ir rolę kiekvienoje, tarp jų ir naują `guildA`.",
+            "description": "`/auth/me` as the player: `jonas` sees every guild they belong to and the role in each, including the new `guildA`.",
             "auth": {
               "type": "bearer",
               "bearer": [
@@ -1568,7 +1568,7 @@
                 "exec": [
                   "pm.test('200 OK', () => pm.response.to.have.status(200));",
                   "const memberships = pm.response.json().memberships;",
-                  "pm.test('Naujoje grupeje jonas - PLAYER', () => {",
+                  "pm.test('jonas is a PLAYER in the new guild', () => {",
                   "  const m = memberships.find(x => x.guildId === Number(pm.collectionVariables.get('guildA')));",
                   "  pm.expect(m).to.not.be.undefined;",
                   "  pm.expect(m.role).to.eql('PLAYER');",
@@ -1581,11 +1581,11 @@
       ]
     },
     {
-      "name": "4. Užduotys",
-      "description": "Užduotys (Quest) priklauso grupei: `/guilds/{guildId}/quests`.\n\n* Charakteristika `stat`: `STR`, `DEX`, `CON`, `INT`, `WIS`, `CHA`.\n* Tipas `type`: `MILESTONE`, `HABIT`, `GRIND`, `SIDE_QUEST`. `targetCount` privalomas ir leidžiamas tik `GRIND` tipui.\n* Sudėtingumas `difficulty` yra bazinio XP (10) daugiklis: `TRIVIAL` ×1, `EASY` ×2, `MEDIUM` ×3, `HARD` ×5, `LEGENDARY` ×8.\n\n`xpPerCompletion` visada apskaičiuoja serveris.\n\nUžduotis kuria grupės narys (`createdBy`). Keisti ją gali kūrėjas, grupės DM arba savininkas; `SIDE_QUEST` kuria tik DM (žr. `6. Rolės ir teisės`).",
+      "name": "4. Quests",
+      "description": "Quests belong to a guild: `/guilds/{guildId}/quests`.\n\n* `stat`: `STR`, `DEX`, `CON`, `INT`, `WIS`, `CHA`.\n* `type`: `MILESTONE`, `HABIT`, `GRIND`, `SIDE_QUEST`. `targetCount` is required for the `GRIND` type and allowed only there.\n* `difficulty` multiplies the base XP (10): `TRIVIAL` ×1, `EASY` ×2, `MEDIUM` ×3, `HARD` ×5, `LEGENDARY` ×8.\n\nThe server always calculates `xpPerCompletion`.\n\nA guild member creates a quest (`createdBy`). The creator, the guild's game master or the owner can edit it; only the game master creates a `SIDE_QUEST` (see `6. Roles and permissions`).",
       "item": [
         {
-          "name": "Sukurti užduotį",
+          "name": "Create quest",
           "request": {
             "method": "POST",
             "header": [
@@ -1595,10 +1595,10 @@
               }
             ],
             "url": "{{baseUrl}}/guilds/{{guildA}}/quests",
-            "description": "Sukuria `MILESTONE` tipo `HARD` sudėtingumo užduotį A grupėje ir išsaugo jos ID kintamajame `questId`.\n\n`xpPerCompletion` apskaičiuoja serveris: 10 × 5 (`HARD`) = **50**.\n\ndocs/API.md lentelės metodas **#8**.",
+            "description": "Creates a `MILESTONE` quest with `HARD` difficulty in guild A and saves its ID to `questId`.\n\nThe server calculates `xpPerCompletion`: 10 × 5 (`HARD`) = **50**.\n\nMethod **#8** in the docs/API.md table.",
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"title\": \"Run 10 kilometers\",\n  \"description\": \"Postman demonstracijai sukurta uzduotis\",\n  \"stat\": \"CON\",\n  \"type\": \"MILESTONE\",\n  \"difficulty\": \"HARD\"\n}",
+              "raw": "{\n  \"title\": \"Run 10 kilometers\",\n  \"description\": \"Quest created by the Postman run\",\n  \"stat\": \"CON\",\n  \"type\": \"MILESTONE\",\n  \"difficulty\": \"HARD\"\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -1614,9 +1614,9 @@
                 "exec": [
                   "pm.test('201 Created', () => pm.response.to.have.status(201));",
                   "const body = pm.response.json();",
-                  "pm.test('Serveris pats isvede XP is sudetingumo (HARD = 10 * 5)', () => pm.expect(body.xpPerCompletion).to.eql(50));",
-                  "pm.test('Tevine grupe teisinga', () => pm.expect(body.guildId).to.eql(Number(pm.collectionVariables.get('guildA'))));",
-                  "pm.test('Uzduoties kurejas - prisijunges naudotojas', () => pm.expect(body.createdBy).to.eql(Number(pm.collectionVariables.get('userId'))));",
+                  "pm.test('The server derives XP from difficulty (HARD = 10 * 5)', () => pm.expect(body.xpPerCompletion).to.eql(50));",
+                  "pm.test('The parent guild is correct', () => pm.expect(body.guildId).to.eql(Number(pm.collectionVariables.get('guildA'))));",
+                  "pm.test('The quest creator is the logged-in user', () => pm.expect(body.createdBy).to.eql(Number(pm.collectionVariables.get('userId'))));",
                   "pm.collectionVariables.set('questId', body.id);"
                 ]
               }
@@ -1624,7 +1624,7 @@
           ]
         },
         {
-          "name": "Klaida 422 – GRIND užduotis be targetCount",
+          "name": "Error 422 – GRIND quest without targetCount",
           "request": {
             "method": "POST",
             "header": [
@@ -1634,10 +1634,10 @@
               }
             ],
             "url": "{{baseUrl}}/guilds/{{guildA}}/quests",
-            "description": "`GRIND` tipo užduotis privalo turėti `targetCount`. JSON teisingas, bet pažeista dalykinė taisyklė, todėl grąžinamas `422 Unprocessable Entity`.",
+            "description": "A `GRIND` quest must have a `targetCount`. The JSON is valid but breaks a domain rule, so the response is `422 Unprocessable Entity`.",
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"title\": \"Grind be tikslo\",\n  \"stat\": \"STR\",\n  \"type\": \"GRIND\",\n  \"difficulty\": \"EASY\"\n}",
+              "raw": "{\n  \"title\": \"Grind without a target\",\n  \"stat\": \"STR\",\n  \"type\": \"GRIND\",\n  \"difficulty\": \"EASY\"\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -1652,19 +1652,19 @@
                 "type": "text/javascript",
                 "exec": [
                   "pm.test('422 Unprocessable Entity', () => pm.response.to.have.status(422));",
-                  "pm.test('Pranesimas paaiskina taisykle', () => pm.expect(pm.response.json().message).to.include('targetCount'));"
+                  "pm.test('The message explains the rule', () => pm.expect(pm.response.json().message).to.include('targetCount'));"
                 ]
               }
             }
           ]
         },
         {
-          "name": "Gauti užduočių sąrašą pagal charakteristiką",
+          "name": "List quests by stat",
           "request": {
             "method": "GET",
             "header": [],
             "url": "{{baseUrl}}/guilds/{{guildA}}/quests?stat=CON",
-            "description": "Grąžina grupės užduočių sąrašą.\n\nGalimi filtrai: `stat`, `type`, `difficulty`, `active`. Čia filtruojama pagal `stat=CON`.\n\ndocs/API.md lentelės metodas **#6**."
+            "description": "Returns the guild's quests.\n\nAvailable filters: `stat`, `type`, `difficulty`, `active`. Here the list is filtered by `stat=CON`.\n\nMethod **#6** in the docs/API.md table."
           },
           "event": [
             {
@@ -1674,24 +1674,24 @@
                 "exec": [
                   "pm.test('200 OK', () => pm.response.to.have.status(200));",
                   "const quests = pm.response.json().content;",
-                  "pm.test('Filtras pagal stat suveike, ID: ' + quests.map(q => q.id).join(', '), () => {",
+                  "pm.test('The stat filter works, IDs: ' + quests.map(q => q.id).join(', '), () => {",
                   "  pm.expect(quests).to.have.lengthOf(1);",
                   "  pm.expect(quests[0].stat).to.eql('CON');",
                   "  pm.expect(quests[0].id).to.eql(Number(pm.collectionVariables.get('questId')));",
                   "});",
-                  "pm.test('Uzduotis priklauso A grupei', () => pm.expect(quests[0].guildId).to.eql(Number(pm.collectionVariables.get('guildA'))));"
+                  "pm.test('The quest belongs to guild A', () => pm.expect(quests[0].guildId).to.eql(Number(pm.collectionVariables.get('guildA'))));"
                 ]
               }
             }
           ]
         },
         {
-          "name": "Gauti užduotį pagal ID",
+          "name": "Get quest by ID",
           "request": {
             "method": "GET",
             "header": [],
             "url": "{{baseUrl}}/guilds/{{guildA}}/quests/{{questId}}",
-            "description": "Grąžina vieną užduotį per jos tėvinę grupę.\n\ndocs/API.md lentelės metodas **#7**."
+            "description": "Returns one quest through its parent guild.\n\nMethod **#7** in the docs/API.md table."
           },
           "event": [
             {
@@ -1700,19 +1700,19 @@
                 "type": "text/javascript",
                 "exec": [
                   "pm.test('200 OK', () => pm.response.to.have.status(200));",
-                  "pm.test('Ta pati uzduotis', () => pm.expect(pm.response.json().id).to.eql(Number(pm.collectionVariables.get('questId'))));"
+                  "pm.test('The same quest', () => pm.expect(pm.response.json().id).to.eql(Number(pm.collectionVariables.get('questId'))));"
                 ]
               }
             }
           ]
         },
         {
-          "name": "Klaida 404 – užduotis per svetimą grupę",
+          "name": "Error 404 – quest via another guild",
           "request": {
             "method": "GET",
             "header": [],
             "url": "{{baseUrl}}/guilds/{{guildB}}/quests/{{questId}}",
-            "description": "Užduotis egzistuoja, bet priklauso grupei A, o užklausa siunčiama per grupę B. Vaikinis resursas pasiekiamas tik per teisingą tėvinį, todėl grąžinamas `404 Not Found`."
+            "description": "The quest exists, but it belongs to guild A and the request goes through guild B. A child resource is reachable only through its real parent, so the response is `404 Not Found`."
           },
           "event": [
             {
@@ -1721,14 +1721,14 @@
                 "type": "text/javascript",
                 "exec": [
                   "pm.test('404 Not Found', () => pm.response.to.have.status(404));",
-                  "pm.test('Uzduotis egzistuoja, bet ne sioje grupeje', () => pm.expect(pm.response.json().message).to.include('not found in guild'));"
+                  "pm.test('The quest exists, but not in this guild', () => pm.expect(pm.response.json().message).to.include('not found in guild'));"
                 ]
               }
             }
           ]
         },
         {
-          "name": "Atnaujinti užduotį",
+          "name": "Update quest",
           "request": {
             "method": "PATCH",
             "header": [
@@ -1738,7 +1738,7 @@
               }
             ],
             "url": "{{baseUrl}}/guilds/{{guildA}}/quests/{{questId}}",
-            "description": "Dalinai atnaujina užduotį (`PATCH`): siunčiamas tik `difficulty = LEGENDARY`. Pavadinimas ir aprašymas lieka tokie, kokie buvo — nedingsta.\n\nServeris perskaičiuoja `xpPerCompletion`: 10 × 8 = **80**. Jau patvirtintų įrašų XP nesikeičia.\n\ndocs/API.md lentelės metodas **#9**.",
+            "description": "Partially updates the quest (`PATCH`): only `difficulty = LEGENDARY` is sent. The title and description stay as they were.\n\nThe server recalculates `xpPerCompletion`: 10 × 8 = **80**. XP on log entries that are already approved does not change.\n\nMethod **#9** in the docs/API.md table.",
             "body": {
               "mode": "raw",
               "raw": "{\n  \"difficulty\": \"LEGENDARY\"\n}",
@@ -1757,13 +1757,13 @@
                 "exec": [
                   "pm.test('200 OK', () => pm.response.to.have.status(200));",
                   "const body = pm.response.json();",
-                  "pm.test('Sudetingumas pakeistas, XP perskaiciuotas (LEGENDARY = 10 * 8)', () => {",
+                  "pm.test('Difficulty changed, XP recalculated (LEGENDARY = 10 * 8)', () => {",
                   "  pm.expect(body.difficulty).to.eql('LEGENDARY');",
                   "  pm.expect(body.xpPerCompletion).to.eql(80);",
                   "});",
-                  "pm.test('Neatsiusti laukai (title, description) nepakito', () => {",
+                  "pm.test('Fields not sent (title, description) are unchanged', () => {",
                   "  pm.expect(body.title).to.eql('Run 10 kilometers');",
-                  "  pm.expect(body.description).to.eql('Postman demonstracijai sukurta uzduotis');",
+                  "  pm.expect(body.description).to.eql('Quest created by the Postman run');",
                   "});"
                 ]
               }
@@ -1773,11 +1773,11 @@
       ]
     },
     {
-      "name": "5. Progreso įrašai",
-      "description": "Progreso įrašai (LogEntry) priklauso užduočiai: `/guilds/{guildId}/quests/{questId}/logs`.\n\n* Naujas įrašas visada sukuriamas `PENDING` būsenos ir su 0 XP. Kuriant XP iš kliento nepriimamas.\n* Dungeon Master įrašą patvirtina (`APPROVED`) arba atmeta (`REJECTED`) per `PATCH`. Nepateikus `xpAwarded`, serveris XP paima iš užduoties sudėtingumo.\n* `PENDING` ir `REJECTED` įrašai negali turėti XP ar inspiration.\n* Patvirtintas XP užšaldomas: vėliau pakeitus užduoties sudėtingumą, istorija neperrašoma.\n* Įrašą registruoja žaidėjas `jonas`, tvirtina grupės DM. Savo įrašo tvirtinti negalima net DM.",
+      "name": "5. Log entries",
+      "description": "Log entries belong to a quest: `/guilds/{guildId}/quests/{questId}/logs`.\n\n* A new log entry is always created as `PENDING` with 0 XP. The server does not accept XP from the client on create.\n* The game master approves (`APPROVED`) or rejects (`REJECTED`) a log entry with `PATCH`. Without `xpAwarded`, the server takes the XP from the quest's difficulty.\n* `PENDING` and `REJECTED` log entries cannot have XP or inspiration.\n* Approved XP is frozen: changing the quest's difficulty later does not rewrite history.\n* The player `jonas` logs the entry and the guild's game master approves it. Nobody can approve their own log entry, not even the game master.",
       "item": [
         {
-          "name": "Užregistruoti progresą",
+          "name": "Log progress",
           "request": {
             "method": "POST",
             "header": [
@@ -1787,10 +1787,10 @@
               }
             ],
             "url": "{{baseUrl}}/guilds/{{guildA}}/quests/{{questId}}/logs",
-            "description": "Žaidėjas `jonas` (`playerToken`) užregistruoja progresą užduočiai ir išsaugo įrašo ID kintamajame `logId`.\n\nNaujas įrašas visada yra `PENDING` būsenos, su `xpAwarded = 0` ir `inspirationAwarded = 0`. Laukas `occurredAt` negali būti ateityje.\n\ndocs/API.md lentelės metodas **#13**.",
+            "description": "The player `jonas` (`playerToken`) logs progress on the quest, and the log entry's ID is saved to `logId`.\n\nA new log entry is always `PENDING`, with `xpAwarded = 0` and `inspirationAwarded = 0`. `occurredAt` cannot be in the future.\n\nMethod **#13** in the docs/API.md table.",
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"note\": \"Nubegau 10 km per 52 minutes\",\n  \"evidenceUrl\": \"https://example.org/evidence/run.png\",\n  \"occurredAt\": \"{{occurredAt}}\"\n}",
+              "raw": "{\n  \"note\": \"Ran 10 km in 52 minutes\",\n  \"evidenceUrl\": \"https://example.org/evidence/run.png\",\n  \"occurredAt\": \"{{occurredAt}}\"\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -1816,14 +1816,14 @@
                 "exec": [
                   "pm.test('201 Created', () => pm.response.to.have.status(201));",
                   "const body = pm.response.json();",
-                  "pm.test('Naujas irasas visada PENDING ir be tasku', () => {",
+                  "pm.test('A new log entry is always PENDING with no points', () => {",
                   "  pm.expect(body.status).to.eql('PENDING');",
                   "  pm.expect(body.xpAwarded).to.eql(0);",
                   "  pm.expect(body.inspirationAwarded).to.eql(0);",
                   "  pm.expect(body.reviewedAt).to.be.undefined;",
                   "});",
-                  "pm.test('Irasas priklauso sukurtai uzduociai', () => pm.expect(body.questId).to.eql(Number(pm.collectionVariables.get('questId'))));",
-                  "pm.test('Autorius - zaidejas jonas', () => pm.expect(body.authorId).to.eql(Number(pm.collectionVariables.get('playerId'))));",
+                  "pm.test('The log entry belongs to the created quest', () => pm.expect(body.questId).to.eql(Number(pm.collectionVariables.get('questId'))));",
+                  "pm.test('The author is the player jonas', () => pm.expect(body.authorId).to.eql(Number(pm.collectionVariables.get('playerId'))));",
                   "pm.collectionVariables.set('logId', body.id);"
                 ]
               }
@@ -1831,7 +1831,7 @@
           ]
         },
         {
-          "name": "Klaida 422 – įvykio data ateityje",
+          "name": "Error 422 – occurredAt in the future",
           "request": {
             "method": "POST",
             "header": [
@@ -1841,7 +1841,7 @@
               }
             ],
             "url": "{{baseUrl}}/guilds/{{guildA}}/quests/{{questId}}/logs",
-            "description": "`occurredAt` nurodytas ateityje (2099 m.). Tai dalykinės taisyklės pažeidimas, todėl grąžinamas `422 Unprocessable Entity`.",
+            "description": "`occurredAt` is in the future (2099). That breaks a domain rule, so the response is `422 Unprocessable Entity`.",
             "body": {
               "mode": "raw",
               "raw": "{\n  \"occurredAt\": \"2099-01-01T00:00:00Z\"\n}",
@@ -1869,19 +1869,19 @@
                 "type": "text/javascript",
                 "exec": [
                   "pm.test('422 Unprocessable Entity', () => pm.response.to.have.status(422));",
-                  "pm.test('Pranesimas apie occurredAt', () => pm.expect(pm.response.json().message).to.include('occurredAt'));"
+                  "pm.test('Message about occurredAt', () => pm.expect(pm.response.json().message).to.include('occurredAt'));"
                 ]
               }
             }
           ]
         },
         {
-          "name": "Gauti laukiančius įrašus",
+          "name": "List pending log entries",
           "request": {
             "method": "GET",
             "header": [],
             "url": "{{baseUrl}}/guilds/{{guildA}}/quests/{{questId}}/logs?status=PENDING",
-            "description": "Grąžina užduoties įrašų sąrašą.\n\nFiltras `status` gali būti `PENDING`, `APPROVED` arba `REJECTED`. Čia ieškoma įrašų, kurie dar laukia peržiūros.\n\ndocs/API.md lentelės metodas **#11**.\n\nSiunčia grupės DM — jis mato visų žaidėjų įrašus. Žaidėjas matytų tik savo (žr. `6. Rolės ir teisės`)."
+            "description": "Returns the quest's log entries.\n\nThe `status` filter can be `PENDING`, `APPROVED` or `REJECTED`. Here it looks for log entries still waiting for review.\n\nMethod **#11** in the docs/API.md table.\n\nSent by the guild's game master, who sees every player's log entries. A player would see only their own (see `6. Roles and permissions`)."
           },
           "event": [
             {
@@ -1891,24 +1891,24 @@
                 "exec": [
                   "pm.test('200 OK', () => pm.response.to.have.status(200));",
                   "const logs = pm.response.json().content;",
-                  "pm.test('Rastas vienas PENDING irasas, ID: ' + logs.map(l => l.id).join(', '), () => {",
+                  "pm.test('Found one PENDING log entry, IDs: ' + logs.map(l => l.id).join(', '), () => {",
                   "  pm.expect(logs).to.have.lengthOf(1);",
                   "  pm.expect(logs[0].status).to.eql('PENDING');",
                   "  pm.expect(logs[0].id).to.eql(Number(pm.collectionVariables.get('logId')));",
                   "});",
-                  "pm.test('Irasas priklauso sukurtai uzduociai', () => pm.expect(logs[0].questId).to.eql(Number(pm.collectionVariables.get('questId'))));"
+                  "pm.test('The log entry belongs to the created quest', () => pm.expect(logs[0].questId).to.eql(Number(pm.collectionVariables.get('questId'))));"
                 ]
               }
             }
           ]
         },
         {
-          "name": "Gauti įrašą pagal ID",
+          "name": "Get log entry by ID",
           "request": {
             "method": "GET",
             "header": [],
             "url": "{{baseUrl}}/guilds/{{guildA}}/quests/{{questId}}/logs/{{logId}}",
-            "description": "Grąžina vieną progreso įrašą per užduotį ir grupę.\n\ndocs/API.md lentelės metodas **#12**."
+            "description": "Returns one log entry through its quest and guild.\n\nMethod **#12** in the docs/API.md table."
           },
           "event": [
             {
@@ -1917,14 +1917,14 @@
                 "type": "text/javascript",
                 "exec": [
                   "pm.test('200 OK', () => pm.response.to.have.status(200));",
-                  "pm.test('Tas pats irasas', () => pm.expect(pm.response.json().id).to.eql(Number(pm.collectionVariables.get('logId'))));"
+                  "pm.test('The same log entry', () => pm.expect(pm.response.json().id).to.eql(Number(pm.collectionVariables.get('logId'))));"
                 ]
               }
             }
           ]
         },
         {
-          "name": "Patvirtinti įrašą",
+          "name": "Approve log entry",
           "request": {
             "method": "PATCH",
             "header": [
@@ -1934,10 +1934,10 @@
               }
             ],
             "url": "{{baseUrl}}/guilds/{{guildA}}/quests/{{questId}}/logs/{{logId}}",
-            "description": "Grupės Dungeon Master (kolekcijos naudotojas) patvirtina žaidėjo įrašą (`PATCH`): siunčiami tik peržiūros laukai `status = APPROVED`, `inspirationAwarded = 1` ir `reviewerNote`. Įrašo turinys (`note`, `evidenceUrl`, `occurredAt`) lieka nepakeistas.\n\n`xpAwarded` nesiunčiamas, todėl serveris jį paima iš užduoties sudėtingumo (`LEGENDARY` = **80**). Užpildomi `reviewedAt` ir `reviewerId`. Peržiūros laukus keisti gali tik grupės DM.\n\ndocs/API.md lentelės metodas **#14**.",
+            "description": "The guild's game master (the collection user) approves the player's log entry (`PATCH`): only the review fields `status = APPROVED`, `inspirationAwarded = 1` and `reviewerNote` are sent. The entry's content (`note`, `evidenceUrl`, `occurredAt`) stays unchanged.\n\n`xpAwarded` is not sent, so the server takes it from the quest's difficulty (`LEGENDARY` = **80**). `reviewedAt` and `reviewerId` are filled in. Only the guild's game master can change the review fields.\n\nMethod **#14** in the docs/API.md table.",
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"status\": \"APPROVED\",\n  \"inspirationAwarded\": 1,\n  \"reviewerNote\": \"Uzskaitau, nuotrauka aiski\"\n}",
+              "raw": "{\n  \"status\": \"APPROVED\",\n  \"inspirationAwarded\": 1,\n  \"reviewerNote\": \"Approved, the photo is clear\"\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -1953,17 +1953,17 @@
                 "exec": [
                   "pm.test('200 OK', () => pm.response.to.have.status(200));",
                   "const body = pm.response.json();",
-                  "pm.test('XP paimtas is uzduoties sudetingumo, nors klientas jo nepadave', () => {",
+                  "pm.test('XP comes from the quest difficulty although the client did not send it', () => {",
                   "  pm.expect(body.status).to.eql('APPROVED');",
                   "  pm.expect(body.xpAwarded).to.eql(80);",
                   "  pm.expect(body.inspirationAwarded).to.eql(1);",
                   "  pm.expect(body.reviewedAt).to.be.a('string');",
                   "});",
-                  "pm.test('Neatsiusti laukai (note, evidenceUrl) nepakito', () => {",
-                  "  pm.expect(body.note).to.eql('Nubegau 10 km per 52 minutes');",
+                  "pm.test('Fields not sent (note, evidenceUrl) are unchanged', () => {",
+                  "  pm.expect(body.note).to.eql('Ran 10 km in 52 minutes');",
                   "  pm.expect(body.evidenceUrl).to.eql('https://example.org/evidence/run.png');",
                   "});",
-                  "pm.test('Patvirtino DM, o ne iraso autorius', () => {",
+                  "pm.test('Approved by the game master, not by the author', () => {",
                   "  pm.expect(body.reviewerId).to.eql(Number(pm.collectionVariables.get('userId')));",
                   "  pm.expect(body.authorId).to.eql(Number(pm.collectionVariables.get('playerId')));",
                   "});"
@@ -1973,7 +1973,7 @@
           ]
         },
         {
-          "name": "Klaida 422 – XP neperžiūrėtam įrašui",
+          "name": "Error 422 – XP on an unreviewed log entry",
           "request": {
             "method": "PATCH",
             "header": [
@@ -1983,7 +1983,7 @@
               }
             ],
             "url": "{{baseUrl}}/guilds/{{guildA}}/quests/{{questId}}/logs/{{logId}}",
-            "description": "Bandoma `PENDING` įrašui priskirti `xpAwarded = 500`. Neperžiūrėtas įrašas negali turėti XP, todėl grąžinamas `422 Unprocessable Entity`.",
+            "description": "Tries to give a `PENDING` log entry `xpAwarded = 500`. An unreviewed log entry cannot have XP, so the response is `422 Unprocessable Entity`.",
             "body": {
               "mode": "raw",
               "raw": "{\n  \"status\": \"PENDING\",\n  \"xpAwarded\": 500\n}",
@@ -2001,14 +2001,14 @@
                 "type": "text/javascript",
                 "exec": [
                   "pm.test('422 Unprocessable Entity', () => pm.response.to.have.status(422));",
-                  "pm.test('Neperziuretas irasas negali tureti tasku', () => pm.expect(pm.response.json().message).to.include('PENDING'));"
+                  "pm.test('An unreviewed log entry cannot have points', () => pm.expect(pm.response.json().message).to.include('PENDING'));"
                 ]
               }
             }
           ]
         },
         {
-          "name": "Klaida 422 – patvirtinto įrašo turinio keisti negalima",
+          "name": "Error 422 – approved log entry is frozen",
           "request": {
             "method": "PATCH",
             "header": [
@@ -2018,7 +2018,7 @@
               }
             ],
             "url": "{{baseUrl}}/guilds/{{guildA}}/quests/{{questId}}/logs/{{logId}}",
-            "description": "Autorius turinį (`note`, `evidenceUrl`, `occurredAt`) keisti gali tik kol įrašas `PENDING`. Patvirtinus įrodymų pakeisti nebegalima — DM pirma turi grąžinti įrašą į `PENDING`.",
+            "description": "The author can edit the content (`note`, `evidenceUrl`, `occurredAt`) only while the log entry is `PENDING`. Once it is approved the evidence can no longer change; the game master first has to move the entry back to `PENDING`.",
             "auth": {
               "type": "bearer",
               "bearer": [
@@ -2031,7 +2031,7 @@
             },
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"note\": \"Pataisyta jau po patvirtinimo\"\n}",
+              "raw": "{\n  \"note\": \"Edited after approval\"\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -2046,19 +2046,19 @@
                 "type": "text/javascript",
                 "exec": [
                   "pm.test('422 Unprocessable Entity', () => pm.response.to.have.status(422));",
-                  "pm.test('Perziureto iraso turinys uzsaldytas', () => pm.expect(pm.response.json().message).to.include('reviewed log entry cannot be edited'));"
+                  "pm.test('A reviewed log entry is frozen', () => pm.expect(pm.response.json().message).to.include('reviewed log entry cannot be edited'));"
                 ]
               }
             }
           ]
         },
         {
-          "name": "Ištrinti įrašą",
+          "name": "Delete log entry",
           "request": {
             "method": "DELETE",
             "header": [],
             "url": "{{baseUrl}}/guilds/{{guildA}}/quests/{{questId}}/logs/{{logId}}",
-            "description": "Ištrina progreso įrašą. Atsakymas yra `204 No Content` — atsakymas be turinio.\n\ndocs/API.md lentelės metodas **#15**."
+            "description": "Deletes the log entry. The response is `204 No Content`, with an empty body.\n\nMethod **#15** in the docs/API.md table."
           },
           "event": [
             {
@@ -2067,19 +2067,19 @@
                 "type": "text/javascript",
                 "exec": [
                   "pm.test('204 No Content', () => pm.response.to.have.status(204));",
-                  "pm.test('Atsakymas be turinio', () => pm.expect(pm.response.text()).to.be.empty);"
+                  "pm.test('Empty response body', () => pm.expect(pm.response.text()).to.be.empty);"
                 ]
               }
             }
           ]
         },
         {
-          "name": "Klaida 404 – įrašas jau ištrintas",
+          "name": "Error 404 – log entry already deleted",
           "request": {
             "method": "DELETE",
             "header": [],
             "url": "{{baseUrl}}/guilds/{{guildA}}/quests/{{questId}}/logs/{{logId}}",
-            "description": "Pakartotinai trinant tą patį įrašą grąžinamas `404 Not Found`."
+            "description": "Deleting the same log entry again returns `404 Not Found`."
           },
           "event": [
             {
@@ -2096,16 +2096,16 @@
       ]
     },
     {
-      "name": "6. Rolės ir teisės",
-      "description": "Autorizacijos taisyklės iš LD0 — kiekviena parodyta `403 Forbidden` atsakymu su paaiškinimu.\n\n| Kas | Ką gali |\n| --- | --- |\n| Svečias | Tik registruotis ir prisijungti (`401` visur kitur) |\n| `PLAYER` | Mato grupę ir jos užduotis, kuria užduotis, registruoja ir mato **tik savo** įrašus |\n| `DUNGEON_MASTER` | Mato visus grupės įrašus, tvirtina / atmeta (ne savo), kuria `SIDE_QUEST` |\n| Savininkas | Keičia ir trina grupę, valdo narius |\n| `ADMIN` | Mato visas grupes, trina bet kurį turinį, valdo naudotojus |\n\nNe grupės narys apie grupę negauna nieko — tik `403`.",
+      "name": "6. Roles and permissions",
+      "description": "The authorization rules, each shown as a `403 Forbidden` response with an explanation.\n\n| Who | Can |\n| --- | --- |\n| Guest | Only register and log in (`401` everywhere else) |\n| `PLAYER` | See the guild and its quests, create quests, log and see **only their own** log entries |\n| `DUNGEON_MASTER` | See every log entry in the guild, approve / reject them (not their own), create `SIDE_QUEST` |\n| Owner | Edit and delete the guild, manage members |\n| `ADMIN` | See every guild, delete any content, manage users |\n\nA non-member gets nothing about a guild, only `403`.",
       "item": [
         {
-          "name": "Klaida 403 – ne grupės narys",
+          "name": "Error 403 – not a guild member",
           "request": {
             "method": "GET",
             "header": [],
             "url": "{{baseUrl}}/guilds/2",
-            "description": "Grupė 2 (*Iron Vow*) egzistuoja, bet kolekcijos naudotojas nėra jos narys."
+            "description": "Guild 2 (*Iron Vow*) exists, but the collection user is not a member."
           },
           "event": [
             {
@@ -2114,14 +2114,14 @@
                 "type": "text/javascript",
                 "exec": [
                   "pm.test('403 Forbidden', () => pm.response.to.have.status(403));",
-                  "pm.test('Paaiskinama, kad naudotojas ne narys', () => pm.expect(pm.response.json().message).to.include('not a member'));"
+                  "pm.test('Explains that the user is not a member', () => pm.expect(pm.response.json().message).to.include('not a member'));"
                 ]
               }
             }
           ]
         },
         {
-          "name": "Žaidėjas registruoja įrašą",
+          "name": "Player logs an entry",
           "request": {
             "method": "POST",
             "header": [
@@ -2131,7 +2131,7 @@
               }
             ],
             "url": "{{baseUrl}}/guilds/{{guildA}}/quests/{{questId}}/logs",
-            "description": "Naujas `PENDING` įrašas, kurį žaidėjas bandys patvirtinti pats. ID išsaugomas `logPlayer`.",
+            "description": "A new `PENDING` log entry that the player will try to approve. Its ID is saved to `logPlayer`.",
             "auth": {
               "type": "bearer",
               "bearer": [
@@ -2144,7 +2144,7 @@
             },
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"note\": \"Antras zaidejo irasas\",\n  \"occurredAt\": \"{{occurredAt}}\"\n}",
+              "raw": "{\n  \"note\": \"Second log entry by the player\",\n  \"occurredAt\": \"{{occurredAt}}\"\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -2166,7 +2166,7 @@
           ]
         },
         {
-          "name": "Klaida 403 – žaidėjas negali tvirtinti",
+          "name": "Error 403 – player cannot approve",
           "request": {
             "method": "PATCH",
             "header": [
@@ -2176,7 +2176,7 @@
               }
             ],
             "url": "{{baseUrl}}/guilds/{{guildA}}/quests/{{questId}}/logs/{{logPlayer}}",
-            "description": "Peržiūros laukus (`status`, `xpAwarded`, `inspirationAwarded`, `reviewerNote`) keičia tik grupės DM.",
+            "description": "Only the guild's game master changes the review fields (`status`, `xpAwarded`, `inspirationAwarded`, `reviewerNote`).",
             "auth": {
               "type": "bearer",
               "bearer": [
@@ -2204,14 +2204,14 @@
                 "type": "text/javascript",
                 "exec": [
                   "pm.test('403 Forbidden', () => pm.response.to.have.status(403));",
-                  "pm.test('Tvirtina tik DM', () => pm.expect(pm.response.json().message).to.include('Only the game master'));"
+                  "pm.test('Only the game master approves', () => pm.expect(pm.response.json().message).to.include('Only the game master'));"
                 ]
               }
             }
           ]
         },
         {
-          "name": "Klaida 403 – DM nekeičia žaidėjo įrašo turinio",
+          "name": "Error 403 – game master cannot edit player content",
           "request": {
             "method": "PATCH",
             "header": [
@@ -2221,10 +2221,10 @@
               }
             ],
             "url": "{{baseUrl}}/guilds/{{guildA}}/quests/{{questId}}/logs/{{logPlayer}}",
-            "description": "DM tvirtina, bet žaidėjo pastabos ir įrodymų perrašyti negali — turinį keičia tik autorius.",
+            "description": "The game master approves entries but cannot rewrite the player's note or evidence: only the author edits the content.",
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"note\": \"DM perrase pastaba\"\n}",
+              "raw": "{\n  \"note\": \"Note rewritten by the game master\"\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -2239,14 +2239,14 @@
                 "type": "text/javascript",
                 "exec": [
                   "pm.test('403 Forbidden', () => pm.response.to.have.status(403));",
-                  "pm.test('Turini keicia tik autorius', () => pm.expect(pm.response.json().message).to.include('Only the author'));"
+                  "pm.test('Only the author edits the content', () => pm.expect(pm.response.json().message).to.include('Only the author'));"
                 ]
               }
             }
           ]
         },
         {
-          "name": "DM registruoja savo įrašą",
+          "name": "Game master logs own entry",
           "request": {
             "method": "POST",
             "header": [
@@ -2256,10 +2256,10 @@
               }
             ],
             "url": "{{baseUrl}}/guilds/{{guildA}}/quests/{{questId}}/logs",
-            "description": "DM taip pat gali registruoti progresą. ID išsaugomas `logDm`.",
+            "description": "A game master can log progress too. The ID is saved to `logDm`.",
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"note\": \"DM irasas apie save\",\n  \"occurredAt\": \"{{occurredAt}}\"\n}",
+              "raw": "{\n  \"note\": \"The game master's own log entry\",\n  \"occurredAt\": \"{{occurredAt}}\"\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -2281,7 +2281,7 @@
           ]
         },
         {
-          "name": "Klaida 403 – savo įrašo tvirtinti negalima",
+          "name": "Error 403 – cannot approve own entry",
           "request": {
             "method": "PATCH",
             "header": [
@@ -2291,7 +2291,7 @@
               }
             ],
             "url": "{{baseUrl}}/guilds/{{guildA}}/quests/{{questId}}/logs/{{logDm}}",
-            "description": "LD0 taisyklė: įrašo negali tvirtinti jo autorius, **net jei jis yra DM**.",
+            "description": "The author of a log entry cannot approve it, **even when the author is the game master**.",
             "body": {
               "mode": "raw",
               "raw": "{\n  \"status\": \"APPROVED\"\n}",
@@ -2309,19 +2309,19 @@
                 "type": "text/javascript",
                 "exec": [
                   "pm.test('403 Forbidden', () => pm.response.to.have.status(403));",
-                  "pm.test('Savo iraso tvirtinti negalima', () => pm.expect(pm.response.json().message).to.include('your own log entry'));"
+                  "pm.test('You cannot approve your own log entry', () => pm.expect(pm.response.json().message).to.include('your own log entry'));"
                 ]
               }
             }
           ]
         },
         {
-          "name": "Klaida 403 – žaidėjas nemato svetimo įrašo",
+          "name": "Error 403 – player cannot view entries by others",
           "request": {
             "method": "GET",
             "header": [],
             "url": "{{baseUrl}}/guilds/{{guildA}}/quests/{{questId}}/logs/{{logDm}}",
-            "description": "Žaidėjas mato tik savo įrašus; svetimus — tik grupės DM.",
+            "description": "A player sees only their own log entries; only the guild's game master sees everyone's.",
             "auth": {
               "type": "bearer",
               "bearer": [
@@ -2340,19 +2340,19 @@
                 "type": "text/javascript",
                 "exec": [
                   "pm.test('403 Forbidden', () => pm.response.to.have.status(403));",
-                  "pm.test('Svetimus irasus mato tik DM', () => pm.expect(pm.response.json().message).to.include('Only the game master'));"
+                  "pm.test('Only the game master sees entries by others', () => pm.expect(pm.response.json().message).to.include('Only the game master'));"
                 ]
               }
             }
           ]
         },
         {
-          "name": "Žaidėjas mato tik savo įrašus",
+          "name": "Player sees only own entries",
           "request": {
             "method": "GET",
             "header": [],
             "url": "{{baseUrl}}/guilds/{{guildA}}/quests/{{questId}}/logs",
-            "description": "Tas pats sąrašo kelias kaip DM, bet žaidėjui serveris grąžina tik jo paties įrašus.",
+            "description": "The same list path as for the game master, but for a player the server returns only that player's own log entries.",
             "auth": {
               "type": "bearer",
               "bearer": [
@@ -2373,7 +2373,7 @@
                   "pm.test('200 OK', () => pm.response.to.have.status(200));",
                   "const logs = pm.response.json().content;",
                   "const ids = logs.map(x => x.id);",
-                  "pm.test('Visi irasai - jono, ID: ' + ids.join(', '), () => {",
+                  "pm.test('All log entries are by jonas, IDs: ' + ids.join(', '), () => {",
                   "  logs.forEach(x => pm.expect(x.authorId).to.eql(Number(pm.collectionVariables.get('playerId'))));",
                   "  pm.expect(ids).to.include(Number(pm.collectionVariables.get('logPlayer')));",
                   "  pm.expect(ids).to.not.include(Number(pm.collectionVariables.get('logDm')));",
@@ -2384,12 +2384,12 @@
           ]
         },
         {
-          "name": "DM mato visus įrašus",
+          "name": "Game master sees all entries",
           "request": {
             "method": "GET",
             "header": [],
             "url": "{{baseUrl}}/guilds/{{guildA}}/quests/{{questId}}/logs",
-            "description": "DM mato ir žaidėjo, ir savo įrašus."
+            "description": "The game master sees both the player's log entries and their own."
           },
           "event": [
             {
@@ -2399,7 +2399,7 @@
                 "exec": [
                   "pm.test('200 OK', () => pm.response.to.have.status(200));",
                   "const ids = pm.response.json().content.map(x => x.id);",
-                  "pm.test('Matomi abu irasai, ID: ' + ids.join(', '), () => {",
+                  "pm.test('Both log entries are visible, IDs: ' + ids.join(', '), () => {",
                   "  pm.expect(ids).to.include(Number(pm.collectionVariables.get('logPlayer')));",
                   "  pm.expect(ids).to.include(Number(pm.collectionVariables.get('logDm')));",
                   "});"
@@ -2409,7 +2409,7 @@
           ]
         },
         {
-          "name": "Klaida 403 – SIDE_QUEST kuria tik DM",
+          "name": "Error 403 – only the game master creates SIDE_QUEST",
           "request": {
             "method": "POST",
             "header": [
@@ -2419,7 +2419,7 @@
               }
             ],
             "url": "{{baseUrl}}/guilds/{{guildA}}/quests",
-            "description": "`SIDE_QUEST` — DM skiriama užduotis už netikėtą veiklą, todėl žaidėjas tokios sukurti negali.",
+            "description": "A `SIDE_QUEST` is a quest the game master hands out for an unexpected good deed, so a player cannot create one.",
             "auth": {
               "type": "bearer",
               "bearer": [
@@ -2432,7 +2432,7 @@
             },
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"title\": \"Netiketas geras darbas\",\n  \"stat\": \"CHA\",\n  \"type\": \"SIDE_QUEST\",\n  \"difficulty\": \"EASY\"\n}",
+              "raw": "{\n  \"title\": \"Unexpected good deed\",\n  \"stat\": \"CHA\",\n  \"type\": \"SIDE_QUEST\",\n  \"difficulty\": \"EASY\"\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -2447,14 +2447,14 @@
                 "type": "text/javascript",
                 "exec": [
                   "pm.test('403 Forbidden', () => pm.response.to.have.status(403));",
-                  "pm.test('SIDE_QUEST - tik DM', () => pm.expect(pm.response.json().message).to.include('SIDE_QUEST'));"
+                  "pm.test('SIDE_QUEST - game master only', () => pm.expect(pm.response.json().message).to.include('SIDE_QUEST'));"
                 ]
               }
             }
           ]
         },
         {
-          "name": "Klaida 403 – grupę keičia tik savininkas",
+          "name": "Error 403 – only the owner edits the guild",
           "request": {
             "method": "PATCH",
             "header": [
@@ -2464,7 +2464,7 @@
               }
             ],
             "url": "{{baseUrl}}/guilds/{{guildA}}",
-            "description": "Grupės pavadinimą ir aprašymą keičia tik jos savininkas.",
+            "description": "Only the owner changes the guild's name and description.",
             "auth": {
               "type": "bearer",
               "bearer": [
@@ -2477,7 +2477,7 @@
             },
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"description\": \"Zaidejo bandymas pakeisti\"\n}",
+              "raw": "{\n  \"description\": \"A player tries to edit the guild\"\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -2492,19 +2492,19 @@
                 "type": "text/javascript",
                 "exec": [
                   "pm.test('403 Forbidden', () => pm.response.to.have.status(403));",
-                  "pm.test('Grupe keicia tik savininkas', () => pm.expect(pm.response.json().message).to.include('guild owner'));"
+                  "pm.test('Only the owner edits the guild', () => pm.expect(pm.response.json().message).to.include('guild owner'));"
                 ]
               }
             }
           ]
         },
         {
-          "name": "Klaida 403 – naudotojų valdymas tik administratoriui",
+          "name": "Error 403 – user management is admin-only",
           "request": {
             "method": "GET",
             "header": [],
             "url": "{{baseUrl}}/users",
-            "description": "`/api/users/**` leidžiama tik rolei `ADMIN` (tikrinama Spring Security lygiu, dar prieš kontrolerį)."
+            "description": "`/api/users/**` is allowed only for the `ADMIN` role (checked by Spring Security, before the controller)."
           },
           "event": [
             {
@@ -2513,19 +2513,19 @@
                 "type": "text/javascript",
                 "exec": [
                   "pm.test('403 Forbidden', () => pm.response.to.have.status(403));",
-                  "pm.test('Ne ADMIN - 403', () => pm.expect(pm.response.json().message).to.include('permission'));"
+                  "pm.test('Not ADMIN - 403', () => pm.expect(pm.response.json().message).to.include('permission'));"
                 ]
               }
             }
           ]
         },
         {
-          "name": "Žaidėjas išeina iš grupės",
+          "name": "Player leaves the guild",
           "request": {
             "method": "DELETE",
             "header": [],
             "url": "{{baseUrl}}/guilds/{{guildA}}/members/{{playerId}}",
-            "description": "Narys gali pašalinti pats save (išeiti). Kitus narius šalina tik savininkas arba administratorius.\n\ndocs/API.md lentelės metodas **#25**.",
+            "description": "A member can remove themselves (leave). Only the owner or an administrator removes other members.\n\nMethod **#25** in the docs/API.md table.",
             "auth": {
               "type": "bearer",
               "bearer": [
@@ -2550,12 +2550,12 @@
           ]
         },
         {
-          "name": "Klaida 403 – išėjęs žaidėjas grupės nebemato",
+          "name": "Error 403 – former member loses access",
           "request": {
             "method": "GET",
             "header": [],
             "url": "{{baseUrl}}/guilds/{{guildA}}",
-            "description": "Išėjęs iš grupės, jonas nebemato nei jos, nei jos užduočių ir įrašų.",
+            "description": "After leaving the guild, `jonas` can no longer see it, its quests or its log entries.",
             "auth": {
               "type": "bearer",
               "bearer": [
@@ -2574,7 +2574,7 @@
                 "type": "text/javascript",
                 "exec": [
                   "pm.test('403 Forbidden', () => pm.response.to.have.status(403));",
-                  "pm.test('Nebe narys - 403', () => pm.expect(pm.response.json().message).to.include('not a member'));"
+                  "pm.test('No longer a member - 403', () => pm.expect(pm.response.json().message).to.include('not a member'));"
                 ]
               }
             }
@@ -2583,16 +2583,16 @@
       ]
     },
     {
-      "name": "7. Išvalymas",
-      "description": "Ištrina viską, ką sukūrė kolekcija, kad ją būtų galima leisti pakartotinai. Grupės trynimas pašalina ir visus jos narius, užduotis bei įrašus. Grupę trina jos savininkas arba administratorius.\n\nPaskutinė užklausa patikrina, kad ištrinta grupė nebepasiekiama (`404`).",
+      "name": "7. Cleanup",
+      "description": "Deletes everything the collection created, so it can run again. Deleting a guild also removes all its members, quests and log entries. The owner or an administrator deletes a guild.\n\nThe last request checks that the deleted guild is no longer reachable (`404`).",
       "item": [
         {
-          "name": "Ištrinti užduotį",
+          "name": "Delete quest",
           "request": {
             "method": "DELETE",
             "header": [],
             "url": "{{baseUrl}}/guilds/{{guildA}}/quests/{{questId}}",
-            "description": "Ištrina užduotį kartu su visais jos įrašais (`204 No Content`).\n\ndocs/API.md lentelės metodas **#10**."
+            "description": "Deletes the quest together with all its log entries (`204 No Content`).\n\nMethod **#10** in the docs/API.md table."
           },
           "event": [
             {
@@ -2607,12 +2607,12 @@
           ]
         },
         {
-          "name": "Ištrinti grupę",
+          "name": "Delete guild",
           "request": {
             "method": "DELETE",
             "header": [],
             "url": "{{baseUrl}}/guilds/{{guildA}}",
-            "description": "Ištrina grupę A kartu su visu jos turiniu (`204 No Content`).\n\ndocs/API.md lentelės metodas **#5**."
+            "description": "Deletes guild A with all its content (`204 No Content`).\n\nMethod **#5** in the docs/API.md table."
           },
           "event": [
             {
@@ -2627,12 +2627,12 @@
           ]
         },
         {
-          "name": "Ištrinti antrą grupę – administratorius",
+          "name": "Delete second guild – administrator",
           "request": {
             "method": "DELETE",
             "header": [],
             "url": "{{baseUrl}}/guilds/{{guildB}}",
-            "description": "Grupę B ištrina **administratorius**, nors nėra jos narys: `ADMIN` gali šalinti netinkamą turinį bet kurioje grupėje.",
+            "description": "Guild B is deleted by an **administrator** who is not a member: `ADMIN` can remove inappropriate content in any guild.",
             "auth": {
               "type": "bearer",
               "bearer": [
@@ -2657,12 +2657,12 @@
           ]
         },
         {
-          "name": "Klaida 404 – ištrinta grupė nerasta",
+          "name": "Error 404 – deleted guild not found",
           "request": {
             "method": "GET",
             "header": [],
             "url": "{{baseUrl}}/guilds/{{guildA}}",
-            "description": "Patikrina, kad ištrinta grupė nebepasiekiama (`404 Not Found`)."
+            "description": "Checks that the deleted guild is no longer reachable (`404 Not Found`)."
           },
           "event": [
             {
@@ -2671,7 +2671,7 @@
                 "type": "text/javascript",
                 "exec": [
                   "pm.test('404 Not Found', () => pm.response.to.have.status(404));",
-                  "pm.test('Po istrynimo resurso nebera', () => pm.expect(pm.response.json().status).to.eql(404));"
+                  "pm.test('The resource is gone after deletion', () => pm.expect(pm.response.json().status).to.eql(404));"
                 ]
               }
             }
@@ -2680,8 +2680,8 @@
       ]
     },
     {
-      "name": "8. Administravimas",
-      "description": "Naudotojų valdymas — tik rolei `ADMIN` (aplanko *Authorization*: `{{adminToken}}`).\n\nAdministratorius mato naudotojus, keičia jų rolę ir gali **užblokuoti** paskyrą: tada atšaukiamos visos naudotojo sesijos ir prisijungti nebeleidžiama (`403`).",
+      "name": "8. Administration",
+      "description": "User management, for the `ADMIN` role only (folder *Authorization*: `{{adminToken}}`).\n\nAn administrator sees users, changes their role and can **block** an account: all of that user's sessions are revoked and login is refused (`403`).",
       "auth": {
         "type": "bearer",
         "bearer": [
@@ -2694,12 +2694,12 @@
       },
       "item": [
         {
-          "name": "Naudotojų sąrašas",
+          "name": "List users",
           "request": {
             "method": "GET",
             "header": [],
             "url": "{{baseUrl}}/users?username={{username}}",
-            "description": "Puslapiuotas sąrašas su filtru pagal vardo dalį. Slaptažodžių maišos negrąžinamos.\n\ndocs/API.md lentelės metodas **#26**."
+            "description": "A paged list with a filter by part of the username. Password hashes are never returned.\n\nMethod **#26** in the docs/API.md table."
           },
           "event": [
             {
@@ -2709,7 +2709,7 @@
                 "exec": [
                   "pm.test('200 OK', () => pm.response.to.have.status(200));",
                   "const body = pm.response.json();",
-                  "pm.test('Rastas kolekcijos naudotojas', () => {",
+                  "pm.test('Finds the collection user', () => {",
                   "  pm.expect(body.totalElements).to.eql(1);",
                   "  pm.expect(body.content[0].id).to.eql(Number(pm.collectionVariables.get('userId')));",
                   "  pm.expect(body.content[0]).to.not.have.property('passwordHash');",
@@ -2720,12 +2720,12 @@
           ]
         },
         {
-          "name": "Gauti naudotoją pagal ID",
+          "name": "Get user by ID",
           "request": {
             "method": "GET",
             "header": [],
             "url": "{{baseUrl}}/users/{{userId}}",
-            "description": "docs/API.md lentelės metodas **#27**."
+            "description": "Method **#27** in the docs/API.md table."
           },
           "event": [
             {
@@ -2734,14 +2734,14 @@
                 "type": "text/javascript",
                 "exec": [
                   "pm.test('200 OK', () => pm.response.to.have.status(200));",
-                  "pm.test('Tas pats naudotojas', () => pm.expect(pm.response.json().username).to.eql(pm.collectionVariables.get('username')));"
+                  "pm.test('The same user', () => pm.expect(pm.response.json().username).to.eql(pm.collectionVariables.get('username')));"
                 ]
               }
             }
           ]
         },
         {
-          "name": "Klaida 422 – savęs užblokuoti negalima",
+          "name": "Error 422 – cannot block yourself",
           "request": {
             "method": "PATCH",
             "header": [
@@ -2751,7 +2751,7 @@
               }
             ],
             "url": "{{baseUrl}}/users/{{adminId}}",
-            "description": "Apsauga nuo situacijos, kai neliktų nė vieno administratoriaus: savo ADMIN teisių nuimti ar savęs užblokuoti negalima.",
+            "description": "Guards against ending up with no administrator: you cannot remove your own ADMIN rights or block yourself.",
             "body": {
               "mode": "raw",
               "raw": "{\n  \"enabled\": false\n}",
@@ -2769,14 +2769,14 @@
                 "type": "text/javascript",
                 "exec": [
                   "pm.test('422 Unprocessable Entity', () => pm.response.to.have.status(422));",
-                  "pm.test('Saves uzblokuoti negalima', () => pm.expect(pm.response.json().message).to.include('your own'));"
+                  "pm.test('You cannot block yourself', () => pm.expect(pm.response.json().message).to.include('your own'));"
                 ]
               }
             }
           ]
         },
         {
-          "name": "Užblokuoti naudotoją",
+          "name": "Block user",
           "request": {
             "method": "PATCH",
             "header": [
@@ -2786,7 +2786,7 @@
               }
             ],
             "url": "{{baseUrl}}/users/{{userId}}",
-            "description": "Užblokuojama kolekcijos naudotojo paskyra: atšaukiami visi jo refresh žetonai.\n\ndocs/API.md lentelės metodas **#28**.",
+            "description": "Blocks the collection user's account: all of their refresh tokens are revoked.\n\nMethod **#28** in the docs/API.md table.",
             "body": {
               "mode": "raw",
               "raw": "{\n  \"enabled\": false\n}",
@@ -2804,14 +2804,14 @@
                 "type": "text/javascript",
                 "exec": [
                   "pm.test('200 OK', () => pm.response.to.have.status(200));",
-                  "pm.test('Paskyra uzblokuota', () => pm.expect(pm.response.json().enabled).to.eql(false));"
+                  "pm.test('The account is blocked', () => pm.expect(pm.response.json().enabled).to.eql(false));"
                 ]
               }
             }
           ]
         },
         {
-          "name": "Klaida 403 – užblokuotas negali prisijungti",
+          "name": "Error 403 – blocked user cannot log in",
           "request": {
             "method": "POST",
             "header": [
@@ -2821,7 +2821,7 @@
               }
             ],
             "url": "{{baseUrl}}/auth/login",
-            "description": "Slaptažodis teisingas, bet paskyra užblokuota — `403`, ne `401`.",
+            "description": "The password is correct, but the account is blocked: `403`, not `401`.",
             "auth": {
               "type": "noauth"
             },
@@ -2842,14 +2842,14 @@
                 "type": "text/javascript",
                 "exec": [
                   "pm.test('403 Forbidden', () => pm.response.to.have.status(403));",
-                  "pm.test('Pranesimas apie uzblokuota paskyra', () => pm.expect(pm.response.json().message).to.include('blocked'));"
+                  "pm.test('Message about the blocked account', () => pm.expect(pm.response.json().message).to.include('blocked'));"
                 ]
               }
             }
           ]
         },
         {
-          "name": "Atblokuoti naudotoją",
+          "name": "Unblock user",
           "request": {
             "method": "PATCH",
             "header": [
@@ -2859,7 +2859,7 @@
               }
             ],
             "url": "{{baseUrl}}/users/{{userId}}",
-            "description": "Paskyra vėl aktyvi — naudotojas gali prisijungti.",
+            "description": "The account is active again, so the user can log in.",
             "body": {
               "mode": "raw",
               "raw": "{\n  \"enabled\": true\n}",
@@ -2877,7 +2877,7 @@
                 "type": "text/javascript",
                 "exec": [
                   "pm.test('200 OK', () => pm.response.to.have.status(200));",
-                  "pm.test('Paskyra aktyvi', () => pm.expect(pm.response.json().enabled).to.eql(true));"
+                  "pm.test('The account is active', () => pm.expect(pm.response.json().enabled).to.eql(true));"
                 ]
               }
             }

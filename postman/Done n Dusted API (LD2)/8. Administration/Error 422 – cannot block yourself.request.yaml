@@ -1,0 +1,20 @@
+$kind: http-request
+description: "Guards against ending up with no administrator: you cannot remove your own ADMIN rights or block yourself."
+url: "{{baseUrl}}/users/{{adminId}}"
+method: PATCH
+headers:
+  Content-Type: application/json
+body:
+  type: json
+  content: |-
+    {
+      "enabled": false
+    }
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test('422 Unprocessable Entity', () => pm.response.to.have.status(422));
+      pm.test('You cannot block yourself', () => pm.expect(pm.response.json().message).to.include('your own'));
+    language: text/javascript
+examples: ./.resources/Error 422 – cannot block yourself.resources/examples
+order: 3000

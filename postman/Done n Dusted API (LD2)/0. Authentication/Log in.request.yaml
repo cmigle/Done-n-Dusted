@@ -1,0 +1,48 @@
+$kind: http-request
+description: |-
+  Returns a token pair:
+
+  * `accessToken`: a signed JWT (HS256), valid for **15 min** (`expiresIn: 900`). It holds `sub` (user ID), `username`, `role`, `iss`, `iat` and `exp`.
+  * `refreshToken`: a random string, not a JWT. The database stores only its SHA-256 hash.
+
+  The test decodes the JWT and checks its claims. Both tokens are saved to variables.
+
+  Method **#17** in the docs/API.md table.
+url: "{{baseUrl}}/auth/login"
+method: POST
+headers:
+  Content-Type: application/json
+body:
+  type: json
+  content: |-
+    {
+      "username": "{{username}}",
+      "password": "{{password}}"
+    }
+auth:
+  type: noauth
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test('200 OK', () => pm.response.to.have.status(200));
+      const body = pm.response.json();
+      const b64 = body.accessToken.split('.')[1].replace(/-/g, '+').replace(/_/g, '/');
+      const claims = JSON.parse(atob(b64 + '==='.slice((b64.length + 3) % 4)));
+      pm.test('Access token - a 3-part JWT, Bearer type, valid for 15 min', () => {
+        pm.expect(body.accessToken.split('.')).to.have.lengthOf(3);
+        pm.expect(body.tokenType).to.eql('Bearer');
+        pm.expect(body.expiresIn).to.eql(900);
+        pm.expect(claims.exp - claims.iat).to.eql(900);
+      });
+      pm.test('JWT claims: sub = user ID, role USER', () => {
+        pm.expect(claims.sub).to.eql(String(pm.collectionVariables.get('userId')));
+        pm.expect(claims.username).to.eql(pm.collectionVariables.get('username'));
+        pm.expect(claims.role).to.eql('USER');
+        pm.expect(claims.iss).to.eql('done-n-dusted');
+      });
+      pm.test('Refresh token - a random string, not a JWT', () => pm.expect(body.refreshToken).to.be.a('string').and.not.include('.'));
+      pm.collectionVariables.set('accessToken', body.accessToken);
+      pm.collectionVariables.set('refreshToken', body.refreshToken);
+    language: text/javascript
+examples: ./.resources/Log in.resources/examples
+order: 5000

@@ -1,0 +1,20 @@
+$kind: http-request
+description: After logout the refresh token can no longer get a new pair.
+url: "{{baseUrl}}/auth/refresh"
+method: POST
+headers:
+  Content-Type: application/json
+body:
+  type: json
+  content: |-
+    {
+      "refreshToken": "{{refreshToken}}"
+    }
+auth:
+  type: noauth
+scripts:
+  - type: afterResponse
+    code: pm.test('401 Unauthorized', () => pm.response.to.have.status(401));
+    language: text/javascript
+examples: ./.resources/Error 401 – refresh after logout.resources/examples
+order: 14000

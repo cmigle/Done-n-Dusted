@@ -1,0 +1,23 @@
+$kind: http-request
+description: "The password is correct, but the account is blocked: `403`, not `401`."
+url: "{{baseUrl}}/auth/login"
+method: POST
+headers:
+  Content-Type: application/json
+body:
+  type: json
+  content: |-
+    {
+      "username": "{{username}}",
+      "password": "{{password}}"
+    }
+auth:
+  type: noauth
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test('403 Forbidden', () => pm.response.to.have.status(403));
+      pm.test('Message about the blocked account', () => pm.expect(pm.response.json().message).to.include('blocked'));
+    language: text/javascript
+examples: ./.resources/Error 403 – blocked user cannot log in.resources/examples
+order: 5000

@@ -1,0 +1,30 @@
+$kind: http-request
+description: |-
+  The owner adds the user `jonas` as a player. The user is given by username.
+
+  Method **#23** in the docs/API.md table.
+url: "{{baseUrl}}/guilds/{{guildA}}/members"
+method: POST
+headers:
+  Content-Type: application/json
+body:
+  type: json
+  content: |-
+    {
+      "username": "jonas",
+      "role": "PLAYER"
+    }
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test('201 Created', () => pm.response.to.have.status(201));
+      const body = pm.response.json();
+      pm.test('Location points to the new member', () => pm.expect(pm.response.headers.get('Location')).to.include('/members/' + pm.collectionVariables.get('playerId')));
+      pm.test('jonas is a PLAYER in the guild', () => {
+        pm.expect(body.userId).to.eql(Number(pm.collectionVariables.get('playerId')));
+        pm.expect(body.username).to.eql('jonas');
+        pm.expect(body.role).to.eql('PLAYER');
+      });
+    language: text/javascript
+examples: ./.resources/Add member – player.resources/examples
+order: 2000

@@ -1,0 +1,20 @@
+$kind: http-request
+description: The author of a log entry cannot approve it, **even when the author is the game master**.
+url: "{{baseUrl}}/guilds/{{guildA}}/quests/{{questId}}/logs/{{logDm}}"
+method: PATCH
+headers:
+  Content-Type: application/json
+body:
+  type: json
+  content: |-
+    {
+      "status": "APPROVED"
+    }
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test('403 Forbidden', () => pm.response.to.have.status(403));
+      pm.test('You cannot approve your own log entry', () => pm.expect(pm.response.json().message).to.include('your own log entry'));
+    language: text/javascript
+examples: ./.resources/Error 403 – cannot approve own entry.resources/examples
+order: 6000

@@ -1,0 +1,17 @@
+$kind: http-request
+description: |-
+  A member can remove themselves (leave). Only the owner or an administrator removes other members.
+
+  Method **#25** in the docs/API.md table.
+url: "{{baseUrl}}/guilds/{{guildA}}/members/{{playerId}}"
+method: DELETE
+auth:
+  type: bearer
+  credentials:
+    token: "{{playerToken}}"
+scripts:
+  - type: afterResponse
+    code: pm.test('204 No Content', () => pm.response.to.have.status(204));
+    language: text/javascript
+examples: ./.resources/Player leaves the guild.resources/examples
+order: 13000

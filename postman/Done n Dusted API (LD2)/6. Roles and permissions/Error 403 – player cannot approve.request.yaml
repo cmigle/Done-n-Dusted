@@ -1,0 +1,24 @@
+$kind: http-request
+description: Only the guild's game master changes the review fields (`status`, `xpAwarded`, `inspirationAwarded`, `reviewerNote`).
+url: "{{baseUrl}}/guilds/{{guildA}}/quests/{{questId}}/logs/{{logPlayer}}"
+method: PATCH
+headers:
+  Content-Type: application/json
+body:
+  type: json
+  content: |-
+    {
+      "status": "APPROVED"
+    }
+auth:
+  type: bearer
+  credentials:
+    token: "{{playerToken}}"
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test('403 Forbidden', () => pm.response.to.have.status(403));
+      pm.test('Only the game master approves', () => pm.expect(pm.response.json().message).to.include('Only the game master'));
+    language: text/javascript
+examples: ./.resources/Error 403 – player cannot approve.resources/examples
+order: 3000

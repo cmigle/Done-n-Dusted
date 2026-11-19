@@ -1,0 +1,33 @@
+$kind: http-request
+description: |-
+  Partially updates the quest (`PATCH`): only `difficulty = LEGENDARY` is sent. The title and description stay as they were.
+
+  The server recalculates `xpPerCompletion`: 10 × 8 = **80**. XP on log entries that are already approved does not change.
+
+  Method **#9** in the docs/API.md table.
+url: "{{baseUrl}}/guilds/{{guildA}}/quests/{{questId}}"
+method: PATCH
+headers:
+  Content-Type: application/json
+body:
+  type: json
+  content: |-
+    {
+      "difficulty": "LEGENDARY"
+    }
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test('200 OK', () => pm.response.to.have.status(200));
+      const body = pm.response.json();
+      pm.test('Difficulty changed, XP recalculated (LEGENDARY = 10 * 8)', () => {
+        pm.expect(body.difficulty).to.eql('LEGENDARY');
+        pm.expect(body.xpPerCompletion).to.eql(80);
+      });
+      pm.test('Fields not sent (title, description) are unchanged', () => {
+        pm.expect(body.title).to.eql('Run 10 kilometers');
+        pm.expect(body.description).to.eql('Quest created by the Postman run');
+      });
+    language: text/javascript
+examples: ./.resources/Update quest.resources/examples
+order: 6000

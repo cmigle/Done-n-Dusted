@@ -1,0 +1,25 @@
+$kind: http-request
+description: The player `jonas` is a guild member but not its owner, so adding members is not allowed.
+url: "{{baseUrl}}/guilds/{{guildA}}/members"
+method: POST
+headers:
+  Content-Type: application/json
+body:
+  type: json
+  content: |-
+    {
+      "username": "ieva",
+      "role": "PLAYER"
+    }
+auth:
+  type: bearer
+  credentials:
+    token: "{{playerToken}}"
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test('403 Forbidden', () => pm.response.to.have.status(403));
+      pm.test('Explains who is allowed', () => pm.expect(pm.response.json().message).to.include('guild owner'));
+    language: text/javascript
+examples: ./.resources/Error 403 – player cannot add members.resources/examples
+order: 7000

@@ -140,7 +140,7 @@ nepavogtų), refresh — idealiai `HttpOnly` slapuke. Dabar refresh grąžinamas
 patogu Postman; perkelti į slapuką — `AuthController` pakeitimas.
 
 **Kaip DM negali patvirtinti savo įrašo?** `LogEntry.author` saugo autorių; `LogEntryService.update()`
-tikrina `!access.is(entry.getAuthor())`. Postman: „Klaida 403 – savo įrašo tvirtinti negalima“.
+tikrina `!access.is(entry.getAuthor())`. Postman: „Error 403 – cannot approve own entry“.
 
 **Ką gali ADMIN?** Mato visas grupes ir jų turinį, trina bet ką, valdo naudotojus. Tvirtinti įrašų
 ir kurti turinio svetimose grupėse negali — tai grupės DM ir narių darbas.
@@ -179,8 +179,8 @@ Išsamus planas su laukiamais atsakymais — [`DEMO_PLANAS.md`](DEMO_PLANAS.md).
 2. Swagger: **Authorize** neįvedus — `401`; `POST /api/auth/login` (`rokas` / `Demo123!`) →
    nukopijuoti `accessToken` → **Authorize** → `GET /api/guilds` veikia.
 3. JWT turinys: Git Bash (`demo/3-curl-komandos.cmd`) komanda `jwt` (`sub`, `role`,
-   `exp - iat = 900`); Postman „Prisijungti“ testai tuos pačius laukus patikrina.
+   `exp - iat = 900`); Postman „Log in“ testai tuos pačius laukus patikrina.
    Žetono į svetimas svetaines (pvz. jwt.io) neklijuoti.
-4. Postman *Run collection*: `0. Autentifikacija` (rotacija, pakartotinis panaudojimas),
-   `6. Rolės ir teisės` (visi `403` su paaiškinimais), `8. Administravimas`.
+4. Postman *Run collection*: `0. Authentication` (rotacija, pakartotinis panaudojimas),
+   `6. Roles and permissions` (visi `403` su paaiškinimais), `8. Administration`.
 5. DB: `SELECT username, left(password_hash, 7) FROM app_user;` — matosi `$2a$10$`, ne slaptažodis.

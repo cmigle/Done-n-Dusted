@@ -1,0 +1,16 @@
+$kind: http-request
+description: A player sees only their own log entries; only the guild's game master sees everyone's.
+url: "{{baseUrl}}/guilds/{{guildA}}/quests/{{questId}}/logs/{{logDm}}"
+method: GET
+auth:
+  type: bearer
+  credentials:
+    token: "{{playerToken}}"
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test('403 Forbidden', () => pm.response.to.have.status(403));
+      pm.test('Only the game master sees entries by others', () => pm.expect(pm.response.json().message).to.include('Only the game master'));
+    language: text/javascript
+examples: ./.resources/Error 403 – player cannot view entries by others.resources/examples
+order: 7000

@@ -1,0 +1,22 @@
+$kind: http-request
+description: "A consequence of the previous request: even the refresh token issued a moment ago is no longer valid. The user has to log in again."
+url: "{{baseUrl}}/auth/refresh"
+method: POST
+headers:
+  Content-Type: application/json
+body:
+  type: json
+  content: |-
+    {
+      "refreshToken": "{{refreshToken}}"
+    }
+auth:
+  type: noauth
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test('401 Unauthorized', () => pm.response.to.have.status(401));
+      pm.test('Even the newest refresh token is revoked', () => pm.expect(pm.response.json().message).to.include('revoked'));
+    language: text/javascript
+examples: ./.resources/Error 401 – new refresh token revoked too.resources/examples
+order: 11000

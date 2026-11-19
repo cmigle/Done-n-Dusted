@@ -1,0 +1,15 @@
+$kind: http-request
+description: |-
+  Deletes the log entry. The response is `204 No Content`, with an empty body.
+
+  Method **#15** in the docs/API.md table.
+url: "{{baseUrl}}/guilds/{{guildA}}/quests/{{questId}}/logs/{{logId}}"
+method: DELETE
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test('204 No Content', () => pm.response.to.have.status(204));
+      pm.test('Empty response body', () => pm.expect(pm.response.text()).to.be.empty);
+    language: text/javascript
+examples: ./.resources/Delete log entry.resources/examples
+order: 8000

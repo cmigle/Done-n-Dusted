@@ -1,0 +1,9 @@
+$kind: collection
+description: |-
+  Registration, login and the JWT token lifecycle.
+
+  * Every run registers a new user `postman_<time>`. This user creates the guilds, so it becomes their **owner and game master**.
+  * `accessToken` (a JWT valid for 15 min) is sent with every later request: collection *Authorization* → *Bearer Token* `{{accessToken}}`.
+  * `refreshToken` is single-use: once used at `/auth/refresh` it is revoked and a new pair is issued (rotation). A reused one is treated as stolen, and all of the user's sessions are revoked.
+  * At the end the collection logs in as the demo users `jonas` (player) and `admin` (administrator). Their password is `Demo123!`.
+order: 1000

@@ -1,0 +1,24 @@
+$kind: http-request
+description: "`occurredAt` is in the future (2099). That breaks a domain rule, so the response is `422 Unprocessable Entity`."
+url: "{{baseUrl}}/guilds/{{guildA}}/quests/{{questId}}/logs"
+method: POST
+headers:
+  Content-Type: application/json
+body:
+  type: json
+  content: |-
+    {
+      "occurredAt": "2099-01-01T00:00:00Z"
+    }
+auth:
+  type: bearer
+  credentials:
+    token: "{{playerToken}}"
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test('422 Unprocessable Entity', () => pm.response.to.have.status(422));
+      pm.test('Message about occurredAt', () => pm.expect(pm.response.json().message).to.include('occurredAt'));
+    language: text/javascript
+examples: ./.resources/Error 422 – occurredAt in the future.resources/examples
+order: 2000

@@ -1,9 +1,0 @@
-$kind: collection
-description: |-
-  Registracija, prisijungimas ir JWT žetonų gyvavimo ciklas.
-
-  * Kolekcija kaskart užregistruoja naują naudotoją `postman_<laikas>`. Jis sukurs grupes, todėl bus jų **savininkas ir DM**.
-  * `accessToken` (JWT, galioja 15 min) siunčiamas visose tolesnėse užklausose: kolekcijos *Authorization* → *Bearer Token* `{{accessToken}}`.
-  * `refreshToken` vienkartinis: panaudotas `/auth/refresh` jis atšaukiamas ir išduodama nauja pora (rotacija). Pakartotinai panaudotas laikomas pavogtu — atšaukiamos visos naudotojo sesijos.
-  * Pabaigoje prisijungiama kaip demonstraciniai naudotojai `jonas` (žaidėjas) ir `admin` (administratorius). Jų slaptažodis — `Demo123!`.
-order: 1000

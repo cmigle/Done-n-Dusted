@@ -1,0 +1,13 @@
+$kind: http-request
+description: |-
+  Deletes guild A with all its content (`204 No Content`).
+
+  Method **#5** in the docs/API.md table.
+url: "{{baseUrl}}/guilds/{{guildA}}"
+method: DELETE
+scripts:
+  - type: afterResponse
+    code: pm.test('204 No Content', () => pm.response.to.have.status(204));
+    language: text/javascript
+examples: ./.resources/Delete guild.resources/examples
+order: 2000

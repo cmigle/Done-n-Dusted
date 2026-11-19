@@ -1,0 +1,42 @@
+$kind: http-request
+description: |-
+  Creates a new guild. The user who creates it becomes its **owner** (`ownerId`) and its **game master**.
+
+  A pre-request script generates a unique name `Postman Guild <time>` so the collection can be run again and again. The response is `201 Created` with a `Location` header, and the new guild's ID is saved to `guildA`.
+
+  Method **#3** in the docs/API.md table.
+url: "{{baseUrl}}/guilds"
+method: POST
+headers:
+  Content-Type: application/json
+body:
+  type: json
+  content: |-
+    {
+      "name": "{{guildName}}",
+      "description": "Guild created by the Postman run"
+    }
+scripts:
+  - type: beforeRequest
+    code: |-
+      pm.collectionVariables.set('guildName', 'Postman Guild ' + Date.now());
+      pm.collectionVariables.set('occurredAt', new Date(Date.now() - 3600000).toISOString());
+    language: text/javascript
+  - type: afterResponse
+    code: |-
+      pm.test('201 Created', () => pm.response.to.have.status(201));
+      pm.test('Location header points to the new resource', () => {
+        pm.expect(pm.response.headers.get('Location')).to.include('/api/guilds/');
+      });
+      pm.test('JSON content type', () => pm.expect(pm.response.headers.get('Content-Type')).to.include('application/json'));
+      const body = pm.response.json();
+      pm.test('Returns the created resource with id and createdAt', () => {
+        pm.expect(body.id).to.be.a('number');
+        pm.expect(body.name).to.eql(pm.collectionVariables.get('guildName'));
+        pm.expect(body.createdAt).to.be.a('string');
+      });
+      pm.test('The creator becomes the guild owner', () => pm.expect(body.ownerId).to.eql(Number(pm.collectionVariables.get('userId'))));
+      pm.collectionVariables.set('guildA', body.id);
+    language: text/javascript
+examples: ./.resources/Create guild.resources/examples
+order: 1000

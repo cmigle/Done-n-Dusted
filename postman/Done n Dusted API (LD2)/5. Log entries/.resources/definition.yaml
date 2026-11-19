@@ -1,0 +1,10 @@
+$kind: collection
+description: |-
+  Log entries belong to a quest: `/guilds/{guildId}/quests/{questId}/logs`.
+
+  * A new log entry is always created as `PENDING` with 0 XP. The server does not accept XP from the client on create.
+  * The game master approves (`APPROVED`) or rejects (`REJECTED`) a log entry with `PATCH`. Without `xpAwarded`, the server takes the XP from the quest's difficulty.
+  * `PENDING` and `REJECTED` log entries cannot have XP or inspiration.
+  * Approved XP is frozen: changing the quest's difficulty later does not rewrite history.
+  * The player `jonas` logs the entry and the guild's game master approves it. Nobody can approve their own log entry, not even the game master.
+order: 6000

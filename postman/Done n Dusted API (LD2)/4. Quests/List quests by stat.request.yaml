@@ -1,0 +1,23 @@
+$kind: http-request
+description: |-
+  Returns the guild's quests.
+
+  Available filters: `stat`, `type`, `difficulty`, `active`. Here the list is filtered by `stat=CON`.
+
+  Method **#6** in the docs/API.md table.
+url: "{{baseUrl}}/guilds/{{guildA}}/quests?stat=CON"
+method: GET
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test('200 OK', () => pm.response.to.have.status(200));
+      const quests = pm.response.json().content;
+      pm.test('The stat filter works, IDs: ' + quests.map(q => q.id).join(', '), () => {
+        pm.expect(quests).to.have.lengthOf(1);
+        pm.expect(quests[0].stat).to.eql('CON');
+        pm.expect(quests[0].id).to.eql(Number(pm.collectionVariables.get('questId')));
+      });
+      pm.test('The quest belongs to guild A', () => pm.expect(quests[0].guildId).to.eql(Number(pm.collectionVariables.get('guildA'))));
+    language: text/javascript
+examples: ./.resources/List quests by stat.resources/examples
+order: 3000

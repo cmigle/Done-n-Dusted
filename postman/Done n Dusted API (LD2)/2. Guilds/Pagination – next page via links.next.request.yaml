@@ -1,0 +1,32 @@
+$kind: http-request
+description: |-
+  Opens the next page from the previous response's `links.next` link (variable `nextPage`); the client does not build the URL itself.
+
+  Checks that this is page 2, that none of its guilds repeat page 1, and that `links.prev` is now present.
+
+  Sent as `admin` (`adminToken`): an administrator sees every guild (3 seeded + 2 created), so there are several pages.
+url: "{{nextPage}}"
+method: GET
+auth:
+  type: bearer
+  credentials:
+    token: "{{adminToken}}"
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test('200 OK', () => pm.response.to.have.status(200));
+      const body = pm.response.json();
+      const ids = body.content.map(g => g.id);
+      const previousIds = JSON.parse(pm.collectionVariables.get('pageIds'));
+      pm.test('Page ' + (body.page.number + 1) + ' of ' + body.page.totalPages + ', IDs: ' + ids.join(', '), () => {
+        pm.expect(body.page.number).to.eql(1);
+        pm.expect(body.content.length).to.be.within(1, 2);
+      });
+      pm.test('No guild repeats from the previous page', () => {
+        ids.forEach(id => pm.expect(previousIds).to.not.include(id));
+        pm.expect(Math.min(...ids)).to.be.above(Math.max(...previousIds));
+      });
+      pm.test('The second page has a prev link', () => pm.expect(body.links.prev).to.include('page=0'));
+    language: text/javascript
+examples: ./.resources/Pagination – next page via links.next.resources/examples
+order: 5000

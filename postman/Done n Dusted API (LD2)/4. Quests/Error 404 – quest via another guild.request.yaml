@@ -1,0 +1,12 @@
+$kind: http-request
+description: The quest exists, but it belongs to guild A and the request goes through guild B. A child resource is reachable only through its real parent, so the response is `404 Not Found`.
+url: "{{baseUrl}}/guilds/{{guildB}}/quests/{{questId}}"
+method: GET
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test('404 Not Found', () => pm.response.to.have.status(404));
+      pm.test('The quest exists, but not in this guild', () => pm.expect(pm.response.json().message).to.include('not found in guild'));
+    language: text/javascript
+examples: ./.resources/Error 404 – quest via another guild.resources/examples
+order: 5000

@@ -1,0 +1,20 @@
+$kind: http-request
+description: The account is active again, so the user can log in.
+url: "{{baseUrl}}/users/{{userId}}"
+method: PATCH
+headers:
+  Content-Type: application/json
+body:
+  type: json
+  content: |-
+    {
+      "enabled": true
+    }
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test('200 OK', () => pm.response.to.have.status(200));
+      pm.test('The account is active', () => pm.expect(pm.response.json().enabled).to.eql(true));
+    language: text/javascript
+examples: ./.resources/Unblock user.resources/examples
+order: 6000

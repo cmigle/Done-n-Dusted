@@ -1,0 +1,25 @@
+$kind: http-request
+description: A new `PENDING` log entry that the player will try to approve. Its ID is saved to `logPlayer`.
+url: "{{baseUrl}}/guilds/{{guildA}}/quests/{{questId}}/logs"
+method: POST
+headers:
+  Content-Type: application/json
+body:
+  type: json
+  content: |-
+    {
+      "note": "Second log entry by the player",
+      "occurredAt": "{{occurredAt}}"
+    }
+auth:
+  type: bearer
+  credentials:
+    token: "{{playerToken}}"
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test('201 Created', () => pm.response.to.have.status(201));
+      pm.collectionVariables.set('logPlayer', pm.response.json().id);
+    language: text/javascript
+examples: ./.resources/Player logs an entry.resources/examples
+order: 2000

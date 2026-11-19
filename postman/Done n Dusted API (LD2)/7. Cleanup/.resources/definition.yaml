@@ -1,0 +1,6 @@
+$kind: collection
+description: |-
+  Deletes everything the collection created, so it can run again. Deleting a guild also removes all its members, quests and log entries. The owner or an administrator deletes a guild.
+
+  The last request checks that the deleted guild is no longer reachable (`404`).
+order: 8000

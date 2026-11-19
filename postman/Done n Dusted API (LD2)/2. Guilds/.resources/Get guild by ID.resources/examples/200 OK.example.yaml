@@ -1,0 +1,20 @@
+$kind: http-example
+request:
+  url: "{{baseUrl}}/guilds/{{guildA}}"
+  method: GET
+response:
+  statusCode: 200
+  statusText: OK
+  headers:
+    Content-Type: application/json
+  body:
+    type: json
+    content: |-
+      {
+        "id": 4,
+        "name": "Postman Guild 1794148292021",
+        "description": "Guild created by the Postman run",
+        "ownerId": 5,
+        "createdAt": "2026-11-08T14:31:32.096916Z"
+      }
+order: 1000

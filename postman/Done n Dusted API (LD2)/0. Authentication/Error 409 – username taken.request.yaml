@@ -1,0 +1,26 @@
+$kind: http-request
+description: The same name in upper case. Usernames are unique regardless of case, so the response is `409 Conflict`.
+url: "{{baseUrl}}/auth/register"
+method: POST
+headers:
+  Content-Type: application/json
+body:
+  type: json
+  content: |-
+    {
+      "username": "{{usernameUpper}}",
+      "password": "{{password}}"
+    }
+auth:
+  type: noauth
+scripts:
+  - type: beforeRequest
+    code: pm.variables.set('usernameUpper', pm.collectionVariables.get('username').toUpperCase());
+    language: text/javascript
+  - type: afterResponse
+    code: |-
+      pm.test('409 Conflict', () => pm.response.to.have.status(409));
+      pm.test('The name is taken even in a different case', () => pm.expect(pm.response.json().message).to.include('already taken'));
+    language: text/javascript
+examples: ./.resources/Error 409 – username taken.resources/examples
+order: 2000

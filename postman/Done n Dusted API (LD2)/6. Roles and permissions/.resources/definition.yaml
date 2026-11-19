@@ -1,0 +1,14 @@
+$kind: collection
+description: |-
+  The authorization rules, each shown as a `403 Forbidden` response with an explanation.
+
+  | Who | Can |
+  | --- | --- |
+  | Guest | Only register and log in (`401` everywhere else) |
+  | `PLAYER` | See the guild and its quests, create quests, log and see **only their own** log entries |
+  | `DUNGEON_MASTER` | See every log entry in the guild, approve / reject them (not their own), create `SIDE_QUEST` |
+  | Owner | Edit and delete the guild, manage members |
+  | `ADMIN` | See every guild, delete any content, manage users |
+
+  A non-member gets nothing about a guild, only `403`.
+order: 7000

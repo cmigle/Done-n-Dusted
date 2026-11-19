@@ -1,6 +1,0 @@
-$kind: collection
-description: |-
-  Duomenų bazės suvestinė: kiek yra grupių, užduočių ir progreso įrašų, su visais jų ID.
-
-  Daroma administratoriaus vardu, nes tik jis mato viską. Aplanką galima leisti ir atskirai (*Run folder*) bet kuriuo metu — jis nieko nekeičia, tik skaito.
-order: 2000

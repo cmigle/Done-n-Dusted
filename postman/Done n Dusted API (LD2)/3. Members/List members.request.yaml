@@ -1,0 +1,20 @@
+$kind: http-request
+description: |-
+  The guild's creator automatically becomes a member with the `DUNGEON_MASTER` role.
+
+  Method **#21** in the docs/API.md table.
+url: "{{baseUrl}}/guilds/{{guildA}}/members"
+method: GET
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test('200 OK', () => pm.response.to.have.status(200));
+      const members = pm.response.json().content;
+      pm.test('The only member is the creator, as DUNGEON_MASTER', () => {
+        pm.expect(members).to.have.lengthOf(1);
+        pm.expect(members[0].userId).to.eql(Number(pm.collectionVariables.get('userId')));
+        pm.expect(members[0].role).to.eql('DUNGEON_MASTER');
+      });
+    language: text/javascript
+examples: ./.resources/List members.resources/examples
+order: 1000
