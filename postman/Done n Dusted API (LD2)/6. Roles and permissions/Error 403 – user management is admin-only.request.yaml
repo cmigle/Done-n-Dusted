@@ -1,0 +1,12 @@
+$kind: http-request
+description: "`/api/users/**` is allowed only for the `ADMIN` role (checked by Spring Security, before the controller)."
+url: "{{baseUrl}}/users"
+method: GET
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test('403 Forbidden', () => pm.response.to.have.status(403));
+      pm.test('Not ADMIN - 403', () => pm.expect(pm.response.json().message).to.include('permission'));
+    language: text/javascript
+examples: ./.resources/Error 403 – user management is admin-only.resources/examples
+order: 12000

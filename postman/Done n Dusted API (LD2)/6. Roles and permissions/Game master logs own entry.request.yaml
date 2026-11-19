@@ -1,0 +1,21 @@
+$kind: http-request
+description: A game master can log progress too. The ID is saved to `logDm`.
+url: "{{baseUrl}}/guilds/{{guildA}}/quests/{{questId}}/logs"
+method: POST
+headers:
+  Content-Type: application/json
+body:
+  type: json
+  content: |-
+    {
+      "note": "The game master's own log entry",
+      "occurredAt": "{{occurredAt}}"
+    }
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test('201 Created', () => pm.response.to.have.status(201));
+      pm.collectionVariables.set('logDm', pm.response.json().id);
+    language: text/javascript
+examples: ./.resources/Game master logs own entry.resources/examples
+order: 5000

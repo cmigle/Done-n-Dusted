@@ -1,0 +1,42 @@
+$kind: http-request
+description: |-
+  Creates a new user. A pre-request script generates a unique name `postman_<time>` so the collection can be run again and again.
+
+  Registration always grants the `USER` role and returns no tokens, so log in afterwards. The password is stored only as a BCrypt hash and never appears in the response.
+
+  Method **#16** in the docs/API.md table.
+url: "{{baseUrl}}/auth/register"
+method: POST
+headers:
+  Content-Type: application/json
+body:
+  type: json
+  content: |-
+    {
+      "username": "{{username}}",
+      "password": "{{password}}"
+    }
+auth:
+  type: noauth
+scripts:
+  - type: beforeRequest
+    code: pm.collectionVariables.set('username', 'postman_' + Date.now());
+    language: text/javascript
+  - type: afterResponse
+    code: |-
+      pm.test('201 Created', () => pm.response.to.have.status(201));
+      const body = pm.response.json();
+      pm.test('Location points to the new user', () => pm.expect(pm.response.headers.get('Location')).to.include('/api/users/' + body.id));
+      pm.test('A new user is always USER', () => {
+        pm.expect(body.username).to.eql(pm.collectionVariables.get('username'));
+        pm.expect(body.role).to.eql('USER');
+        pm.expect(body.enabled).to.eql(true);
+      });
+      pm.test('Neither the password nor its hash is returned', () => {
+        pm.expect(body).to.not.have.property('password');
+        pm.expect(body).to.not.have.property('passwordHash');
+      });
+      pm.collectionVariables.set('userId', body.id);
+    language: text/javascript
+examples: ./.resources/Register.resources/examples
+order: 1000

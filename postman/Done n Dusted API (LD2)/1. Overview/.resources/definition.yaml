@@ -1,0 +1,6 @@
+$kind: collection
+description: |-
+  A database overview: how many guilds, quests and log entries there are, with all their IDs.
+
+  It runs as the administrator, because only an administrator sees everything. The folder can also run on its own (*Run folder*) at any time: it only reads and changes nothing.
+order: 2000

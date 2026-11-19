@@ -1,0 +1,17 @@
+$kind: http-request
+description: |-
+  The first request with a token (the collection's *Bearer Token* `{{accessToken}}`). Returns the logged-in user and their guilds with roles; a new user belongs to none yet.
+
+  Method **#20** in the docs/API.md table.
+url: "{{baseUrl}}/auth/me"
+method: GET
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test('200 OK', () => pm.response.to.have.status(200));
+      const body = pm.response.json();
+      pm.test('Recognised as the same user', () => pm.expect(body.id).to.eql(Number(pm.collectionVariables.get('userId'))));
+      pm.test('A new user belongs to no guild yet', () => pm.expect(body.memberships).to.eql([]));
+    language: text/javascript
+examples: ./.resources/Who am I.resources/examples
+order: 6000

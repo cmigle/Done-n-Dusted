@@ -7,16 +7,16 @@ LD2 prie LD1 REST API prideda du sluoksnius: **kas tu esi** (JWT žetonai) ir **
 - Rolė grupėje (`PLAYER` arba `DUNGEON_MASTER`) imama iš DB kiekvienai užklausai, todėl pakeitimas galioja iš karto.[](source:access)
 - Postman kolekcija: 78 užklausos ir 176 patikros, 0 klaidų švarioje DB.[](source:postman)
 
-@answer scope="LD2 · Spring Boot 4.1.1 · Spring Security 7 · dev profilis · main fe41324"
+@answer scope="LD2 · Spring Boot 4.1.1 · Spring Security 7 · dev profilis · main a8c86c5"
 @meta locale=en style=editorial
 @source token title="TokenService.createAccessToken – JWT kūrimas" path=src/main/java/lt/ktu/donendusted/security/TokenService.java lines=36:49
-@source sec title="SecurityConfig – filtrų grandinė" path=src/main/java/lt/ktu/donendusted/config/SecurityConfig.java lines=39:58
-@source refresh title="AuthService.refresh – rotacija ir vagystės aptikimas" path=src/main/java/lt/ktu/donendusted/service/AuthService.java lines=69:87
+@source sec title="SecurityConfig – filtrų grandinė" path=src/main/java/lt/ktu/donendusted/config/SecurityConfig.java lines=46:72
+@source refresh title="AuthService.refresh – rotacija ir vagystės aptikimas" path=src/main/java/lt/ktu/donendusted/service/AuthService.java lines=69:89
 @source access title="GuildService.access – įėjimas į grupę" path=src/main/java/lt/ktu/donendusted/service/GuildService.java lines=69:81
 @source guildaccess title="GuildAccess – teisės grupėje" path=src/main/java/lt/ktu/donendusted/service/GuildAccess.java lines=15:44
-@source logupdate title="LogEntryService.update – kas gali keisti įrašą" path=src/main/java/lt/ktu/donendusted/service/LogEntryService.java lines=91:109
+@source logupdate title="LogEntryService.update – kas gali keisti įrašą" path=src/main/java/lt/ktu/donendusted/service/LogEntryService.java lines=91:112
 @source autherr title="ApiAuthErrorHandler – 401/403 iš filtrų" path=src/main/java/lt/ktu/donendusted/security/ApiAuthErrorHandler.java lines=13:36
-@source authex title="ApiExceptionHandler – 401 pranešimai" path=src/main/java/lt/ktu/donendusted/error/ApiExceptionHandler.java lines=55:65
+@source authex title="ApiExceptionHandler – 401 pranešimai" path=src/main/java/lt/ktu/donendusted/error/ApiExceptionHandler.java lines=72:83
 @source v5 title="V5 migracija – narystės ir vienas DM" path=src/main/resources/db/migration/V5__guild_membership.sql lines=4:21
 @source v4 title="V4 migracija – naudotojai ir refresh žetonai" path=src/main/resources/db/migration/V4__users_and_tokens.sql lines=1:36
 @source postman title="Postman kolekcija (v2.1 JSON)" path=postman/DoneNDusted.postman_collection.json
@@ -114,12 +114,12 @@ Svarbiausia mintis: **autentifikacija** (kas tu) vyksta filtruose, o **autorizac
 | ruleOk > ok | taip | emphasis |
 
 @steps id=decision-steps
-| s1 | Yra žetonas? | Nėra `Authorization` antraštės – `401` su `WWW-Authenticate: Bearer` ir pranešimu „Reikalingas prisijungimas“. | status-decision | hasToken |
+| s1 | Yra žetonas? | Nėra `Authorization` antraštės – `401` su `WWW-Authenticate: Bearer` ir pranešimu „Authentication required“. | status-decision | hasToken |
 | s2 | Žetonas galioja? | Sugadintas parašas arba praėjęs `exp` – `401` su `invalid_token`. Pasibaigusiam žetonui pranešimas siūlo `/api/auth/refresh`. | status-decision | validToken |
-| s3 | Reikia ADMIN? | Tik `/api/users/**`. Ne administratoriui – `403` „Neturite teises“, dar prieš kontrolerį. | status-decision | adminPath |
+| s3 | Reikia ADMIN? | Tik `/api/users/**`. Ne administratoriui – `403` „You do not have permission“, dar prieš kontrolerį. | status-decision | adminPath |
 | s4 | Laukai teisingi? | Kaip LD1: blogas JSON, tipas ar `@Valid` apribojimas – `400` su `details`. | status-decision | bodyOk |
 | s5 | Grupė yra? | `GuildService.access()` pirmiausia ieško grupės: nėra – `404`. | status-decision | guildExists |
-| s6 | Narys ar ADMIN? | Grupė yra, bet naudotojas ne narys ir ne `ADMIN` – `403` „Nesate grupes N narys“. | status-decision | isMember |
+| s6 | Narys ar ADMIN? | Grupė yra, bet naudotojas ne narys ir ne `ADMIN` – `403` „You are not a member of guild N.“. | status-decision | isMember |
 | s7 | Rolė leidžia? | Konkreti teisė: DM tvirtina, savininkas keičia grupę, autorius keičia savo įrašą. Ne – `403` su paaiškinimu. | status-decision | roleOk |
 | s8 | Taisyklė tenkinama? | LD1 dalykinės taisyklės ir naujos (patvirtinto įrašo turinys užšaldytas) – `422`. | status-decision | ruleOk |
 | s9 | 200 / 201 / 204 | Viskas tinka: pakeitimas įrašomas transakcijoje. | status-decision | ok |
@@ -160,7 +160,7 @@ Tvarka svarbi: pirma tikrinama, **kas** kreipiasi, tada **ar gali**, ir tik tada
 | t4 | Kažkas panaudoja seną R1 | Atšauktas žetonas atkeliavo dar kartą – vadinasi, kažkas jį nukopijavo. Serveris atšaukia visas to naudotojo sesijas ir grąžina `401`. | token-life | db |
 | t5 | Atsijungimas | `POST /api/auth/logout` atšaukia refresh žetoną. Access žetonas galioja iki savo `exp`, todėl jis ir trumpas. | token-life | client |
 
-Rotacija ir pakartotinio panaudojimo aptikimas – rekomenduojama OAuth 2.0 saugumo praktika.[](source:rfc9700) Postman aplanke `0. Autentifikacija` šis scenarijus parodytas užklausomis „Atnaujinti žetonus“ ir „Klaida 401 – pakartotinai panaudotas refresh žetonas“.
+Rotacija ir pakartotinio panaudojimo aptikimas – rekomenduojama OAuth 2.0 saugumo praktika.[](source:rfc9700) Postman aplanke `0. Authentication` šis scenarijus parodytas užklausomis „Refresh tokens“ ir „Error 401 – reused refresh token“.
 
 ## Kas yra JWT viduje? {#jwt}
 
@@ -255,15 +255,15 @@ Filtrai suveikia anksčiau nei kontroleris, todėl `@RestControllerAdvice` jų k
 
 | Situacija | Kodas | Pranešimas |
 | --- | --- | --- |
-| Nėra antraštės `Authorization` | `401` | Reikalingas prisijungimas: Authorization: Bearer `<accessToken>` |
-| Sugadintas žetonas | `401` | Access zetonas neteisingas |
-| Pasibaigęs žetonas | `401` | Access zetonas pasibaiges – gaukite nauja per /api/auth/refresh |
-| Blogas vardas ar slaptažodis | `401` | Neteisingas naudotojo vardas arba slaptazodis |
-| Užblokuota paskyra | `403` | Paskyra uzblokuota |
-| Ne grupės narys | `403` | Nesate grupes N narys |
-| Žaidėjas tvirtina įrašą | `403` | Irasus perziuri tik grupes DM |
-| DM tvirtina savo įrašą | `403` | Savo iraso tvirtinti negalima |
-| Ne ADMIN kviečia `/api/users` | `403` | Neturite teises atlikti sio veiksmo |
+| Nėra antraštės `Authorization` | `401` | Authentication required. Send the header Authorization: Bearer `<accessToken>`. |
+| Sugadintas žetonas | `401` | Invalid access token |
+| Pasibaigęs žetonas | `401` | Access token has expired. Get a new one from /api/auth/refresh. |
+| Blogas vardas ar slaptažodis | `401` | Invalid username or password |
+| Užblokuota paskyra | `403` | Account is blocked. |
+| Ne grupės narys | `403` | You are not a member of guild N. |
+| Žaidėjas tvirtina įrašą | `403` | Only the game master can review log entries. |
+| DM tvirtina savo įrašą | `403` | You cannot review your own log entry. |
+| Ne ADMIN kviečia `/api/users` | `403` | You do not have permission to perform this action. |
 
 Prie kiekvieno `401` serveris prideda antraštę `WWW-Authenticate: Bearer`, kaip reikalauja Bearer žetonų standartas.[](source:rfc6750) **401** reiškia „nežinau, kas tu“, **403** – „žinau, bet negalima“.
 
@@ -304,15 +304,15 @@ Visų slaptažodis `Demo123!`.[](source:v4) Visus LD1 įrašus peržiūrėjo tos
 
 | Aplankas | Ką parodo |
 | --- | --- |
-| 0. Autentifikacija | Registracija, `409`, `400`, prisijungimas, JWT turinys, `/auth/me`, `401`, rotacija, vagystės aptikimas, atsijungimas |
-| 1. Suvestinė | `admin` vardu: `Is viso - grupiu: 3, uzduociu: 9, irasu: 12` |
-| 2. Grupės | LD1 CRUD, kūrėjas tampa savininku, naudotojas mato tik savo grupes, puslapiavimas |
-| 3. Nariai | Žaidėjo pridėjimas, `409` antras DM, `422` nežinomas naudotojas, `403` žaidėjui |
-| 4. Užduotys | LD1 testai ir `createdBy` |
-| 5. Progreso įrašai | Žaidėjas registruoja, DM tvirtina, patvirtinto įrašo turinys užšaldytas (`422`) |
-| 6. Rolės ir teisės | Visi `403` atvejai su paaiškinimais, žaidėjas mato tik savo įrašus, išėjimas iš grupės |
-| 7. Išvalymas | Ištrynimas, antrą grupę trina `admin`, `404` po ištrynimo |
-| 8. Administravimas | Naudotojų sąrašas, `422` bandant užblokuoti save, blokavimas ir atblokavimas |
+| 0. Authentication | Registracija, `409`, `400`, prisijungimas, JWT turinys, `/auth/me`, `401`, rotacija, vagystės aptikimas, atsijungimas |
+| 1. Overview | `admin` vardu: `Total - guilds: 3, quests: 9, log entries: 12` |
+| 2. Guilds | LD1 CRUD, kūrėjas tampa savininku, naudotojas mato tik savo grupes, puslapiavimas |
+| 3. Members | Žaidėjo pridėjimas, `409` antras DM, `422` nežinomas naudotojas, `403` žaidėjui |
+| 4. Quests | LD1 testai ir `createdBy` |
+| 5. Log entries | Žaidėjas registruoja, DM tvirtina, patvirtinto įrašo turinys užšaldytas (`422`) |
+| 6. Roles and permissions | Visi `403` atvejai su paaiškinimais, žaidėjas mato tik savo įrašus, išėjimas iš grupės |
+| 7. Cleanup | Ištrynimas, antrą grupę trina `admin`, `404` po ištrynimo |
+| 8. Administration | Naudotojų sąrašas, `422` bandant užblokuoti save, blokavimas ir atblokavimas |
 
 Kolekcijos lygyje nustatytas *Bearer Token* `{{accessToken}}`. Užklausos, kurias siunčia žaidėjas ar administratorius, turi savo `{{playerToken}}` arba `{{adminToken}}`. Kiekvienas paleidimas užregistruoja naują naudotoją `postman_<laikas>`, todėl kolekciją galima leisti kartotinai.
 
@@ -376,11 +376,11 @@ Kiekvienai silpnai vietai turėk paruoštą sprendimą: trumpesnis galiojimas ar
 ## Ką pasitikrinti prieš gynimą? {#checklist}
 
 - [ ] Paleisk iš naujo `demo/1-paleisti-api.cmd` (arba `./mvnw spring-boot:run`), kad DB būtų švari ir seed ID teisingi. Visa eiga su laukiamais atsakymais – `docs/DEMO_PLANAS.md`.
-- [ ] Paleisk Postman kolekciją (`demo/2-postman-testai.cmd`): turi būti 176 patikros be klaidų ir suvestinė `grupiu: 3, uzduociu: 9, irasu: 12`.
+- [ ] Paleisk Postman kolekciją (`demo/2-postman-testai.cmd`): turi būti 176 patikros be klaidų ir suvestinė `guilds: 3, quests: 9, log entries: 12`.
 - [ ] Swagger: parodyk `401` be žetono, prisijunk kaip `rokas`, įklijuok žetoną per **Authorize**.
-- [ ] JWT turinys: `demo/3-curl-komandos.cmd` → komanda `jwt` parodo `sub`, `role`, `iat`, `exp` (`exp - iat = 900`); Postman „Prisijungti“ testai tai patikrina.
-- [ ] Parodyk rotaciją: „Atnaujinti žetonus“, tada „Klaida 401 – pakartotinai panaudotas refresh žetonas“.
-- [ ] Aplanke `6. Rolės ir teisės` parodyk „Klaida 403 – savo įrašo tvirtinti negalima“.
+- [ ] JWT turinys: `demo/3-curl-komandos.cmd` → komanda `jwt` parodo `sub`, `role`, `iat`, `exp` (`exp - iat = 900`); Postman „Log in“ testai tai patikrina.
+- [ ] Parodyk rotaciją: „Refresh tokens“, tada „Error 401 – reused refresh token“.
+- [ ] Aplanke `6. Roles and permissions` parodyk „Error 403 – cannot approve own entry“.
 - [ ] DB (`demo/4-duomenu-baze.cmd`): `password_hash` prasideda `$2a$10$` – maiša, ne slaptažodis; refresh žetonų – tik SHA-256 maiša.
 - [ ] Mokėk paaiškinti skirtumą tarp `401` ir `403` bei tarp autentifikacijos ir autorizacijos.
 - [ ] GitHub: parodyk šakas ir žymas `v0.1.0`, `v0.2.0`.

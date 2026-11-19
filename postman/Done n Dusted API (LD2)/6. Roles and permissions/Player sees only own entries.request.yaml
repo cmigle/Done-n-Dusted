@@ -1,0 +1,22 @@
+$kind: http-request
+description: The same list path as for the game master, but for a player the server returns only that player's own log entries.
+url: "{{baseUrl}}/guilds/{{guildA}}/quests/{{questId}}/logs"
+method: GET
+auth:
+  type: bearer
+  credentials:
+    token: "{{playerToken}}"
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test('200 OK', () => pm.response.to.have.status(200));
+      const logs = pm.response.json().content;
+      const ids = logs.map(x => x.id);
+      pm.test('All log entries are by jonas, IDs: ' + ids.join(', '), () => {
+        logs.forEach(x => pm.expect(x.authorId).to.eql(Number(pm.collectionVariables.get('playerId'))));
+        pm.expect(ids).to.include(Number(pm.collectionVariables.get('logPlayer')));
+        pm.expect(ids).to.not.include(Number(pm.collectionVariables.get('logDm')));
+      });
+    language: text/javascript
+examples: ./.resources/Player sees only own entries.resources/examples
+order: 8000

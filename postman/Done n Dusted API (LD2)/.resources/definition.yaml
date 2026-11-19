@@ -3,66 +3,66 @@ name: Done n Dusted API (LD2)
 description: |-
   # Done n Dusted API (LD2)
 
-  DnD principu veikianti produktyvumo sistema: žaidėjas registruoja realaus gyvenimo progresą, grupės Dungeon Master jį patvirtina, ir tik patvirtinti įrašai suteikia XP.
+  A productivity system that plays like a tabletop RPG: a player logs real-life progress, the guild's game master approves it, and only approved log entries award XP.
 
-  Resursų hierarchija: **Guild (1:N) → Quest (1:N) → LogEntry**. Vaikinis objektas pasiekiamas tik per tėvinį, todėl neteisinga grandinė grąžina `404`.
+  Resource hierarchy: **Guild (1:N) → Quest (1:N) → LogEntry**. A child is reachable only through its parent, so a wrong chain returns `404`.
 
-  LD2 prideda **autentifikaciją ir autorizaciją**: JWT access ir refresh žetonai, grupės rolės `PLAYER` / `DUNGEON_MASTER` ir globali rolė `ADMIN`.
+  Access is controlled with **authentication and authorization**: JWT access and refresh tokens, the guild roles `PLAYER` / `DUNGEON_MASTER` and the global `ADMIN` role.
 
-  ## Kaip paleisti
+  ## How to run
 
-  1. Paleiskite API (`./mvnw spring-boot:run`). Ji veikia adresu `http://localhost:8080/api`.
-  2. Postman programoje paleiskite visą kolekciją su **Run collection**. Aplankus ir užklausas leiskite iš eilės, nes vėlesnės užklausos naudoja ankstesnių sukurtus ID ir žetonus.
+  1. Start the API (`./mvnw spring-boot:run`). It runs at `http://localhost:8080/api`.
+  2. In Postman, run the whole collection with **Run collection**. Keep the folders and requests in order: later requests use the IDs and tokens that earlier ones created.
 
-  Kolekcija kaskart užregistruoja naują naudotoją, pati susikuria duomenis ir po savęs išsivalo, todėl ją galima leisti kiek norima kartų.
+  Every run registers a new user, creates its own data and cleans up after itself, so the collection can be run any number of times.
 
-  ## Autorizacija
+  ## Authorization
 
-  Kolekcijos lygyje nustatyta *Bearer Token* `{{accessToken}}` — ją paveldi visos užklausos. Kai užklausą siunčia kitas naudotojas, jos *Authorization* skiltyje nurodytas kitas žetonas:
+  The collection sets *Bearer Token* `{{accessToken}}`, which every request inherits. When another user sends a request, its *Authorization* tab names a different token:
 
-  | Žetonas | Naudotojas | Kam naudojamas |
+  | Token | User | Used for |
   | --- | --- | --- |
-  | `accessToken` | `postman_<laikas>`, užregistruotas kolekcijos | Grupių savininkas ir DM |
-  | `playerToken` | `jonas` | Grupės žaidėjas (`PLAYER`) |
-  | `adminToken` | `admin` | Administratorius (`ADMIN`) |
+  | `accessToken` | `postman_<time>`, registered by the collection | Guild owner and game master |
+  | `playerToken` | `jonas` | Guild player (`PLAYER`) |
+  | `adminToken` | `admin` | Administrator (`ADMIN`) |
 
-  Demonstracinių naudotojų (`admin`, `rokas`, `ieva`, `jonas`) slaptažodis — `Demo123!`.
+  The demo users (`admin`, `rokas`, `ieva`, `jonas`) share the password `Demo123!`.
 
-  ## Aplankai
+  ## Folders
 
-  | Aplankas | Kas tikrinama |
+  | Folder | What it checks |
   | --- | --- |
-  | 0. Autentifikacija | Registracija, prisijungimas, JWT turinys, `/auth/me`, žetonų rotacija, atsijungimas, `401` |
-  | 1. Suvestinė | Kiek DB yra grupių, užduočių ir įrašų (su ID), ar vaikų ID rodo į teisingą tėvą |
-  | 2. Grupės | Grupių CRUD, puslapiavimas per `links.next`, `400`, `404`, `409`, `415` klaidos |
-  | 3. Nariai | Narių pridėjimas, rolės, vienas DM grupėje (`409`), `403`, `422` |
-  | 4. Užduotys | Užduočių kūrimas, filtrai, XP skaičiavimas, `422` ir tėvinės grandinės `404` |
-  | 5. Progreso įrašai | Žaidėjas registruoja, DM patvirtina, XP taisyklės, užšaldytas turinys |
-  | 6. Rolės ir teisės | Kas ką gali: `403` ne nariui, žaidėjui, DM su savo įrašu, ne administratoriui |
-  | 7. Išvalymas | Sukurtų duomenų ištrynimas (`204`, taip pat administratoriaus) ir patikra, kad jų nebėra |
-  | 8. Administravimas | Naudotojų sąrašas, užblokavimas ir atblokavimas |
+  | 0. Authentication | Registration, login, JWT claims, `/auth/me`, token rotation, logout, `401` |
+  | 1. Overview | How many guilds, quests and log entries the database holds (with IDs), and whether child IDs point to the right parent |
+  | 2. Guilds | Guild CRUD, pagination via `links.next`, `400`, `404`, `409` and `415` errors |
+  | 3. Members | Adding members, roles, one game master per guild (`409`), `403`, `422` |
+  | 4. Quests | Creating quests, filters, XP calculation, `422` and the parent-chain `404` |
+  | 5. Log entries | A player logs progress, the game master approves it, XP rules, frozen content |
+  | 6. Roles and permissions | Who can do what: `403` for a non-member, a player, a game master with their own entry, a non-admin |
+  | 7. Cleanup | Deleting the created data (`204`, also by an administrator) and checking that it is gone |
+  | 8. Administration | User list, blocking and unblocking |
 
-  Atnaujinimas visur yra `PATCH` (dalinis): keičiami tik atsiųsti laukai, todėl neatsiųstas aprašymas nedingsta. Sukūrus resursą be `description`, jis išsaugomas kaip `""`.
+  Every update is a `PATCH` (partial): only the fields sent change, so a description that is not sent is kept. A resource created without `description` stores it as `""`.
 
-  ## Kolekcijos kintamieji
+  ## Collection variables
 
-  | Kintamasis | Reikšmė |
+  | Variable | Value |
   | --- | --- |
-  | `baseUrl` | API adresas, numatytai `http://localhost:8080/api` |
-  | `username`, `password`, `userId` | Kolekcijos užregistruotas naudotojas; slaptažodis bendras ir demonstraciniams naudotojams |
-  | `accessToken`, `refreshToken`, `oldRefreshToken` | Kolekcijos naudotojo žetonai ir panaudotas refresh žetonas rotacijos testui |
-  | `playerToken`, `playerId` | Žaidėjo `jonas` žetonas ir ID |
-  | `adminToken`, `adminId` | Administratoriaus žetonas ir ID |
-  | `guildName` | Unikalus grupės pavadinimas, generuojamas grupės kūrimo užklausoje |
-  | `guildA`, `guildB` | Sukurtų grupių ID |
-  | `questId`, `logId` | Sukurtos užduoties ir įrašo ID |
-  | `logPlayer`, `logDm` | Žaidėjo ir DM įrašai teisių patikroms |
-  | `occurredAt` | Įvykio laikas (prieš valandą), naudojamas įrašams |
-  | `nextPage`, `pageIds` | Puslapiavimo demonstracijai: `links.next` nuoroda ir pirmo puslapio ID |
+  | `baseUrl` | API address, `http://localhost:8080/api` by default |
+  | `username`, `password`, `userId` | The user the collection registers; the demo users share the same password |
+  | `accessToken`, `refreshToken`, `oldRefreshToken` | The collection user's tokens and a used refresh token for the rotation test |
+  | `playerToken`, `playerId` | Token and ID of the player `jonas` |
+  | `adminToken`, `adminId` | Token and ID of the administrator |
+  | `guildName` | Unique guild name, generated by the create-guild request |
+  | `guildA`, `guildB` | IDs of the created guilds |
+  | `questId`, `logId` | IDs of the created quest and log entry |
+  | `logPlayer`, `logDm` | The player's and the game master's log entries for the permission checks |
+  | `occurredAt` | Event time (an hour ago) used for log entries |
+  | `nextPage`, `pageIds` | For the pagination demo: the `links.next` link and the first page's IDs |
 
-  ## Klaidų formatas
+  ## Error format
 
-  Kiekviena klaida grąžinama vienoda `ApiError` struktūra:
+  Every error comes back in the same `ApiError` shape:
 
   ```json
   {
@@ -75,13 +75,13 @@ description: |-
   }
   ```
 
-  `details` pateikiamas tik tada, kai klaida susijusi su konkrečiais laukais.
+  `details` is included only when the error concerns specific fields.
 
-  **401 ar 403?** `401` — serveris nežino, kas jūs: nėra žetono, jis sugadintas ar pasibaigęs, blogi prisijungimo duomenys. `403` — žino, bet teisių neužtenka: ne grupės narys, netinkama rolė grupėje, ne `ADMIN`, užblokuota paskyra.
+  **401 or 403?** `401`: the server does not know who you are (no token, a broken or expired token, wrong login details). `403`: it knows, but you lack the rights (not a guild member, the wrong guild role, not `ADMIN`, a blocked account).
 
-  **400 ar 422?** `400` reiškia, kad klaidą matyti vien iš užklausos (blogas JSON, tipas, lauko apribojimas, nežinomas laukas). `422` reiškia, kad užklausa teisinga, bet pažeidžia dalykinės srities taisyklę.
+  **400 or 422?** `400` means the error is visible from the request alone (bad JSON, a wrong type, a field constraint, an unknown field). `422` means the request is well-formed but breaks a domain rule.
 
-  Kiekviena užklausa turi išsaugotą pavyzdinį atsakymą (*Examples*), įrašytą iš tikro API paleidimo.
+  Every request has a saved example response (*Examples*) recorded from a real API run.
 variables:
   baseUrl: http://localhost:8080/api
   username: ""

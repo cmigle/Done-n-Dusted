@@ -1,0 +1,28 @@
+$kind: http-request
+description: The demo administrator. `adminToken` is used for the overview, for pagination (an administrator sees every guild) and in the `8. Administration` folder.
+url: "{{baseUrl}}/auth/login"
+method: POST
+headers:
+  Content-Type: application/json
+body:
+  type: json
+  content: |-
+    {
+      "username": "admin",
+      "password": "{{password}}"
+    }
+auth:
+  type: noauth
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test('200 OK', () => pm.response.to.have.status(200));
+      const body = pm.response.json();
+      const b64 = body.accessToken.split('.')[1].replace(/-/g, '+').replace(/_/g, '/');
+      const claims = JSON.parse(atob(b64 + '==='.slice((b64.length + 3) % 4)));
+      pm.test('JWT role - ADMIN', () => pm.expect(claims.role).to.eql('ADMIN'));
+      pm.collectionVariables.set('adminToken', body.accessToken);
+      pm.collectionVariables.set('adminId', Number(claims.sub));
+    language: text/javascript
+examples: ./.resources/Log in as administrator (admin).resources/examples
+order: 17000

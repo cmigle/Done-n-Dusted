@@ -1,0 +1,42 @@
+$kind: http-example
+request:
+  url: "{{baseUrl}}/guilds/{{guildA}}/quests?stat=CON"
+  method: GET
+response:
+  statusCode: 200
+  statusText: OK
+  headers:
+    Content-Type: application/json
+  body:
+    type: json
+    content: |-
+      {
+        "totalElements": 1,
+        "content": [
+          {
+            "id": 10,
+            "guildId": 4,
+            "title": "Run 10 kilometers",
+            "description": "Quest created by the Postman run",
+            "stat": "CON",
+            "type": "MILESTONE",
+            "difficulty": "HARD",
+            "active": true,
+            "xpPerCompletion": 50,
+            "createdBy": 5,
+            "createdAt": "2026-11-08T14:31:34.639486Z"
+          }
+        ],
+        "page": {
+          "number": 0,
+          "size": 20,
+          "totalElements": 1,
+          "totalPages": 1
+        },
+        "links": {
+          "self": "http://localhost:8080/api/guilds/4/quests?stat=CON&page=0&size=20",
+          "first": "http://localhost:8080/api/guilds/4/quests?stat=CON&page=0&size=20",
+          "last": "http://localhost:8080/api/guilds/4/quests?stat=CON&page=0&size=20"
+        }
+      }
+order: 1000

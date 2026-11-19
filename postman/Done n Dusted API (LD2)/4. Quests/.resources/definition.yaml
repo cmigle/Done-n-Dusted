@@ -1,0 +1,12 @@
+$kind: collection
+description: |-
+  Quests belong to a guild: `/guilds/{guildId}/quests`.
+
+  * `stat`: `STR`, `DEX`, `CON`, `INT`, `WIS`, `CHA`.
+  * `type`: `MILESTONE`, `HABIT`, `GRIND`, `SIDE_QUEST`. `targetCount` is required for the `GRIND` type and allowed only there.
+  * `difficulty` multiplies the base XP (10): `TRIVIAL` ×1, `EASY` ×2, `MEDIUM` ×3, `HARD` ×5, `LEGENDARY` ×8.
+
+  The server always calculates `xpPerCompletion`.
+
+  A guild member creates a quest (`createdBy`). The creator, the guild's game master or the owner can edit it; only the game master creates a `SIDE_QUEST` (see `6. Roles and permissions`).
+order: 5000

@@ -1,0 +1,21 @@
+$kind: http-request
+description: Tries to give a `PENDING` log entry `xpAwarded = 500`. An unreviewed log entry cannot have XP, so the response is `422 Unprocessable Entity`.
+url: "{{baseUrl}}/guilds/{{guildA}}/quests/{{questId}}/logs/{{logId}}"
+method: PATCH
+headers:
+  Content-Type: application/json
+body:
+  type: json
+  content: |-
+    {
+      "status": "PENDING",
+      "xpAwarded": 500
+    }
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test('422 Unprocessable Entity', () => pm.response.to.have.status(422));
+      pm.test('An unreviewed log entry cannot have points', () => pm.expect(pm.response.json().message).to.include('PENDING'));
+    language: text/javascript
+examples: ./.resources/Error 422 – XP on an unreviewed log entry.resources/examples
+order: 6000

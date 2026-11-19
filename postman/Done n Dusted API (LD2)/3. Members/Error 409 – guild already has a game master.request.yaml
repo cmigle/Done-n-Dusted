@@ -1,0 +1,21 @@
+$kind: http-request
+description: The guild already has a game master (its creator), so a second one cannot be appointed.
+url: "{{baseUrl}}/guilds/{{guildA}}/members"
+method: POST
+headers:
+  Content-Type: application/json
+body:
+  type: json
+  content: |-
+    {
+      "username": "ieva",
+      "role": "DUNGEON_MASTER"
+    }
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test('409 Conflict', () => pm.response.to.have.status(409));
+      pm.test('One game master per guild', () => pm.expect(pm.response.json().message).to.include('already has a game master'));
+    language: text/javascript
+examples: ./.resources/Error 409 – guild already has a game master.resources/examples
+order: 5000

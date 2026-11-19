@@ -1,0 +1,33 @@
+$kind: http-request
+description: |-
+  Creates a `MILESTONE` quest with `HARD` difficulty in guild A and saves its ID to `questId`.
+
+  The server calculates `xpPerCompletion`: 10 × 5 (`HARD`) = **50**.
+
+  Method **#8** in the docs/API.md table.
+url: "{{baseUrl}}/guilds/{{guildA}}/quests"
+method: POST
+headers:
+  Content-Type: application/json
+body:
+  type: json
+  content: |-
+    {
+      "title": "Run 10 kilometers",
+      "description": "Quest created by the Postman run",
+      "stat": "CON",
+      "type": "MILESTONE",
+      "difficulty": "HARD"
+    }
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test('201 Created', () => pm.response.to.have.status(201));
+      const body = pm.response.json();
+      pm.test('The server derives XP from difficulty (HARD = 10 * 5)', () => pm.expect(body.xpPerCompletion).to.eql(50));
+      pm.test('The parent guild is correct', () => pm.expect(body.guildId).to.eql(Number(pm.collectionVariables.get('guildA'))));
+      pm.test('The quest creator is the logged-in user', () => pm.expect(body.createdBy).to.eql(Number(pm.collectionVariables.get('userId'))));
+      pm.collectionVariables.set('questId', body.id);
+    language: text/javascript
+examples: ./.resources/Create quest.resources/examples
+order: 1000

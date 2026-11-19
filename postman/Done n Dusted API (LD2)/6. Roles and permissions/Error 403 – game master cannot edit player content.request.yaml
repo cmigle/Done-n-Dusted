@@ -1,0 +1,20 @@
+$kind: http-request
+description: "The game master approves entries but cannot rewrite the player's note or evidence: only the author edits the content."
+url: "{{baseUrl}}/guilds/{{guildA}}/quests/{{questId}}/logs/{{logPlayer}}"
+method: PATCH
+headers:
+  Content-Type: application/json
+body:
+  type: json
+  content: |-
+    {
+      "note": "Note rewritten by the game master"
+    }
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test('403 Forbidden', () => pm.response.to.have.status(403));
+      pm.test('Only the author edits the content', () => pm.expect(pm.response.json().message).to.include('Only the author'));
+    language: text/javascript
+examples: ./.resources/Error 403 – game master cannot edit player content.resources/examples
+order: 4000

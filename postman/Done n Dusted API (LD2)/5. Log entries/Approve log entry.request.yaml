@@ -1,0 +1,41 @@
+$kind: http-request
+description: |-
+  The guild's game master (the collection user) approves the player's log entry (`PATCH`): only the review fields `status = APPROVED`, `inspirationAwarded = 1` and `reviewerNote` are sent. The entry's content (`note`, `evidenceUrl`, `occurredAt`) stays unchanged.
+
+  `xpAwarded` is not sent, so the server takes it from the quest's difficulty (`LEGENDARY` = **80**). `reviewedAt` and `reviewerId` are filled in. Only the guild's game master can change the review fields.
+
+  Method **#14** in the docs/API.md table.
+url: "{{baseUrl}}/guilds/{{guildA}}/quests/{{questId}}/logs/{{logId}}"
+method: PATCH
+headers:
+  Content-Type: application/json
+body:
+  type: json
+  content: |-
+    {
+      "status": "APPROVED",
+      "inspirationAwarded": 1,
+      "reviewerNote": "Approved, the photo is clear"
+    }
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test('200 OK', () => pm.response.to.have.status(200));
+      const body = pm.response.json();
+      pm.test('XP comes from the quest difficulty although the client did not send it', () => {
+        pm.expect(body.status).to.eql('APPROVED');
+        pm.expect(body.xpAwarded).to.eql(80);
+        pm.expect(body.inspirationAwarded).to.eql(1);
+        pm.expect(body.reviewedAt).to.be.a('string');
+      });
+      pm.test('Fields not sent (note, evidenceUrl) are unchanged', () => {
+        pm.expect(body.note).to.eql('Ran 10 km in 52 minutes');
+        pm.expect(body.evidenceUrl).to.eql('https://example.org/evidence/run.png');
+      });
+      pm.test('Approved by the game master, not by the author', () => {
+        pm.expect(body.reviewerId).to.eql(Number(pm.collectionVariables.get('userId')));
+        pm.expect(body.authorId).to.eql(Number(pm.collectionVariables.get('playerId')));
+      });
+    language: text/javascript
+examples: ./.resources/Approve log entry.resources/examples
+order: 5000

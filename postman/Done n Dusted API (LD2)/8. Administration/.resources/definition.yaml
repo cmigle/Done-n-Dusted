@@ -1,0 +1,12 @@
+$kind: collection
+description: |-
+  User management, for the `ADMIN` role only (folder *Authorization*: `{{adminToken}}`).
+
+  An administrator sees users, changes their role and can **block** an account: all of that user's sessions are revoked and login is refused (`403`).
+auth:
+  - id: 4a62b28e-74ca-4ba0-83ae-599315cb9838
+    type: bearer
+    name: bearer auth
+    credentials:
+      token: "{{adminToken}}"
+order: 9000

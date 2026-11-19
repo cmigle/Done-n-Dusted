@@ -1,0 +1,25 @@
+$kind: http-request
+description: |-
+  Revokes the refresh token. The access token stays valid until its `exp` (the server does not store access tokens), which is why it is short-lived: 15 min.
+
+  Method **#19** in the docs/API.md table.
+url: "{{baseUrl}}/auth/logout"
+method: POST
+headers:
+  Content-Type: application/json
+body:
+  type: json
+  content: |-
+    {
+      "refreshToken": "{{refreshToken}}"
+    }
+auth:
+  type: noauth
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test('204 No Content', () => pm.response.to.have.status(204));
+      pm.test('Empty response body', () => pm.expect(pm.response.text()).to.be.empty);
+    language: text/javascript
+examples: ./.resources/Log out.resources/examples
+order: 13000

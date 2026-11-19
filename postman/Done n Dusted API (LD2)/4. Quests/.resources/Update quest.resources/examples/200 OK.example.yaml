@@ -1,0 +1,26 @@
+$kind: http-example
+request:
+  url: "{{baseUrl}}/guilds/{{guildA}}/quests/{{questId}}"
+  method: PATCH
+response:
+  statusCode: 200
+  statusText: OK
+  headers:
+    Content-Type: application/json
+  body:
+    type: json
+    content: |-
+      {
+        "id": 10,
+        "guildId": 4,
+        "title": "Run 10 kilometers",
+        "description": "Quest created by the Postman run",
+        "stat": "CON",
+        "type": "MILESTONE",
+        "difficulty": "LEGENDARY",
+        "active": true,
+        "xpPerCompletion": 80,
+        "createdBy": 5,
+        "createdAt": "2026-11-08T14:31:34.639486Z"
+      }
+order: 1000

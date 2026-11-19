@@ -1,0 +1,27 @@
+$kind: http-request
+description: A `SIDE_QUEST` is a quest the game master hands out for an unexpected good deed, so a player cannot create one.
+url: "{{baseUrl}}/guilds/{{guildA}}/quests"
+method: POST
+headers:
+  Content-Type: application/json
+body:
+  type: json
+  content: |-
+    {
+      "title": "Unexpected good deed",
+      "stat": "CHA",
+      "type": "SIDE_QUEST",
+      "difficulty": "EASY"
+    }
+auth:
+  type: bearer
+  credentials:
+    token: "{{playerToken}}"
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test('403 Forbidden', () => pm.response.to.have.status(403));
+      pm.test('SIDE_QUEST - game master only', () => pm.expect(pm.response.json().message).to.include('SIDE_QUEST'));
+    language: text/javascript
+examples: ./.resources/Error 403 – only the game master creates SIDE_QUEST.resources/examples
+order: 10000

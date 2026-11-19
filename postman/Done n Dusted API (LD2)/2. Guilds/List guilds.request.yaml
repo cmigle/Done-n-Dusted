@@ -1,0 +1,33 @@
+$kind: http-request
+description: |-
+  Returns the guilds the logged-in user belongs to: a new user sees only the two they created. An administrator sees all of them (see `1. Overview`). Default parameters: up to 20 guilds per page, sorted by name.
+
+  * `name` filters by part of the name.
+  * `page`, `size` and `sort` (e.g. `sort=name,asc`) control pagination. The largest `size` is 100.
+
+  The next two requests show pagination on its own.
+
+  Method **#1** in the docs/API.md table.
+url: "{{baseUrl}}/guilds"
+method: GET
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test('200 OK', () => pm.response.to.have.status(200));
+      const guilds = pm.response.json().content;
+      const ids = guilds.map(g => g.id);
+      pm.test('The user sees only their own guilds, IDs: ' + [...ids].sort((a, b) => a - b).join(', '), () => {
+        const mine = [Number(pm.collectionVariables.get('guildA')), Number(pm.collectionVariables.get('guildB'))];
+        pm.expect([...ids].sort((a, b) => a - b)).to.eql(mine.sort((a, b) => a - b));
+        pm.expect(pm.response.json().totalElements).to.eql(2);
+      });
+      pm.test('Every guild has an id, a name and a description', () => {
+        guilds.forEach(g => {
+          pm.expect(g.id).to.be.a('number');
+          pm.expect(g.name).to.be.a('string');
+          pm.expect(g.description).to.be.a('string');
+        });
+      });
+    language: text/javascript
+examples: ./.resources/List guilds.resources/examples
+order: 3000

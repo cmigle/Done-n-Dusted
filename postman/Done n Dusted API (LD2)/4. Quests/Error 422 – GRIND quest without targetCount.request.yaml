@@ -1,0 +1,23 @@
+$kind: http-request
+description: A `GRIND` quest must have a `targetCount`. The JSON is valid but breaks a domain rule, so the response is `422 Unprocessable Entity`.
+url: "{{baseUrl}}/guilds/{{guildA}}/quests"
+method: POST
+headers:
+  Content-Type: application/json
+body:
+  type: json
+  content: |-
+    {
+      "title": "Grind without a target",
+      "stat": "STR",
+      "type": "GRIND",
+      "difficulty": "EASY"
+    }
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test('422 Unprocessable Entity', () => pm.response.to.have.status(422));
+      pm.test('The message explains the rule', () => pm.expect(pm.response.json().message).to.include('targetCount'));
+    language: text/javascript
+examples: ./.resources/Error 422 – GRIND quest without targetCount.resources/examples
+order: 2000

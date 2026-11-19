@@ -66,7 +66,7 @@ nepamirštami. Tas pats failas — `docs/openapi.json`.
 | 2.7 | Nukopijuoti `accessToken` → **Authorize** → įklijuoti → `GET /api/guilds` | `200`, tik grupės 1 ir 2 (jonas grupės 3 nemato) |
 | 2.8 | `GET /api/auth/me` | jonas, `role: USER`, `memberships`: dvi grupės su `PLAYER` |
 | 2.9 | Git Bash (`3-curl-komandos`) → `jwt` | JWT turinys: `iss: done-n-dusted`, `sub: "2"`, `username: rokas`, `role: USER`, `iat`, `exp` (`exp - iat = 900`). Žetono neklijuoti į svetimas svetaines (jwt.io) |
-| 2.10 | Postman → `0. Autentifikacija` → **Prisijungti** → *Test Results* | Testai patys iškoduoja JWT ir patikrina tuos pačius laukus |
+| 2.10 | Postman → `0. Authentication` → **Log in** → *Test Results* | Testai patys iškoduoja JWT ir patikrina tuos pačius laukus |
 
 Pasakyti: access žetonas — HS256 JWT, 15 min, serveris jo nesaugo; JWT pasirašytas, ne
 užšifruotas, todėl jame nėra slaptažodžio. Slaptažodis DB — tik BCrypt maiša.
@@ -75,7 +75,7 @@ užšifruotas, todėl jame nėra slaptažodžio. Slaptažodis DB — tik BCrypt 
 
 ## 3. Žetonų atnaujinimas ir atsijungimas (1–2 min)
 
-Patogiausia Postman aplanke `0. Autentifikacija` (užklausos eina iš eilės ir pačios perduoda
+Patogiausia Postman aplanke `0. Authentication` (užklausos eina iš eilės ir pačios perduoda
 žetonus) arba curl `5.6` (`3-curl-komandos`).
 
 | # | Ką daryti | Ką turi matyti |
@@ -92,7 +92,7 @@ panaudojamas vieną kartą (rotacija). Access po atsijungimo galioja iki 15 min 
 
 ---
 
-## 4. Rolės ir teisės (3 min) — curl arba Postman `6. Rolės ir teisės`
+## 4. Rolės ir teisės (3 min) — curl arba Postman `6. Roles and permissions`
 
 curl: `3-curl-komandos` → kopijuoti iš `DEMO_KOMANDOS.txt` 5 skyriaus. `$A` — rokas, `$J` — jonas.
 
@@ -117,7 +117,7 @@ per `GuildService.access()`: `404` — grupės nėra, `403` — ne narys, toliau
 
 ---
 
-## 5. Administratorius (1 min) — Postman `8. Administravimas` arba Swagger su `admin`
+## 5. Administratorius (1 min) — Postman `8. Administration` arba Swagger su `admin`
 
 | Ką daryti | Ką turi matyti |
 | --- | --- |
@@ -146,8 +146,8 @@ DBeaver alternatyva: PostgreSQL, `localhost:55432`, DB ir naudotojas `postgres`,
 ## 7. Automatiniai testai (1 min) — `2-postman-testai` arba Postman *Run collection*
 
 Turi matyti: **176 patikros, 0 klaidų**, ~20 s. Kolekcijoje 78 užklausos; newman lentelėje
-`requests` rodo 91, nes „Suvestinė“ papildomai kviečia sąrašus per `pm.sendRequest`. Aplankai: `0. Autentifikacija`,
-`1. Suvestinė` („Is viso - grupiu: 3, uzduociu: 9, irasu: 12“), `2. Grupės` … `8. Administravimas`.
+`requests` rodo 91, nes „Overview“ papildomai kviečia sąrašus per `pm.sendRequest`. Aplankai: `0. Authentication`,
+`1. Overview` („Total - guilds: 3, quests: 9, log entries: 12“), `2. Guilds` … `8. Administration`.
 Kolekciją galima leisti kartotinai — ji pati susikuria vardus ir pasivalo.
 
 ---
@@ -173,7 +173,7 @@ Kolekciją galima leisti kartotinai — ji pati susikuria vardus ir pasivalo.
 | --- | --- |
 | `Port 8080 was already in use` arba DB nepasileidžia | `0-sustabdyti`, tada `1-paleisti-api` |
 | `401 "Access token has expired. ..."` | Praėjo 15 min: prisijungti iš naujo (Git Bash — parašyti `zetonai`) |
-| Postman visur `401` | Pirma paleisti `0. Autentifikacija` → „Prisijungti“ (užpildo `accessToken`) |
+| Postman visur `401` | Pirma paleisti `0. Authentication` → „Log in“ (užpildo `accessToken`) |
 | Postman pavienė užklausa iš `6.` aplanko meta klaidą | Ji naudoja ankstesnių aplankų kintamuosius — leisti visą kolekciją arba aplankus iš eilės |
 | Swagger vis dar rodo seną žetoną | **Authorize** → *Logout* → įklijuoti naują |
 | Swagger „Failed to load API definition“ | Viršutiniame laukelyje turi būti `/v3/api-docs` (jis skirtas API aprašui, ne užklausoms) → **Explore** |

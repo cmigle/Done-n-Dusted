@@ -1,0 +1,8 @@
+$kind: collection
+description: |-
+  Guild management: create, list, paginate, get, partial update (`PATCH`) and validation errors.
+
+  The collection user creates the guilds, so it is the owner and game master of both. `guildA` is used throughout the collection; `guildB` is created without a description (showing that `description` becomes `""` instead of disappearing) and is needed for the parent-chain test.
+
+  The guild list shows only the user's own guilds, so pagination is demonstrated as the administrator.
+order: 3000

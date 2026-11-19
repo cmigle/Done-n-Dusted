@@ -1,0 +1,41 @@
+$kind: http-request
+description: |-
+  A pagination demo: asks for only **2 guilds** per page (`size=2`), sorted by ID.
+
+  In the response, `page` gives the page number, the page size and the total number of guilds and pages, and `links` gives the `self`, `first`, `next` and `last` links. There is no `prev`, because this is the first page.
+
+  `links.next` is saved to `nextPage`.
+
+  Sent as `admin` (`adminToken`): an administrator sees every guild (3 seeded + 2 created), so there are several pages.
+url: "{{baseUrl}}/guilds?page=0&size=2&sort=id,asc"
+method: GET
+auth:
+  type: bearer
+  credentials:
+    token: "{{adminToken}}"
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test('200 OK', () => pm.response.to.have.status(200));
+      const body = pm.response.json();
+      const ids = body.content.map(g => g.id);
+      pm.test('Page ' + (body.page.number + 1) + ' of ' + body.page.totalPages + ', IDs: ' + ids.join(', '), () => {
+        pm.expect(body.page.number).to.eql(0);
+        pm.expect(body.page.size).to.eql(2);
+        pm.expect(body.content).to.have.lengthOf(2);
+        pm.expect(body.page.totalPages).to.eql(Math.ceil(body.page.totalElements / 2));
+      });
+      pm.test('The first page has next but no prev', () => {
+        pm.expect(body.links.prev).to.be.undefined;
+        pm.expect(body.links.next).to.include('page=1');
+      });
+      pm.test('The links keep size and sort', () => {
+        pm.expect(body.links.next).to.include('size=2');
+        pm.expect(body.links.next).to.include('sort=id');
+      });
+      // The next request does not build the URL itself - it follows the server's links.next.
+      pm.collectionVariables.set('nextPage', body.links.next);
+      pm.collectionVariables.set('pageIds', JSON.stringify(ids));
+    language: text/javascript
+examples: ./.resources/Pagination – first page.resources/examples
+order: 4000

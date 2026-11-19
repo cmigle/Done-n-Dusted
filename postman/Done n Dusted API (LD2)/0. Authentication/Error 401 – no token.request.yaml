@@ -1,0 +1,19 @@
+$kind: http-request
+description: Without an `Authorization` header only registration, login and token refresh are reachable. Everything else returns `401` in the same `ApiError` shape.
+url: "{{baseUrl}}/guilds"
+method: GET
+auth:
+  type: noauth
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test('401 Unauthorized', () => pm.response.to.have.status(401));
+      pm.test('WWW-Authenticate: Bearer', () => pm.expect(pm.response.headers.get('WWW-Authenticate')).to.eql('Bearer'));
+      pm.test('ApiError explains what is missing', () => {
+        const e = pm.response.json();
+        pm.expect(e.status).to.eql(401);
+        pm.expect(e.message).to.include('Bearer');
+      });
+    language: text/javascript
+examples: ./.resources/Error 401 – no token.resources/examples
+order: 7000

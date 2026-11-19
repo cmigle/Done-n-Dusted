@@ -1,0 +1,25 @@
+$kind: http-request
+description: |-
+  Partially updates the guild (`PATCH`): only `description` is sent. Fields that are not sent (`name`) stay unchanged.
+
+  Method **#4** in the docs/API.md table.
+url: "{{baseUrl}}/guilds/{{guildA}}"
+method: PATCH
+headers:
+  Content-Type: application/json
+body:
+  type: json
+  content: |-
+    {
+      "description": "Description after editing"
+    }
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test('200 OK', () => pm.response.to.have.status(200));
+      const body = pm.response.json();
+      pm.test('The change is saved', () => pm.expect(body.description).to.eql('Description after editing'));
+      pm.test('The name that was not sent is unchanged', () => pm.expect(body.name).to.eql(pm.collectionVariables.get('guildName')));
+    language: text/javascript
+examples: ./.resources/Update guild.resources/examples
+order: 7000

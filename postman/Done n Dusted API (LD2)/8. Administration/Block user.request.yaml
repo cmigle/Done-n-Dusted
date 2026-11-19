@@ -1,0 +1,23 @@
+$kind: http-request
+description: |-
+  Blocks the collection user's account: all of their refresh tokens are revoked.
+
+  Method **#28** in the docs/API.md table.
+url: "{{baseUrl}}/users/{{userId}}"
+method: PATCH
+headers:
+  Content-Type: application/json
+body:
+  type: json
+  content: |-
+    {
+      "enabled": false
+    }
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test('200 OK', () => pm.response.to.have.status(200));
+      pm.test('The account is blocked', () => pm.expect(pm.response.json().enabled).to.eql(false));
+    language: text/javascript
+examples: ./.resources/Block user.resources/examples
+order: 4000

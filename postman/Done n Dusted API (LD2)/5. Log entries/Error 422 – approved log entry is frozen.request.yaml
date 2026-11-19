@@ -1,0 +1,24 @@
+$kind: http-request
+description: The author can edit the content (`note`, `evidenceUrl`, `occurredAt`) only while the log entry is `PENDING`. Once it is approved the evidence can no longer change; the game master first has to move the entry back to `PENDING`.
+url: "{{baseUrl}}/guilds/{{guildA}}/quests/{{questId}}/logs/{{logId}}"
+method: PATCH
+headers:
+  Content-Type: application/json
+body:
+  type: json
+  content: |-
+    {
+      "note": "Edited after approval"
+    }
+auth:
+  type: bearer
+  credentials:
+    token: "{{playerToken}}"
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test('422 Unprocessable Entity', () => pm.response.to.have.status(422));
+      pm.test('A reviewed log entry is frozen', () => pm.expect(pm.response.json().message).to.include('reviewed log entry cannot be edited'));
+    language: text/javascript
+examples: ./.resources/Error 422 – approved log entry is frozen.resources/examples
+order: 7000

@@ -1,0 +1,21 @@
+$kind: http-request
+description: "The request has an undeclared field `xpAwarded`. The server does not ignore such fields: it rejects the request with `400 Bad Request`."
+url: "{{baseUrl}}/guilds"
+method: POST
+headers:
+  Content-Type: application/json
+body:
+  type: json
+  content: |-
+    {
+      "name": "{{guildName}} (C)",
+      "xpAwarded": 9999
+    }
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test('400 Bad Request', () => pm.response.to.have.status(400));
+      pm.test('The server rejects undeclared fields', () => pm.expect(pm.response.json().message).to.include('xpAwarded'));
+    language: text/javascript
+examples: ./.resources/Error 400 – unknown field.resources/examples
+order: 11000

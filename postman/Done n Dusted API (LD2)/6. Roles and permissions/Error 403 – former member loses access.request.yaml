@@ -1,0 +1,16 @@
+$kind: http-request
+description: After leaving the guild, `jonas` can no longer see it, its quests or its log entries.
+url: "{{baseUrl}}/guilds/{{guildA}}"
+method: GET
+auth:
+  type: bearer
+  credentials:
+    token: "{{playerToken}}"
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test('403 Forbidden', () => pm.response.to.have.status(403));
+      pm.test('No longer a member - 403', () => pm.expect(pm.response.json().message).to.include('not a member'));
+    language: text/javascript
+examples: ./.resources/Error 403 – former member loses access.resources/examples
+order: 14000

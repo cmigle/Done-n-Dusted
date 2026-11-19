@@ -1,0 +1,24 @@
+$kind: http-request
+description: Only the owner changes the guild's name and description.
+url: "{{baseUrl}}/guilds/{{guildA}}"
+method: PATCH
+headers:
+  Content-Type: application/json
+body:
+  type: json
+  content: |-
+    {
+      "description": "A player tries to edit the guild"
+    }
+auth:
+  type: bearer
+  credentials:
+    token: "{{playerToken}}"
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test('403 Forbidden', () => pm.response.to.have.status(403));
+      pm.test('Only the owner edits the guild', () => pm.expect(pm.response.json().message).to.include('guild owner'));
+    language: text/javascript
+examples: ./.resources/Error 403 – only the owner edits the guild.resources/examples
+order: 11000

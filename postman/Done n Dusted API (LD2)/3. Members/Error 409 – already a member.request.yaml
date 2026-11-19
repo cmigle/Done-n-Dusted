@@ -1,0 +1,21 @@
+$kind: http-request
+description: A user can be in a guild only once.
+url: "{{baseUrl}}/guilds/{{guildA}}/members"
+method: POST
+headers:
+  Content-Type: application/json
+body:
+  type: json
+  content: |-
+    {
+      "username": "jonas",
+      "role": "PLAYER"
+    }
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test('409 Conflict', () => pm.response.to.have.status(409));
+      pm.test('The message explains the conflict', () => pm.expect(pm.response.json().message).to.include('already a member'));
+    language: text/javascript
+examples: ./.resources/Error 409 – already a member.resources/examples
+order: 4000

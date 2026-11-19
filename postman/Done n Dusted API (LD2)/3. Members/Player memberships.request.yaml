@@ -1,0 +1,21 @@
+$kind: http-request
+description: "`/auth/me` as the player: `jonas` sees every guild they belong to and the role in each, including the new `guildA`."
+url: "{{baseUrl}}/auth/me"
+method: GET
+auth:
+  type: bearer
+  credentials:
+    token: "{{playerToken}}"
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test('200 OK', () => pm.response.to.have.status(200));
+      const memberships = pm.response.json().memberships;
+      pm.test('jonas is a PLAYER in the new guild', () => {
+        const m = memberships.find(x => x.guildId === Number(pm.collectionVariables.get('guildA')));
+        pm.expect(m).to.not.be.undefined;
+        pm.expect(m.role).to.eql('PLAYER');
+      });
+    language: text/javascript
+examples: ./.resources/Player memberships.resources/examples
+order: 9000

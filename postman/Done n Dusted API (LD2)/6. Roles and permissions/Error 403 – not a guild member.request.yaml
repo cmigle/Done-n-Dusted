@@ -1,0 +1,12 @@
+$kind: http-request
+description: Guild 2 (*Iron Vow*) exists, but the collection user is not a member.
+url: "{{baseUrl}}/guilds/2"
+method: GET
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test('403 Forbidden', () => pm.response.to.have.status(403));
+      pm.test('Explains that the user is not a member', () => pm.expect(pm.response.json().message).to.include('not a member'));
+    language: text/javascript
+examples: ./.resources/Error 403 – not a guild member.resources/examples
+order: 1000
