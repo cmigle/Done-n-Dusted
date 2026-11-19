@@ -161,7 +161,7 @@ all pairs pass
 
 | Lygis | Kas | Kiekis | Komanda |
 | --- | --- | --- | --- |
-| Backend integraciniai | MockMvc + įterptinė PostgreSQL: autentifikacija, teisės, validacija, kortelė, draugystės, sąsajos maršrutai | 48 | `./mvnw test` |
+| Backend integraciniai | MockMvc + įterptinė PostgreSQL: autentifikacija, teisės, validacija, kortelė, draugystės, sąsajos maršrutai, naktinis demo atstatymas | 50 | `./mvnw test` |
 | API kontraktas | Postman kolekcija | 91 užklausa, 176 patikros | `npx newman run postman/DoneNDusted.postman_collection.json` |
 | Frontend unit | Vitest + Testing Library: API klientas (refresh vienu metu), avataras, komponentai, formos | 13 | `npm test` |
 | End-to-end | Playwright: svečias, prisijungimas, žygis → žaidimo vedėjo patvirtinimas → kortelė, užduoties forma, `409` prie lauko, draugo kortelė, administravimas, temos išsaugojimas be mirktelėjimo, telefono meniu, 404 | 11 | `npm run test:e2e` |
@@ -194,6 +194,7 @@ Naršyklė ──HTTPS──► Azure App Service (Italy North, Linux, Java 21, 
 | Konfigūracija aplinkos kintamaisiais | `SPRING_PROFILES_ACTIVE=prod`, `DB_URL`, `DB_USER`, `DB_PASSWORD`, `JWT_SECRET` (48 atsitiktiniai simboliai), `CORS_ORIGINS`, `PORT`/`WEBSITES_PORT=8080` — App Service nustatymuose, ne Git'e |
 | Saugumas | Tik HTTPS, TLS ≥ 1.2, FTP išjungtas; DB pasiekiama tik iš Azure paslaugų ir tik su SSL |
 | Always On | Programa neužmiega — pirmas atsakymas greitas |
+| Naktinis demo atstatymas | Demo prisijungimai vieši, todėl kas naktį 04:00 (Vilniaus laiku) visi duomenys grąžinami į pradinius: `DemoResetService` paleidžia Flyway migracijas laikinoje schemoje ir nukopijuoja jų eilutes per vieną transakciją; `admin` paskyra nekeičiama, naujos paskyros ištrinamos |
 
 **Diegimas:**
 

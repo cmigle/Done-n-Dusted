@@ -10,7 +10,7 @@ Full-stack project: **Spring Boot 4 REST API** with JWT auth and role-based acce
 TypeScript** client, built in three stages that are each kept on their own branch.
 
 **Live demo: <https://done-n-dusted.azurewebsites.net>** · API docs: [Swagger UI](https://done-n-dusted.azurewebsites.net/swagger-ui.html) ·
-demo accounts `rokas` (game master), `jonas` (player), `ieva` (password `Demo123!`); the admin password on the live demo is private
+demo accounts `rokas` (game master), `jonas` (player), `ieva` (password `Demo123!`); the admin password on the live demo is private. The demo data resets every night, so feel free to try anything
 
 | Day | Night |
 | --- | --- |
