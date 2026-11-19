@@ -11,7 +11,7 @@
         <relativePath/>
     </parent>
 
-    <groupId>lt.ktu</groupId>
+    <groupId>io.github.cmigle</groupId>
     <artifactId>done-n-dusted</artifactId>
     <version>0.3.0</version>
     <name>Done n Dusted API</name>

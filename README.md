@@ -7,7 +7,7 @@ achievements (a run, a book, a call with a friend); the guild's game master revi
 approved entries grow the player's character — level, XP and six D&D stats.
 
 Full-stack project: **Spring Boot 4 REST API** with JWT auth and role-based access, and a **React 19 +
-TypeScript** client, built in three stages that are each kept on their own branch.
+TypeScript** client, built in three tagged stages: the REST API, then authentication, then the client and cloud deployment.
 
 **Live demo: <https://done-n-dusted.azurewebsites.net>** · API docs: [Swagger UI](https://done-n-dusted.azurewebsites.net/swagger-ui.html) ·
 demo accounts `rokas` (game master), `jonas` (player), `ieva` (password `Demo123!`); the admin password on the live demo is private
@@ -56,7 +56,7 @@ flowchart LR
     App -- "JDBC over SSL, Flyway" --> DB
 ```
 
-- One App Service serves both the API (`/api`) and the React build (`classpath:/static`): one URL, no CORS. Static Web Apps was not an option because the student subscription only allows regions where it is not offered.
+- One App Service serves both the API (`/api`) and the React build (`classpath:/static`): one URL, no CORS. Static Web Apps was not an option because the subscription only allows regions where it is not offered.
 - The API is stateless: each request carries a signed access token; group roles are read from the database on every request, so role changes apply immediately.
 - Permission rules live in the service layer (`GuildAccess`), not in annotations, because they depend on data (author, game master, owner).
 - Every error, including 401/403 from security filters, uses one `ApiError` JSON shape.
@@ -80,50 +80,52 @@ Demo accounts (password `Demo123!`): `rokas` (game master), `ieva` (game master 
 ## Tests
 
 ```bash
-./mvnw test                                            # 42 backend integration and unit tests
+./mvnw test                                            # 48 backend integration and unit tests
 npx newman run postman/DoneNDusted.postman_collection.json   # 78 requests, 176 assertions
-cd frontend && npm test                                # 12 unit tests
-cd frontend && npm run test:e2e                        # 10 Playwright scenarios (API and UI running)
+cd frontend && npm test                                # 14 unit tests
+cd frontend && npm run test:e2e                        # 11 Playwright scenarios (API and UI running)
 ```
 
 ## Deployment
 
 `scripts/package.sh` builds the React app into `src/main/resources/static` and packages one jar; it runs on Azure App
 Service with the `prod` profile. Configuration comes from environment variables (`DB_URL`, `DB_USER`, `DB_PASSWORD`,
-`JWT_SECRET`, `CORS_ORIGINS`); details in [`docs/LD3.md`](docs/LD3.md#7-diegimas-į-debesį).
+`JWT_SECRET`, `CORS_ORIGINS`); details in [`docs/DEPLOYMENT.md`](docs/DEPLOYMENT.md).
 
 ## Documentation
 
 | | |
 | --- | --- |
-| [`docs/API.md`](docs/API.md) | Full API reference: auth, roles, every endpoint, error codes (Lithuanian) |
+| [`docs/API.md`](docs/API.md) | Full API reference: auth, roles, every endpoint, error codes |
 | [`docs/openapi.json`](docs/openapi.json) | OpenAPI 3.1 specification |
-| [`docs/LD3.md`](docs/LD3.md) | UI requirements, wireframes, design system, tests (Lithuanian) |
-| [`docs/LD2.md`](docs/LD2.md) | Authentication and authorization design notes (Lithuanian) |
+| [`docs/FRONTEND.md`](docs/FRONTEND.md) | UI architecture, wireframes, design system, tests |
+| [`docs/DEPLOYMENT.md`](docs/DEPLOYMENT.md) | Azure setup and how to deploy |
 | [`frontend/README.md`](frontend/README.md) | Frontend scripts and configuration |
 
 ## Project structure
 
 ```
-src/main/java/lt/ktu/donendusted/   Spring Boot API: config, security, domain, repository, service, web, error
+src/main/java/io/github/cmigle/donendusted/   Spring Boot API: config, security, domain, repository, service, web, error
 src/main/resources/db/migration/    Flyway migrations V1–V6 with seed data
 src/test/java/                      MockMvc integration tests (embedded PostgreSQL)
 frontend/                           React + TypeScript client, Vitest and Playwright tests
 postman/                            Postman collection (v2.1 JSON and v3 YAML)
-docs/                               API reference, lab notes, wireframes, screenshots
+docs/                               API reference, UI and deployment notes, wireframes, screenshots
 .github/workflows/                  CI pipeline
 ```
 
-## Labs and versions
+## Versions
 
-Each lab is kept on its own branch so it can still be checked out as submitted.
+Each stage is tagged and has a [release](https://github.com/cmigle/Done-n-Dusted/releases).
 
-| Lab | Scope | Branch | Tag |
-| --- | --- | --- | --- |
-| LD1 | REST API: CRUD, nested resources, pagination with links, validation, error model | [`ld1`](https://github.com/cmigle/Done-n-Dusted/tree/ld1) | `v0.1.0` |
-| LD2 | JWT authentication, refresh-token rotation, roles and per-guild permissions | [`ld2`](https://github.com/cmigle/Done-n-Dusted/tree/ld2) | `v0.2.1` |
-| LD3 | React client, character sheet and friendships, tests, CI, cloud deployment | [`ld3`](https://github.com/cmigle/Done-n-Dusted/tree/ld3) | `v0.3.0` |
+| Version | Scope |
+| --- | --- |
+| [`v0.1.0`](https://github.com/cmigle/Done-n-Dusted/releases/tag/v0.1.0) | REST API: CRUD, nested resources, pagination with links, validation, error model |
+| [`v0.2.1`](https://github.com/cmigle/Done-n-Dusted/releases/tag/v0.2.1) | JWT authentication, refresh-token rotation, roles and per-guild permissions |
+| [`v0.3.0`](https://github.com/cmigle/Done-n-Dusted/releases/tag/v0.3.0) | React client, character sheet and friendships, tests, CI, cloud deployment |
+| [`v0.3.1`](https://github.com/cmigle/Done-n-Dusted/releases/tag/v0.3.1) | Readability and design polish |
+| [`v0.3.2`](https://github.com/cmigle/Done-n-Dusted/releases/tag/v0.3.2) | English UI, day and night themes, WCAG contrast check in CI |
 
 ## Author
 
-Miglė Cirtautaitė — Kaunas University of Technology, 2026.
+Miglė Cirtautaitė, 2026.

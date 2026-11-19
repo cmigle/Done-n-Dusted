@@ -4,17 +4,11 @@ Done n Dusted is a quest log for tabletop RPG groups: players log real-life prog
 game master approves it, and approved entries turn into XP for the player's character.
 
 This document describes the REST API: how to run it, authentication, roles, all endpoints, and the
-response and error formats. Project overview - [`README.md`](../README.md), user interface (LD3) -
-[`LD3.md`](LD3.md).
+response and error formats. Project overview - [`README.md`](../README.md), user interface -
+[`FRONTEND.md`](FRONTEND.md), deployment - [`DEPLOYMENT.md`](DEPLOYMENT.md).
 
 Resource hierarchy: **Guild (1:N) -> Quest (1:N) -> LogEntry**. Users belong to guilds through a
 **GuildMembership** with the role `PLAYER` or `DUNGEON_MASTER` (the game master).
-
-| Lab | Branch / tag | Defense material |
-| --- | --- | --- |
-| LD1 - REST API | `ld1`, `v0.1.0` | [`visual/GYNIMO_GIDAS.md`](visual/GYNIMO_GIDAS.md), [`visual/DEMO_KOMANDOS.txt`](visual/DEMO_KOMANDOS.txt) |
-| LD2 - authentication and authorization | `ld2`, `v0.2.1` | [`LD2.md`](LD2.md), [`DEMO_PLANAS.md`](DEMO_PLANAS.md), [`gynimas/LD2_gynimas.html`](gynimas/LD2_gynimas.html) |
-| LD3 - user interface and deployment | `ld3`, `v0.3.0` | [`LD3.md`](LD3.md) |
 
 ---
 
@@ -25,9 +19,6 @@ You only need **Java 21**. No Maven, Docker or installed PostgreSQL is required.
 ```bash
 ./mvnw spring-boot:run
 ```
-
-On Windows, `demo/1-paleisti-api.cmd` does the same (it frees the ports and opens Swagger);
-the other `demo/` scripts run the Postman tests, a curl shell with tokens, and psql.
 
 The first run downloads Maven and the PostgreSQL 18 binaries (a few minutes), later runs take
 seconds. Once `Started DoneNDustedApplication` appears:
@@ -309,9 +300,9 @@ npx newman run postman/DoneNDusted.postman_collection.json
 Or in the Postman app: *Import* -> *Runner* -> *Run*. It takes about **10 seconds**.
 
 The same collection in the Postman v3 format (separate YAML files) is in
-[`postman/Done n Dusted API (LD2)/`](../postman/Done%20n%20Dusted%20API%20%28LD2%29/); the JSON file
+[`postman/Done n Dusted API/`](../postman/Done%20n%20Dusted%20API/); the JSON file
 is generated from the same sources. It can also be run with the Postman CLI:
-`postman collection run "postman/Done n Dusted API (LD2)"`.
+`postman collection run "postman/Done n Dusted API"`.
 
 The collection sets *Bearer Token* `{{accessToken}}` at the collection level. Requests sent by the
 player `jonas` or by `admin` have their own *Authorization* (`{{playerToken}}`, `{{adminToken}}`).
@@ -320,15 +311,13 @@ player `jonas` or by `admin` have their own *Authorization* (`{{playerToken}}`, 
 | --- | --- |
 | 0. Autentifikacija | Registration, `409`, `400`, login and JWT claims, `/auth/me`, `401` without a token and with a broken token, refresh rotation and reuse detection, logout |
 | 1. Suvestinė | As `admin`: how many guilds, quests and log entries are in the database, with all IDs (`Is viso - grupiu: 3, uzduociu: 9, irasu: 12`) |
-| 2. Grupės | LD1 guild CRUD, the creator becomes the owner, a user sees only their own guilds, paging via `links.next` |
+| 2. Grupės | Guild CRUD, the creator becomes the owner, a user sees only their own guilds, paging via `links.next` |
 | 3. Nariai | Adding a player, `409` for an existing member and a second game master, `422` for an unknown user, `403` for a player |
-| 4. Užduotys | LD1 quest tests, `createdBy` |
+| 4. Užduotys | Quest CRUD and filters, `createdBy` |
 | 5. Progreso įrašai | A player logs progress, the game master approves it; XP from difficulty; an approved log entry's content is frozen (`422`) |
 | 6. Rolės ir teisės | `403`: non-member, player approves, game master edits someone else's content, game master approves their own log entry, player views someone else's log entry, `SIDE_QUEST`, guild edit, `/api/users`; a player sees only their own log entries; leaving a guild |
 | 7. Išvalymas | Deletion `204`, `admin` deletes the second guild, `404` after deletion |
 | 8. Administravimas | User list, `422` when blocking yourself, block -> login `403` -> unblock |
-
-Commands without Postman (curl) - [`docs/visual/DEMO_KOMANDOS.txt`](visual/DEMO_KOMANDOS.txt).
 
 ---
 
@@ -367,7 +356,7 @@ Commands without Postman (curl) - [`docs/visual/DEMO_KOMANDOS.txt`](visual/DEMO_
 ## Project structure
 
 ```
-src/main/java/lt/ktu/donendusted/
+src/main/java/io/github/cmigle/donendusted/
   config/        CorsConfig, EmbeddedPostgresConfig, OpenApiConfig, SecurityConfig
   security/      TokenService (JWT and refresh tokens), CurrentUser, JwtProperties, ApiAuthErrorHandler
   domain/        Guild, Quest, LogEntry, User, GuildMembership, RefreshToken, Friendship + enums
@@ -385,32 +374,28 @@ src/main/resources/db/migration/
   V4__users_and_tokens.sql      users (BCrypt) and refresh tokens
   V5__guild_membership.sql      memberships, owners, authors and seed links
   V6__friendship.sql            friendships; seed: ieva and jonas are friends, rokas sent ieva a friend request
-src/test/java/lt/ktu/donendusted/
+src/test/java/io/github/cmigle/donendusted/
   *IntegrationTest      MockMvc tests with embedded PostgreSQL (one Spring context): ./mvnw test
   service/              unit tests for the character sheet formulas
 .github/workflows/      CI: backend tests, frontend lint/tests/build, Postman and Playwright
-demo/                   Windows launch scripts for the demo (API, newman, curl, psql)
-frontend/               React + TypeScript + Vite client (LD3), Vitest and Playwright tests
+frontend/               React + TypeScript + Vite client, Vitest and Playwright tests
 docs/
   API.md                this document
-  LD3.md                LD3 requirements, user interface, deployment and defense
-  wireframes/           LD3 screen wireframes (SVG) and their generator
+  FRONTEND.md           user interface: architecture, design system, tests
+  DEPLOYMENT.md         Azure setup and deployment
+  wireframes/           screen wireframes (SVG) and their generator
   screenshots/          application screenshots
-  LD2.md                LD2 changes and defense questions
-  DEMO_PLANAS.md        what to show at the defense and in which order
-  gynimas/              LD2 defense page (HTML) and its sources (Archify)
   openapi.json          generated OpenAPI specification
-  visual/               LD1 defense guide, demo commands and diagrams
 postman/
-  Done n Dusted API (LD2)/              collection in the Postman v3 format (YAML)
+  Done n Dusted API/                    collection in the Postman v3 format (YAML)
   DoneNDusted.postman_collection.json   the same collection as v2.1 JSON (newman)
 ```
 
-## User interface (LD3)
+## User interface
 
-The React client is in [`frontend/`](../frontend/); its requirements, wireframes and cloud
-deployment are described in [`LD3.md`](LD3.md).
+The React client is in [`frontend/`](../frontend/); its architecture, wireframes and design system
+are described in [`FRONTEND.md`](FRONTEND.md), and the cloud setup in [`DEPLOYMENT.md`](DEPLOYMENT.md).
 
 ---
 
-Author: **Miglė Cirtautaitė** · Kaunas, 2026
+Author: **Miglė Cirtautaitė**, 2026
