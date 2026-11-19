@@ -43,7 +43,7 @@ export function LandingPage() {
         <ol className="steps grid grid--3">
           <li className="window">
             <h3 className="step__title">
-              <span className="tile tile--lg" style={tile('var(--surface-2)')}>
+              <span className="tile tile--lg" style={tile('var(--info)')}>
                 <NotePlus size={28} aria-hidden="true" />
               </span>
               1. Log what you did

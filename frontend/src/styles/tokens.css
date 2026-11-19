@@ -11,21 +11,22 @@
   --bg: #fff4e4;
   --surface: #ffffff;
   --surface-2: #fbe6cf;
-  --ink: #4a3a5c; /* outlines and hard shadows, never pure black */
-  --text: #4a3a5c;
-  --text-muted: #6f5f7d;
+  --ink: #7a5240; /* outlines and hard shadows: warm cocoa, never black */
+  --text: #4e352a;
+  --text-muted: #7d5f50;
   --primary: #ff8fab; /* the one main call to action per screen */
-  --on-primary: #4a3a5c; /* text and icons on any pastel fill */
+  --on-primary: #4e352a; /* text and icons on any pastel fill */
   --link: #c2406a;
-  --link-2: #4a3a5c; /* links on --surface-2, where pink is too light */
+  --link-2: #4e352a; /* links on --surface-2, where pink is too light */
   --xp: #ffcf5c; /* experience and level only */
   --focus: #c2406a;
   --success: #7ec8a9;
+  --info: #8ecdf5; /* calm accent for informational tiles */
   --danger: #e05a6a;
   --danger-ink: #b02a42; /* error text: the pastel red is too light to read */
   --danger-btn: #b02a42;
   --on-danger: #ffffff;
-  --control: #4a3a5c; /* form control borders: 3:1 against the card in both themes */
+  --control: #7a5240; /* form control borders: 3:1 against the card in both themes */
   --overlay: rgb(255 244 228 / 90%);
 
   --stat-str: #ff8a8a;
@@ -77,11 +78,12 @@
   --text-muted: #c9b8e0;
   --primary: #ffb3c7;
   --on-primary: #2b2340;
-  --link: #ffb3c7;
-  --link-2: #ffb3c7;
+  --link: #bfc3f5;
+  --link-2: #bfc3f5;
   --xp: #ffd97a;
   --focus: #ffd97a;
   --success: #9ee6c4;
+  --info: #9cd3ff;
   --danger: #ff9aa8;
   --danger-ink: #ffb0bb;
   --danger-btn: #ff9aa8;
@@ -139,11 +141,12 @@
     --text-muted: #c9b8e0;
     --primary: #ffb3c7;
     --on-primary: #2b2340;
-    --link: #ffb3c7;
-    --link-2: #ffb3c7;
+    --link: #bfc3f5;
+    --link-2: #bfc3f5;
     --xp: #ffd97a;
     --focus: #ffd97a;
     --success: #9ee6c4;
+    --info: #9cd3ff;
     --danger: #ff9aa8;
     --danger-ink: #ffb0bb;
     --danger-btn: #ff9aa8;

@@ -103,8 +103,8 @@ užfiksuoja `data-theme` tą akimirką, kai sukuriamas `<body>`.
 
 | Žetonas | Reikšmė |
 | --- | --- |
-| Paviršiai | Diena: fonas `#fff4e4`, kortelės `#ffffff`, `surface-2 #fbe6cf`. Naktis: `#2b2340`, `#3d3159`, `#4a3c6b`. Tekstas ir rašalas `#4a3a5c` (diena) / `#fdf3e7` (naktis); juodos (#000) nėra |
-| Akcentai | `--primary` (rožinė) — tik vienam pagrindiniam veiksmui ekrane; `--xp` (geltona) — tik XP ir lygiui; `--success` / `--danger` — patvirtinimas ir trynimas |
+| Paviršiai | Diena: fonas `#fff4e4`, kortelės `#ffffff`, `surface-2 #fbe6cf`. Naktis: `#2b2340`, `#3d3159`, `#4a3c6b`. Dieną tekstas šokoladinis `#4e352a`, rėmeliai ir šešėliai kakavos `#7a5240`; naktį tekstas `#fdf3e7`; juodos (#000) nėra |
+| Akcentai | `--primary` (rožinė) — tik vienam pagrindiniam veiksmui ekrane; `--xp` (geltona) — tik XP ir lygiui; `--success` / `--danger` — patvirtinimas ir trynimas; `--info` (dangaus mėlyna) — informacinės plytelės; naktį nuorodos ramios levandinės `#bfc3f5`, kad nekonkuruotų su rožiniu veiksmo mygtuku |
 | Savybių spalvos | Visame saite tos pačios: STR, DEX, CON, INT, WIS, CHA turi savo `--stat-*` žetoną abiem temoms (juostos, plytelės, filtrai, užduočių kortelių juosta) |
 | Pastelės ir tekstas | Pastelinė spalva niekada nėra teksto spalva: ant jos — tamsus rašalas (ikonų plytelės, XP ženklelis), o ženkleliuose spalva — tik kvadratėlis šalia teksto |
 | Šriftai | Pixelify Sans (logotipas, H1, H2, mygtukai) ir Nunito (visa kita, skaičiai — `tabular-nums`); telefone tekstas 17 px, eilutės aukštis 1,6, H1 ~32 px su `text-wrap: balance` |
@@ -126,32 +126,32 @@ vyksta CI). Skriptas taip pat patikrina, kad „sistema tamsi“ blokas sutampa 
 
 | Pair | Used for | Light | Dark | Min |
 | --- | --- | --- | --- | --- |
-| `--text` on `--bg` | body text on the page | 9.42 ✓ | 13.51 ✓ | 4.5 |
-| `--text` on `--surface` | text in cards, forms, modals | 10.24 ✓ | 10.75 ✓ | 4.5 |
-| `--text` on `--surface-2` | footer, quotes, counters, tables | 8.45 ✓ | 8.91 ✓ | 4.5 |
-| `--text-muted` on `--bg` | hints and meta on the page | 5.35 ✓ | 8.06 ✓ | 4.5 |
-| `--text-muted` on `--surface` | hints and meta in cards | 5.82 ✓ | 6.41 ✓ | 4.5 |
-| `--text-muted` on `--surface-2` | meta in the footer and counters | 4.80 ✓ | 5.31 ✓ | 4.5 |
-| `--link` on `--bg` | links on the page | 4.56 ✓ | 8.84 ✓ | 4.5 |
-| `--link` on `--surface` | links in cards | 4.96 ✓ | 7.03 ✓ | 4.5 |
-| `--link-2` on `--surface-2` | footer links | 8.45 ✓ | 5.83 ✓ | 4.5 |
+| `--text` on `--bg` | body text on the page | 10.35 ✓ | 13.51 ✓ | 4.5 |
+| `--text` on `--surface` | text in cards, forms, modals | 11.25 ✓ | 10.75 ✓ | 4.5 |
+| `--text` on `--surface-2` | footer, quotes, counters, tables | 9.28 ✓ | 8.91 ✓ | 4.5 |
+| `--text-muted` on `--bg` | hints and meta on the page | 5.33 ✓ | 8.06 ✓ | 4.5 |
+| `--text-muted` on `--surface` | hints and meta in cards | 5.79 ✓ | 6.41 ✓ | 4.5 |
+| `--text-muted` on `--surface-2` | meta in the footer and counters | 4.78 ✓ | 5.31 ✓ | 4.5 |
+| `--link` on `--bg` | links on the page | 4.56 ✓ | 8.71 ✓ | 4.5 |
+| `--link` on `--surface` | links in cards | 4.96 ✓ | 6.92 ✓ | 4.5 |
+| `--link-2` on `--surface-2` | footer links | 9.28 ✓ | 5.74 ✓ | 4.5 |
 | `--danger-ink` on `--surface` | form errors | 6.45 ✓ | 6.83 ✓ | 4.5 |
 | `--danger-ink` on `--bg` | errors on the page, 404 | 5.93 ✓ | 8.59 ✓ | 4.5 |
-| `--on-primary` on `--primary` | main CTA button | 4.76 ✓ | 8.84 ✓ | 4.5 |
-| `--on-primary` on `--xp` | XP chips, level badge | 6.99 ✓ | 10.91 ✓ | 4.5 |
-| `--on-primary` on `--success` | Approve / Accept buttons | 5.23 ✓ | 10.28 ✓ | 4.5 |
+| `--on-primary` on `--primary` | main CTA button | 5.23 ✓ | 8.84 ✓ | 4.5 |
+| `--on-primary` on `--xp` | XP chips, level badge | 7.68 ✓ | 10.91 ✓ | 4.5 |
+| `--on-primary` on `--success` | Approve / Accept buttons | 5.74 ✓ | 10.28 ✓ | 4.5 |
 | `--on-danger` on `--danger-btn` | Delete / Reject buttons | 6.45 ✓ | 7.37 ✓ | 4.5 |
-| `--text` on `--surface-2` | secondary buttons | 8.45 ✓ | 8.91 ✓ | 4.5 |
-| `--on-primary` on `--stat-str` | STR icon tile | 4.51 ✓ | 7.37 ✓ | 3 |
-| `--on-primary` on `--stat-dex` | DEX icon tile | 5.23 ✓ | 10.28 ✓ | 3 |
-| `--on-primary` on `--stat-con` | CON icon tile | 5.73 ✓ | 9.22 ✓ | 3 |
-| `--on-primary` on `--stat-int` | INT icon tile | 5.95 ✓ | 9.30 ✓ | 3 |
-| `--on-primary` on `--stat-wis` | WIS icon tile | 4.40 ✓ | 7.08 ✓ | 3 |
-| `--on-primary` on `--stat-cha` | CHA icon tile | 4.76 ✓ | 8.84 ✓ | 3 |
+| `--text` on `--surface-2` | secondary buttons | 9.28 ✓ | 8.91 ✓ | 4.5 |
+| `--on-primary` on `--stat-str` | STR icon tile | 4.96 ✓ | 7.37 ✓ | 3 |
+| `--on-primary` on `--stat-dex` | DEX icon tile | 5.74 ✓ | 10.28 ✓ | 3 |
+| `--on-primary` on `--stat-con` | CON icon tile | 6.29 ✓ | 9.22 ✓ | 3 |
+| `--on-primary` on `--stat-int` | INT icon tile | 6.54 ✓ | 9.30 ✓ | 3 |
+| `--on-primary` on `--stat-wis` | WIS icon tile | 4.84 ✓ | 7.08 ✓ | 3 |
+| `--on-primary` on `--stat-cha` | CHA icon tile | 5.23 ✓ | 8.84 ✓ | 3 |
 | `--focus` on `--bg` | focus outline on the page (non-text) | 4.56 ✓ | 10.91 ✓ | 3 |
 | `--focus` on `--surface` | focus outline in cards (non-text) | 4.96 ✓ | 8.67 ✓ | 3 |
-| `--control` on `--surface` | form control borders in cards (non-text) | 10.24 ✓ | 6.41 ✓ | 3 |
-| `--control` on `--bg` | form control borders on the page (non-text) | 9.42 ✓ | 8.06 ✓ | 3 |
+| `--control` on `--surface` | form control borders in cards (non-text) | 6.76 ✓ | 6.41 ✓ | 3 |
+| `--control` on `--bg` | form control borders on the page (non-text) | 6.21 ✓ | 8.06 ✓ | 3 |
 
 all pairs pass
 
