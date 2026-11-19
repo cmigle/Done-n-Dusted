@@ -3,8 +3,9 @@
  * and two colours. The same name always gives the same avatar, so no images need to be stored.
  */
 
-const BODY = ['#b13e53', '#ef7d57', '#ffcd75', '#a7f070', '#38b764', '#41a6f6', '#73eff7', '#94b0c2']
-const TRIM = ['#5d275d', '#257179', '#29366f', '#3b5dc9', '#333c57']
+// Pastels from the day/night palette: they read on both the cream and the plum background.
+const BODY = ['#ff8a8a', '#7ec8a9', '#ffb07a', '#8ecdf5', '#b79cf0', '#ff8fab', '#ffcf5c', '#9ee6c4']
+const TRIM = ['#4a3a5c', '#6a5a8f', '#c2406a', '#3b6b5c', '#2b2340']
 
 function hash(text: string): number {
   // FNV-1a

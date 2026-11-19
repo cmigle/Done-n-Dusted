@@ -1,6 +1,6 @@
 import type { Stat } from '../api/types'
 import { STATS, STAT_INFO, xp } from '../lib/game'
-import { StatIcon } from './StatIcon'
+import { StatTile } from './StatIcon'
 import { Bar, PixelAvatar } from './ui'
 
 /** A sample character sheet for the landing page: shows at a glance what "your character grows" means. */
@@ -19,15 +19,15 @@ export function CharacterPreview() {
           <span aria-hidden="true">lv</span> 4
         </span>
       </div>
-      <Bar value={65} max={100} label="Experience: 65 of 100 to level 5" animate />
+      <Bar value={72} max={100} segments={10} label="Experience: 72 of 100 to level 5" animate />
       <p className="preview__xp">
-        <span className="xp-number">65 / {xp(100)}</span> to level 5
+        <span className="xp-chip">72 / {xp(100)}</span> to level 5
       </p>
       <ul className="stats stats--compact">
         {STATS.map((stat) => (
           <li key={stat} className="stat">
-            <span className="stat__icon" style={{ color: STAT_INFO[stat].color }}>
-              <StatIcon stat={stat} size={20} />
+            <span className="stat__icon">
+              <StatTile stat={stat} size="sm" />
             </span>
             <span className="stat__name">{STAT_INFO[stat].name}</span>
             <span className="stat__score">{DEMO[stat]}</span>
@@ -38,8 +38,7 @@ export function CharacterPreview() {
       <figcaption className="preview__log">
         <span className="preview__log-label">Latest entry</span>
         <span>
-          Ran 5 km along the river → <span className="xp-number">+{xp(20)}</span>{' '}
-          <span style={{ color: STAT_INFO.CON.color }}>Constitution</span>
+          Ran 5 km along the river → <span className="xp-chip">+{xp(20)}</span> Constitution
         </span>
       </figcaption>
     </figure>

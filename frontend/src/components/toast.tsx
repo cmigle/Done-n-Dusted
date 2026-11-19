@@ -27,9 +27,11 @@ export function ToastProvider({ children }: { children: ReactNode }) {
       <div className="toasts" aria-live="polite" aria-atomic="false">
         {toasts.map((t) => (
           <div key={t.id} className={`toast toast--${t.kind}`} role={t.kind === 'error' ? 'alert' : 'status'}>
-            {t.kind === 'success' && <Check size={20} aria-hidden="true" color="var(--leaf)" />}
-            {t.kind === 'error' && <WarningBox size={20} aria-hidden="true" color="var(--ruby)" />}
-            {t.kind === 'info' && <InfoBox size={20} aria-hidden="true" color="var(--sky)" />}
+            <span className="tile tile--sm">
+              {t.kind === 'success' && <Check size={16} aria-hidden="true" />}
+              {t.kind === 'error' && <WarningBox size={16} aria-hidden="true" />}
+              {t.kind === 'info' && <InfoBox size={16} aria-hidden="true" />}
+            </span>
             <span>{t.text}</span>
           </div>
         ))}

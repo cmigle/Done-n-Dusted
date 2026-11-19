@@ -118,7 +118,13 @@ export function ReviewModal({
             Cancel
           </button>
           <button className={`btn ${status === 'REJECTED' ? 'btn--danger' : 'btn--success'}`} disabled={review.isPending}>
-            {status === 'APPROVED' ? `Approve and award ${formatXp(xp)}` : 'Reject entry'}
+            {status === 'APPROVED' ? (
+              <>
+                Approve and award <span className="digits">{formatXp(xp)}</span>
+              </>
+            ) : (
+              'Reject entry'
+            )}
           </button>
         </div>
       </form>

@@ -128,6 +128,35 @@ test('an unknown path shows the 404 page', async ({ page }) => {
   await expect(page).toHaveTitle('Page not found – Done n Dusted')
 })
 
+test('the theme follows the system, the toggle saves it, and a reload keeps it without a flash', async ({ page }) => {
+  await page.emulateMedia({ colorScheme: 'dark' })
+  await page.goto('/')
+  const html = page.locator('html')
+  const background = () => page.evaluate(() => getComputedStyle(document.body).backgroundColor)
+  await expect(html).not.toHaveAttribute('data-theme')
+  expect(await background()).toBe('rgb(43, 35, 64)')
+
+  const toggle = page.getByRole('button', { name: 'Toggle theme' })
+  await expect(toggle).toHaveAttribute('title', 'Light theme')
+  await toggle.click()
+  await expect(html).toHaveAttribute('data-theme', 'light')
+  await expect(toggle).toHaveAttribute('title', 'Dark theme')
+  await expect(page.locator('meta[name="theme-color"]')).toHaveAttribute('content', '#fff4e4')
+
+  // Record the theme at the moment <body> is created: before any app code runs and before the first paint.
+  await page.addInitScript(() => {
+    new MutationObserver((_, observer) => {
+      if (!document.body) return
+      ;(window as unknown as { themeAtBody: string }).themeAtBody = document.documentElement.dataset.theme ?? 'unset'
+      observer.disconnect()
+    }).observe(document, { childList: true, subtree: true })
+  })
+  await page.reload()
+  expect(await page.evaluate(() => (window as unknown as { themeAtBody: string }).themeAtBody)).toBe('light')
+  await expect(html).toHaveAttribute('data-theme', 'light')
+  expect(await background()).toBe('rgb(255, 244, 228)')
+})
+
 test.describe('phone', () => {
   test.use({ viewport: { width: 390, height: 844 } })
 

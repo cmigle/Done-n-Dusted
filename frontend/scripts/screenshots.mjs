@@ -9,8 +9,8 @@ mkdirSync(out, { recursive: true })
 
 const browser = await chromium.launch({ channel: process.env.E2E_CHANNEL ?? 'msedge' })
 
-async function session(name, viewport, steps) {
-  const context = await browser.newContext({ viewport, deviceScaleFactor: 1, locale: 'en-GB' })
+async function session(name, viewport, steps, colorScheme = 'light') {
+  const context = await browser.newContext({ viewport, deviceScaleFactor: 1, locale: 'en-GB', colorScheme })
   const page = await context.newPage()
   page.on('pageerror', (e) => console.log(`[${name}] page error: ${e.message}`))
   page.on('console', (m) => m.type() === 'error' && console.log(`[${name}] console: ${m.text()}`))
@@ -74,5 +74,20 @@ await session('admin', { width: 1280, height: 800 }, async (page) => {
   await page.getByRole('table').waitFor()
   await shot(page, '08-admin-desktop')
 })
+
+// Night theme (the app follows the system colour scheme until the visitor picks one)
+for (const [suffix, viewport] of [
+  ['desktop', { width: 1280, height: 800 }],
+  ['mobile', { width: 390, height: 844 }],
+]) {
+  await session(`${suffix}-dark`, viewport, async (page) => {
+    await page.goto(base)
+    await shot(page, `01-landing-${suffix}-dark`)
+    if (suffix === 'mobile') return
+    await login(page, 'rokas')
+    await page.goto(`${base}/guilds/2/members/4`)
+    await shot(page, `05-sheet-${suffix}-dark`)
+  }, 'dark')
+}
 
 await browser.close()

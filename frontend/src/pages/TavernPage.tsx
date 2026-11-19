@@ -5,7 +5,7 @@ import { Mail, Plus, Script } from '@nsmr/pixelart-react'
 import { friends, guilds } from '../api/endpoints'
 import { useAuth } from '../auth/AuthContext'
 import { GuildFormModal } from '../components/GuildFormModal'
-import { Empty, ErrorNote, Loading, PixelAvatar, Window } from '../components/ui'
+import { Empty, ErrorNote, Loading, PixelAvatar, Window, WithDigits } from '../components/ui'
 import { GUILD_ROLE_INFO, USER_ROLE_INFO, formatDate, plural } from '../lib/game'
 import { useTitle } from '../lib/useTitle'
 
@@ -32,7 +32,9 @@ export function TavernPage() {
             <div className="hero-card">
               <PixelAvatar name={user.username} size={96} />
               <div>
-                <h2 className="hero-card__name">{user.username}</h2>
+                <h2 className="hero-card__name">
+                  <WithDigits text={user.username} />
+                </h2>
                 <p className="muted">
                   {USER_ROLE_INFO[user.role]} since {formatDate(user.createdAt)}
                 </p>
@@ -47,7 +49,7 @@ export function TavernPage() {
               <p>
                 You have {incoming} new {plural(incoming, 'friend request', 'friend requests')}.
               </p>
-              <Link to="/friends" className="btn btn--small">
+              <Link to="/friends" className="btn btn--secondary btn--small">
                 View
               </Link>
             </Window>
