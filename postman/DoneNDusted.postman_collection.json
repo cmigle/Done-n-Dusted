@@ -320,13 +320,22 @@
               "bearer": [
                 {
                   "key": "token",
-                  "value": "{{accessToken}}x",
+                  "value": "{{tamperedToken}}",
                   "type": "string"
                 }
               ]
             }
           },
           "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.variables.set('tamperedToken', pm.collectionVariables.get('accessToken') + 'x');"
+                ]
+              }
+            },
             {
               "listen": "test",
               "script": {
